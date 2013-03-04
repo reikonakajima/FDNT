@@ -1,0 +1,13 @@
+*~
+*.o
+Makefile*
+CVS
+*.err
+*.log
+*.pyc
+*.condor
+*.cat
+*.reg
+*.fits
+*.out
+*.par

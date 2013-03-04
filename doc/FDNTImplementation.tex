@@ -1,0 +1,935 @@
+% MNRAS style
+\documentclass[useAMS,usenatbib,usegraphicx]{mn2e}
+\usepackage{graphicx,verbatim,natbib,amsmath,amssymb}
+%% aastex
+%\documentclass[preprint2]{aastex}
+%\usepackage{verbatim}
+
+% remove the extra space on top
+%\topmargin -1cm
+
+% define new commands here
+\newcommand{\photoz}{photo-$z$}
+
+\def\jcap{{JCAP\ }}
+\newcommand{\aaps}{{Astron.~Astrophys.~Supp.}}
+\newcommand{\araa}{{Annu.~Rev.~Astron.~Astrophys.}}
+\newcommand{\aap}{{Astron.~Astrophys.}}
+\newcommand{\apjl}{{Astrophys.~J.~Lett.}}
+\newcommand{\apj}{{Astrophys.~J.}}
+\newcommand{\apjs}{{Astrophys.~J.~Supp.}}
+\newcommand{\aj}{{Astron.~J.}}
+\newcommand{\prd}{{Phys.~Rev.~D}}
+\newcommand{\pasp}{{Pub.~Astron.~Soc.~Pacific}}
+\newcommand{\mnras}{{Mon.~Not.~R.~Astron.~Soc.}}
+\newcommand{\physrep}{{Phys. Rep.}}
+\newcommand{\nat}{{Nature}}
+
+\title[FDNT]{Fourier Domain Null Test Shape Measurement Method}
+\author[Nakajima et al.]{R. Nakajima$^1$\thanks{\texttt{reiko@astro.uni-bonn.de}}, 
+G. Bernstein$^2$\thanks{\texttt{garyb@physics.upenn.edu}}, 
+D. Gruen$^3$, O. Marggraf$^1$ \\ 
+  $^1$Argelander Institut f\"{u}r Astronomie, Universit\"{a}t Bonn, 53121 Bonn, Germany \\
+  $^2$Department of Physics and Astronomy, University of Pennsylvania, Philadelphia, PA, 19104 \\
+  $^3$Universt\"{a}ts-Sternwarte M\"{u}nchen, Scheinerstr. 1, 81679 M\"{u}nchen, Germany
+}
+
+\begin{document}
+
+\date{\today}
+
+\maketitle
+
+\begin{abstract}
+This is an internal document outlining the Fourier Domain Null Test (FDNT) method,
+as described and implemented by \citet{bernstein:2010}.
+\end{abstract}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Outline of FDNT}
+
+Throughout this paper, we outline the FDNT code following through the FDNTRing, 
+the FDNT ``Ring Test'', as an example.
+
+\subsection{List of driver programs and modules}
+
+The list of files and modules are listed in Table~\ref{tab:module_list}.
+
+\begin{table}
+\begin{tabular}{l l}
+\hline \hline
+\multicolumn{2}{c}{Module files} \\
+\hline
+\multicolumn{2}{l}{\em main FDNT directory} \\
+\hline
+\multicolumn{2}{l}{\em utilities2} \\
+Pset & Input parameter handling \\
+\hline
+\multicolumn{2}{l}{\em images} \\
+\hline
+\multicolumn{2}{l}{\em astrometry2} \\
+\hline \hline 
+\multicolumn{2}{c}{Driver programs} \\
+\hline
+FDNTRing & Ring test \citep{nakajima/bernstein:2007} \\
+FDNTEllipse & \\
+FDNTGrid & \\
+FDNTGreat & GREAT08 test \citep{bridle/etal:2009} \\
+\hline \hline
+\end{tabular}
+\caption{List of files and modules.}
+\label{tab:module_list}
+\end{table}
+
+
+\subsection{List of namespaces}
+\begin{enumerate}
+\item {\tt laguerre}: 
+\item {\tt sbp}: 
+\item {\tt ran}: 
+\end{enumerate}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Implementation of FDNT}
+
+\subsection{{\tt FDNTRing} driver code}
+This section outlines the Ring Test for the {\tt FDNT} method.  
+The modules used include not only that for the shape measurement method, but also
+generating mock galaxies images with applied shear and PSF convolution.
+\begin{enumerate}
+\item {\bf Define parameters for Ring Test.} \\
+Declare various parameters, define default values for each, then read values
+from input file and {\tt stdin}, into the necessary parameters; show parameters on {\tt stdout}.
+\begin{itemize}
+ \item {\tt nTheta} : number of rotation angles 
+ \item {\tt nDither} : number of dithers (at a given angle)
+ \item {\tt nNoise} : number of noise realizations 
+ \item {\tt (dist1, dist2)} : shear
+ \item {\tt sbGalaxy} : galaxy description 
+ \item {\tt sig} : significance 
+ \item {\tt rhalf} : galaxy half-light radius
+ \item {\tt sbPSF} : PSF description
+ \item {\tt rhalfPSF} : PSF half-light radius
+ \item {\tt order} : fit order
+\end{itemize}
+Define the parameter set with its default values.  Some ``parameters'' may simply be a comment
+with no value associated with it. \\
+\begin{boxit}
+  {\tt \rule{0.1in}{0in} Pset parameters; \\
+    \rule{0.1in}{0in} parameters.addMember({\it a parameter, its default value}); \\
+    \rule{0.1in}{0in} parameters.addMemberNoValue({\it comment parameter});}
+\end{boxit}
+Set parameter from default values; read in parameters from external source (modifying the 
+current values); print out current list of parameter set. \\
+\begin{boxit}
+  {\tt \rule{0.1in}{0in} parameters.setDefault(); \\ 
+    \rule{0.1in}{0in} parameters.setStream(cin); \\ 
+    \rule{0.1in}{0in} parameters.dump(cout);}
+\end{boxit}
+
+\item {\bf Generate model galaxy image.}  \\
+Adjust size to specification, if desired.  \\
+\begin{boxit}
+  {\tt \rule{0.1in}{0in} SBProfile*  unlensed = SBParse(sbGalaxy); \\
+    \rule{0.1in}{0in} {\it size} = EnclosedFluxRadius(*unlensed); \\
+    \rule{0.1in}{0in} unlensed->distort({\it new size}); } \\
+\end{boxit}
+
+\item {\bf Generate model PSF image.} \\ 
+Adjust size to specification, if desired; set flux to unity. \\
+\begin{boxit}
+  {\tt 
+    \rule{0.1in}{0in} SBProfile* psfraw = SBParse(sbPSF); \\
+    \rule{0.1in}{0in} {\it size} = EnclosedFluxRadius(*psfraw); \\
+    \rule{0.1in}{0in} psfraw->distort({\it new size}); \\
+    \rule{0.1in}{0in} psfraw->setFlux(1.);} \\
+\end{boxit}
+
+\item {\bf Find noise level to meet desired significance.}  \\
+Draw PSF-convolved object centered at $(x0, y0) = (0, 0)$. \\
+\begin{boxit}
+  {\tt \rule{0.1in}{0in} SBConvolve obj(*unlensed, *psfraw); \\
+  \rule{0.1in}{0in} ee50obs = EnclosedFluxRadius(obs);\\
+  \rule{0.1in}{0in} gflux = obj.getFlux(); \\
+  \rule{0.1in}{0in} dx = (ee50obs > 3.) ? 1. : 0.5; \\
+  \rule{0.1in}{0in} Image<> clean = obs.draw(dx);} \\
+\end{boxit}
+Set the size/shape info {\tt cleanBasis} for the image, for future use in fitting,
+as a more accurate initial size estimate.\\ 
+\begin{boxit}
+  {\tt \rule{0.1in}{0in} Ellipse cleanBasis({\it x0}, {\it y0}, log({\it estimated size})); \\
+  \rule{0.1in}{0in} cleanBasis.setMu(cleanBasis.getMu()-log(dx)); } \\
+\end{boxit}
+Set noise level {\tt imgRMS} from circular-aperture formula. 
+Note that the S/N of the object is 
+({\it flux}$/2)/(\sqrt{\pi}r_{1/2}\times[${\it rms~noise level per unit area}$]$), 
+where $r_{1/2}$ is the half-light radius.\\
+\begin{boxit}
+  {\tt \rule{0.1in}{0in} trialSN = 1e5;    {\it // set high S/N for the no-noise image} \\
+  \rule{0.1in}{0in} imgRMS = \\
+  \rule{0.2in}{0in} 0.5 * gflux / (sqrt(PI)*ee50obs*significance); \\
+  \rule{0.1in}{0in} Image<> wt(clean.getBounds()); \\
+  \rule{0.1in}{0in} wt = pow(imgRMS*significance/(dx*trialSN), -2.);} \\ 
+\end{boxit}
+Measure the size and flux significance of the PSF-convolved image, assuming an elliptical 
+2d Gaussian fit (needed to determine the appropriate noise to add to image).  
+Note that the {\tt clean} image has no noise added to it. \\
+\begin{boxit}
+  {\tt \rule{0.1in}{0in} GLSimple<> gl(clean, wt, cleanBasis, {\it GL fit order}) \\
+  \rule{0.1in}{0in} gl.solve();  {\it // solve for centroid, size, shape}  \\
+  \rule{0.1in}{0in} cleanBasis = gl.getBasis(); \\
+  \rule{0.1in}{0in} cleanBasis.setMu(cleanBasis.getMu() + log(dx)); \\
+  \rule{0.1in}{0in} gl.b00(f, varf);  \\
+  \rule{0.1in}{0in} {\it // Observed GL S/N is:} \\
+  \rule{0.1in}{0in} {\it //\ \ \ (f/sqrt(varf)) * (significance/trialSN) }} \\
+\end{boxit}
+Calculate optimal detection significance. {\bf [What's this?]}\\
+\begin{boxit}
+  {\tt \rule{0.1in}{0in} sigsum = 0.; \\
+  \rule{0.1in}{0in} for ({\it all pixels in image})\\
+  \rule{0.2in}{0in}   sigsum += clean({\it pixel}) * clean({\it pixel});\\
+  \rule{0.1in}{0in} {\it // the ideal S/N is }\\
+  \rule{0.1in}{0in} {\it // \ \ \ sqrt(sigsum)*dx/imgRMS }} \\
+\end{boxit}
+Save the {\tt clean} object image into {\tt clean.fits}. \\
+\begin{boxit}
+  {\tt \rule{0.1in}{0in} clean.shift(1,1); \\
+  \rule{0.1in}{0in} FITSImage<>::writeToFITS("clean.fits", clean); } \\
+\end{boxit}
+
+\item {\bf Set up the PSF information structure.}  \\
+Use {\tt GLSimple<>} to get basis ellipse {\tt psfBasis};
+store the PSF basis ellipse and the PSF structural information in a {\tt PSFInformation} class
+instance. \\
+\begin{boxit}
+  {\tt \rule{0.1in}{0in} Ellipse psfBasis(0., 0., log(ee50psf/1.17));\\
+  \rule{0.1in}{0in} Image<> ipsf = psfraw->draw(dx); \\
+  \rule{0.1in}{0in} psfBasis.setMu( psfBasis.getMu() - log(dx));\\
+  \rule{0.1in}{0in} GLSimple<> gl(ipsf, {\it weight}, psfBasis, 4);\\
+  \rule{0.1in}{0in} psfBasis = gl.getBasis();\\
+  \rule{0.1in}{0in} psfBasis.setMu( psfBasis.getMu() + log(dx)); \\
+  \rule{0.1in}{0in} PSFInformation psfinfo(*psfraw, psfBasis);} \\
+\end{boxit}
+
+\item {\bf Generate images at each rotation angle, dither, and noise realizations.} \\
+\begin{boxit}
+  {\tt 
+   \rule{0.1in}{0in} for ({\it evenly spaced values of iTheta}) \{\\ 
+   \rule{0.22in}{0in}   gspin = unlensed->rotate(); \\ 
+   \rule{0.22in}{0in}   gshear = gspin->shear(dist1, dist2); \\ 
+   \rule{0.22in}{0in}   startBasis = cleanBasis.setS(srot); \\ 
+   \rule{0.22in}{0in}   for ({\it each dither}) \{ \\ 
+   \rule{0.34in}{0in}     gshift = gshear->shift(); {\it // sub-pixel dither} \\ 
+   \rule{0.34in}{0in}     SBConvolve final(*psfraw, *gshift); \\
+   \rule{0.34in}{0in}     while ({\it not all noise realizations completed}) \{ \\
+   \rule{0.46in}{0in}        Image<> sci = noiseless.duplicate(); \\
+   \rule{0.46in}{0in}        sci({\it each pixel}) += g*imgRMS;  \\
+   \rule{0.46in}{0in}        \ldots \ \ {\it // measure galaxy shape} \\
+   \rule{0.34in}{0in}     \} \\ 
+   \rule{0.22in}{0in}   \} \\
+   \rule{0.1in}{0in} \} } \\
+\end{boxit}
+where \\
+\begin{boxit}
+  {\tt 
+   \rule{0.1in}{0in} GaussianDeviate g; %{\it returns gaussian random number with $\sigma=1$}
+  }
+\end{boxit}
+has been defined earlier (each time ``{\tt g}'' is referenced, it returns a gaussian
+random number, where the gaussian width $\sigma$ is unity). \\
+
+\item {\bf Measure unconvolved galaxy shape.} \\
+Prepare to measure galaxy (set up all necessary information; 
+take convolved, noisy image, and perform deconvolution in Fourier space). \\
+\begin{boxit}
+  {\tt 
+   \rule{0.1in}{0in} FitExposure<> fe(sci, wt, xw, yw, 0); \\
+   \rule{0.1in}{0in} FDNT<> fd(fe, psfinfo, startBasis, order); \\
+   \rule{0.1in}{0in} fd.prepare(); } \\
+\end{boxit}
+Find galaxy shape (for details of what happens here, see \S\ref{ssec:shape2}). \\
+\begin{boxit}
+  {\tt 
+   \rule{0.1in}{0in} fd.shape2(); {\it // shape measurement}
+   } \\
+\end{boxit}
+If fit is not a success, track stats ({\tt failNoise, nFailTheta}); exit if there too many failures.
+If fit a success, track stats (size {\tt sumSigma, egFix = fd.shrinkResponise(targetS),
+seRaw, seNoFix}).
+
+At the end of noise realization and dither loops, print out statatistics for this orientation
+{\tt theta} ({\tt seMeans.add(S, egFix, sig1/sqrt(N-1), sig2/sqrt(N-1))}). \\
+\item {\bf Print out final results.}  \\
+Estimate the applied shear from the ensemble of measured shapes of the rotated galaxies 
+in the Ring Test.
+\end{enumerate}
+
+
+\subsection{\texttt{FDNT} shape measurement outline}
+\label{ssec:shape2}
+This section gives an overview of how \texttt{FDNT::shape2()} probes (``samples'') the shape space
+to obtain the maximum likelihood ``shape'' of a galaxy;
+the uncertainty in other variables (centroid, size) is marginalized over at each shape.
+The shape-space sampling algorithm follows that of \citet{miller/etal:2007}.
+
+{\tt FDNT<>::shape2()} samples point in shape space above a certain likelihood threshold, and
+returns the probability-weighted sum of the shape.
+The likelihood at each point is calculated by calling {\tt processSample()}.
+
+{\tt FDNT<>::processSample()} keeps track of $\ln$(likelihood), flags, covariance, and 
+$\sigma$ (the size of the weight function) {\bf [what for?]}.  
+The actual likelihood at this sample is calculated by calling {\tt logProbability2()}.
+
+{\tt FDNT<>::logProbability2()} returns the $\ln$(likelihood) at the given trial shape.
+It numerically marginalizes over $\ln(\sigma)$, where $\sigma$ is the dimension of the 
+weight function.  Numerical marginalization requires (1) surveying a region over 
+$\ln(\sigma)$ space, (2) at each $\ln(\sigma)$ point, call {\tt marginalizedCentroid()} to find
+maximum in $\ln$(likelihood), and (3) fit a quadratic function around this maxima, and
+numerically integrate to marginalize over $\ln(\sigma)$.  
+
+{\tt FDNT<>::marginalizedCentroid()}, given a trial $\sigma$, finds the likelihood-maximizing
+centroid, and moves the centroid there; then it marginalizes over the centroid by extracting
+the $e_1, e_2, \sigma$ portion of the covariance ({\tt covE23}) and tests ({\tt dE23}).  
+The Fourier Domain Null Test (``FDNT'') is performed in a call to {\tt sumTests()}, which 
+yields these covariances and tests.
+
+{\tt FDNT<>::sumTests()} takes the sum of the ``null test'' results over the different
+exposures (if you have multiple exposures of the same galaxy), and returns the total
+Fisher matrix over the variables $e_1, e_2, \sigma, x0$, and $y0$.
+The ``null test'' itself is simply obtaining different multipole moments in the 
+Fourier space, in which the galaxy image has been deconvolved from the PSF (under a given weight
+function); the code numerically (via Raphson-Newton) estimates the centroid ($x0$ and $y0$)
+that nulls the dipole moments.  The tests for $e_1, e_2$ and $\sigma$ are determined from the
+quadrupole moments, $\frac{1}{2}(Q_{xx}-Q_{yy}), Q_{xy}$, and $\frac{1}{2}(Q_{xx}+Q_{yy})$,
+respectively.  The null tests are performed to find the coordinate system which nulls these 
+multipole moments \citep{bernstein:2010}.
+
+
+\subsection{{\tt FDNT<>::shape2()}}
+This function returns the probability-weighted sum of the shape in $\eta$ space
+of the (deconvolved) galaxy.
+The {\tt Sample} point {\tt s} refers to a sample shape; the function {\tt shape2()} 
+samples over multiple points in shape space above a certain likelihood threshold.
+Each {\tt Sample} instance keeps track of the shape {\tt eta1, eta2}, the 
+log likelihood {\tt lnProb}, and a few other numbers for bookkeeping.
+% The mesh refinement level {\tt level}, mesh index {\tt ix, iy}, the test covariance {\tt covE},
+% {\tt fractionTooBig}, {\tt fractionTooSmall}, {\tt centroidFlag}, {\tt sigma}
+
+The function probes the $\eta_1, \eta_2$ shape space using a variant of the 
+\citet{miller/etal:2007} method, which samples the two dimensional space over a hexagonal 
+mesh pattern, increasing the level of mesh refinement as necessary.
+
+It doesn't look like the shape error, {\tt covE}, has been properly calculated (going down to
+{\tt logProbability2}) in this implementation.  {\bf [Perhaps look into Gary's improved code.]}
+
+\begin{enumerate}
+ \item {\bf Choose a random origin in shape space.} 
+Choose a node ``{\tt origin}'' in ellipticity space, set at a random offset from the 
+(externally estimated) base ellipticity, and calculate probability of that point. \\
+\begin{boxit}
+  {\tt \rule{0.1in}{0in} double eta1, eta2;  \\
+  \rule{0.1in}{0in} galaxyBasis.getS().getEta1Eta2(eta1,eta2);\\
+  \rule{0.1in}{0in} Sample origin(eta1+{\it shift}, eta2+{\it shift});\\
+  \rule{0.1in}{0in} processSample(origin); } \\
+\end{boxit}
+The function \texttt{processSample()} assigns the probability to the ellipticity {\tt origin}.
+Its method is described in detail in the next subsection.
+
+\item {\bf Collect sample points at the coarsest mesh level.} 
+For all known samples (ellipticity values) \texttt{i} that are not too far below 
+the probability of the best point, test for the {\tt lnProb} of the neighboring points 
+on a hexagonal grid. \\
+\begin{boxit}
+  {\tt 
+  \rule{0.1in}{0in} double minProb = origin.lnProb;\\
+  \rule{0.1in}{0in} list<Sample> current;\\
+  \rule{0.1in}{0in} current.push\_back(origin);\\
+  \rule{0.1in}{0in} for ({\it each} current {\it item} i) \{\\
+  \rule{0.2in}{0in}   list<Sample> n = i->neighbors();\\
+  \rule{0.2in}{0in}   for ({\it each neighbor} j) \{\\
+  \rule{0.3in}{0in}     j->getXY(x,y); \\
+  \rule{0.3in}{0in}     {{\it // reject if neighbor is too elliptical}} \\
+  \rule{0.3in}{0in}     if (hypot(x,y) > MAXIMUM\_ETA) continue;\\
+  \rule{0.3in}{0in}     {{\it // only test if neighbor is not already in list}} \\
+  \rule{0.3in}{0in}     if (tried.insert(*j).second) \{ \\
+  \rule{0.4in}{0in}       processSample(*j); \\
+  \rule{0.4in}{0in}        if (j->lnProb < minProb) \\
+  \rule{0.5in}{0in}           minProb = j->lnProb; \\
+  \rule{0.4in}{0in}       {{\it // only bother if neighbor is not too unlikely}} \\
+  \rule{0.4in}{0in}       if (j->lnProb < minProb + PROB\_THRESHOLD) \{ \\
+  \rule{0.5in}{0in}         gotOne = true; \\
+  \rule{0.5in}{0in}         current.push\_back(*j); \\
+  \rule{0.4in}{0in}       \} \\
+  \rule{0.3in}{0in}     \} \\
+  \rule{0.2in}{0in}   \}  \\
+  \rule{0.1in}{0in} \} } \\
+\end{boxit}
+Repeat this until no new good neighbor points are found.
+\item {\bf Remove points which are much less likely than best known shear.}
+The value of {\tt PROB\_THRESHOLD} is approximately -2.7.  \\
+\begin{boxit}
+  {\tt 
+  \rule{0.1in}{0in} for ({\it each} current {\it item} i) \{\\
+  \rule{0.2in}{0in}    if (i->lnProb >= minProb + PROB\_THRESHOLD)\\
+  \rule{0.3in}{0in}       current.erase(i); \\
+  \rule{0.2in}{0in}    \}  \\
+  \rule{0.1in}{0in} \} } \\
+\end{boxit}
+\item {\bf Add samples on a refined grid.}  
+At each deepening of the refinement level, the spacing is 1/2 of the previous level. 
+The refinement stops once the number of samples is above {\tt MINPOINTS}. \\
+\begin{boxit}
+{\tt 
+ \rule{0.1in}{0in} for ({\it each refinement level}) \{ \\
+ \rule{0.2in}{0in}    {\it //Done if we already have enough points} \\
+ \rule{0.2in}{0in}    if (current.size() >= MINPOINTS) \\
+ \rule{0.3in}{0in}      break; \\
+% \rule{0.2in}{0in}    dA /= 4.; \\
+ \rule{0.2in}{0in}    sampleDensity /= 2.; \\
+ \rule{0.2in}{0in}    {\it // check neighbors at the new, finer resolution} \\
+ \rule{0.2in}{0in}    {\it // accept if they meet the criteria as before} \\
+ \rule{0.2in}{0in}    {\it // after each round, remove points that are now} \\
+ \rule{0.2in}{0in}    {\it // below probability threshold} \\
+ \rule{0.1in}{0in} \} } \\
+\end{boxit}
+\item Calculate weighted mean and width of the shape probability. \\
+\begin{boxit}
+{\tt 
+ \rule{0.1in}{0in} for ({\it sample} i) \{ \\
+ \rule{0.2in}{0in}     double prob = exp(-i->lnProb); \\
+ \rule{0.2in}{0in}     double x, y;\\
+ \rule{0.2in}{0in}     i->getXY(x,y);\\
+ \rule{0.2in}{0in}     sump += prob;\\
+ \rule{0.2in}{0in}     sumx += prob*x;\\
+ \rule{0.2in}{0in}     sumy += prob*y;\\
+ \rule{0.2in}{0in}     sumxx += prob*x*x;\\
+ \rule{0.2in}{0in}     sumyy += prob*y*y;\\
+ \rule{0.2in}{0in}     sumxy += prob*x*y;\\
+ \rule{0.2in}{0in}     {\it // also sum probability of size or shape outside bounds}\\
+ \rule{0.1in}{0in} \} } \\
+\end{boxit}
+\end{enumerate}
+      
+\subsection{\texttt{FDNT<>::processSample}}
+Takes the given shear points, and calculates the likelihood of this point after margnializing
+over size $\sigma$ (Gaussian galaxy weight scale) and centroid.
+\begin{enumerate}
+\item Set up the error matrix {\tt covE}
+\item Take the two given shear points {\tt eta1, eta2} and convert it to a shear {\tt trialS}
+\item Call {\tt FDNT<>::logProbability2()} with {\tt trialS}, assign returned {\tt lnProb} to
+the {\tt trialS} point {\tt s}
+\item Set the other data on this point: {\tt s.sigma, s.centroidFlag, s.covE}
+{\bf [but {\tt covE} is not set properly in logProbability2()]}
+\end{enumerate}
+
+\subsection{\texttt{FDNT<>::logProbability2}}
+The marginalization over $\ln\sigma$, where $\sigma$ is the Gaussian scale of the galaxy weight,
+is done numerically.  Returns the size $\ln\sigma$- and centroid-marginalized log probability.
+\begin{enumerate}
+\item Set the many magic numbers ({\tt ANALYTIC\_SIZE\_ERROR = 0.1, INTEGRATION\_BUFFER = 0.4,
+LNSIG\_STEP = 0.2, LNSIG\_INTEGRATION\_STEP = 0.01, lnSigmaFloor = log(leastPSFSigma) - TOO\_SMALL,
+lnSigmaCeiling = nativeBasis.getMu() + TOO\_BIG, LNLIKELIHOOD\_CUTOFF = 5., LNPROB\_DEPTH = 3.})
+\item Set up incidies for test array ({\tt ExposureGroup<>::setIndices()})
+\item Initialize {\tt fractionTooSmall = fractionTooBig = 0}, which keeps track of run-away $\sigma$
+  fraction
+\item Set up variables for {\tt dE23, covE23} (which is the full-dimensional information, 
+  {\tt dE, Ctot}, respectively, marginalized over the centroid)
+\item Call {\tt FDNT<>::marginalizedCentroid} 
+\item If no size marginalization necessary ({\tt iSize < 0}), set 
+  $\chi^2 = \left(dE_{23}\right)^T C_{t,23} \left(dE_{23}\right)$, {\tt chisq = dE23 * 
+  covE23.inverse() * dE23; covE = covE23}, return likelihood: {\tt return 0.5 * (chisq + 
+log(covE23.det()))}
+\item Else, marinalize over size!  Calculate the shift in $\mu = \ln(\sigma)$ to minimize
+{\tt lnprob} at this shear: {\tt gaussShift = -dE23[iSize] +} other terms
+{\bf [don't we want to shift mu here?]}
+\item Define list variables that keep track of range of marginalization: {\tt vlnsig, vlnprob}
+\item Put current probability in the array and set it as minimum: 
+  $\chi^2 = \left(dE_{23}\right)^T C_{t,23} \left(dE_{23}\right)$ {\tt = chisq},
+  {\tt lnprob = 0.5 * ( chisq + log(covE23.det())), minlnprob = lnprob,
+    vlnsig.push\_back(galaxyBasis.getMu()), vlnprob.push\_back(lnprob)}
+\item Determine the initial direction of $d\ln(\sigma)$: {\tt goUp = (dE23[iSize] < 0)}
+\item In a {\tt do} loop:
+  \begin{itemize}
+  \item Take the next step: {\tt nextlnsig = goUp ? vlnsig.back() + LNSIG\_STEP : 
+    vlnsig.front() - LNSIG\_STEP}
+  \item Set the new $\mu =\ln(\sigma)$: {\tt galaxyBasis.setMu(nextlnsig)}
+  \item Call {\tt FDNT<>:: marginalizedCentroid(targetS, dE23, covE23)}
+  \item Calculate $\chi^2$ and {\tt lnprob}
+  \item Mark new minimum: {\tt if (lnprob < minlnprob) minlnprob = lnprob}
+  \item Save {\tt nextlnsig} and {\tt lnprob} into the ordered array {\tt vlnsig, vlnprob}
+  \item Check if the probing of {\tt lnsig} is complete: look into the ends of {\tt vlnsig} and 
+    {\tt vlnprob} to see if {\tt lnprob} compared to {\tt minlnprob} differs more than 
+    {\tt LNPROB\_DEPTH (=3)} in the correct direction.  This sets {\tt upDone} and {\tt downDone}.
+    If both ends satisfies this condition, exit {\tt do} loop
+  \item Else proceed with {\tt do} loop, while evaluating the correct direction
+  \end{itemize}
+\item Take the array of probabilities {\tt vlnprob}, fit a quadratic to vicinity and integrate
+\item Set Intragration limits: {\tt integrateMin = lnSigmaFloor - INTEGRATION\_BUFFER,
+  integrateMax = lnSigmaCeiling + INTEGRATION\_BUFFER}, where {\tt INTEGRATION\_BUFFER = 0.4},
+  {\tt lnSigmaFloor = log(leastPSFsigma) - TOO\_SMALL}, where {\tt lnSigmaFloor = log(leastPSFsigma) 
+  + TOO\_BIG}, and {\tt TOO\_SMALL = log(2.), TOO\_BIG = log(1.5)} are set at the beginning of
+  {\tt shape2()}
+\item Initialize the sums: {\tt sumProb = sumProbTooSmall = sumProbTooBig = sumProbLnsig = 0}
+\item Integrate over evenly spaced {\tt lnsig}:
+  {\tt for (lnsig = integrateMin; lnsig <= integrateMax; lnsig += LNSIG\_INTEGRATION\_STEP)}
+  \begin{itemize}
+  \item Quadratic-fit 3 points of {\tt vlnsig, vlnprob} around {\tt lnsig} and interpolate 
+    {\tt lnprob}, but don't use {\tt lnprob} if it is {\tt > minlnprob + LNLIKELIHOOD\_CUTOFF}
+  \item Calculate the current probability {\tt prob} with respect to {\tt exp(minlnprob)}:
+    {\tt prob = exp(minlnprob - lnprob)}
+  \item Collect the proper sums: {\tt sumProb += prob}, {\tt sumProbLnsig += prob * lnsig},
+    {\tt sumProbTooSmall += prob} if {\tt lnsig < lnSigmaFloor}, and 
+    {\tt sumProbTooBig += prob} if {\tt lnsig > lnSigmaCeiling + TOO\_BIG}
+  \end{itemize}
+\item If {\tt sumProb == 0., return 999.}  (This shouldn't happen very frequently)
+  {\bf [Should properly handle this as an exception, and not return a random value like 999.]}
+\item Calculate the fractions: {\tt fractionTooSmall = sumProbTooSmall / sumProb},
+  {\tt fractionTooBig = sumProbTooBig / sumProb}
+\item Set {\tt galaxyBasis} to the most likely $\sigma$:  {\tt galaxyBasis.setMu(sumProbLnsig / sumProb)}
+\item {\tt return minlnprob - log(sumProb * LNSIG\_INTEGRATION\_STEP) + 0.5 * log(2*PI)}
+  {\bf [Another one of Gary's ominous comment: ??? set {\tt covE} here ???"  (the covariance
+matrix is not set here at all)]}
+\end{enumerate}
+
+\subsection{\texttt{FDNT<>::marginalizedCentroid}}
+Sum tests and return test values and covariance matrix marginalized over centroid position,
+if {\tt !centerIsFixed}.  Outputs are either {\tt nRe = 2} or 3 dimensional, depending on
+whether {\tt sizeIsFixed}.  The appropriately sized covariance matrix {\tt covE23} and errors
+{\tt dE23} are also calculated.
+If marginalizing, centroid of {\tt galaxyBias} is updated to new maximum likelihood position.
+
+{\tt Singularity} flags are set if any of the Fisher matrix operations throws {\tt tmv::Singular}
+exceptions.  Other flags are set during the call to {\tt FDNT<>::sumTests()}.
+\begin{enumerate}
+\item Set up incidies for test array ({\tt ExposureGroup<>::setIndices()})
+\item Check input vector sizes {\tt dE23, covE23}
+\item Set-up variables for full-dimensional (with centroid) information: {\tt Fisher, DCinvT}
+\item Call {\tt FDNT<>::sumTests()}, which fills in {\tt Fisher} $=\sum(dt/dE)^T C^{-1}_t (dt/dE)$
+  and {\tt DCinvT} $=\sum t C^{-1}_t (dt/dE)$
+\item Set {\tt Ctot = Fisher.inverse()} and {\tt dE = DCinvT / Fisher}
+\item If ({\tt !centerIsFixed}):
+  \begin{itemize}
+  \item Find {\tt xyshift = dE.subVector(iX, iY+1)} 
+    $+ F^{-1}(xy\ {\rm sub\,sym\,matrix}) * F(xy\ {\rm sub\,matrix}) * dE({\rm full})$
+    {\bf [another one of Gary's ominous doubts here]}
+  \item If ({\tt |xyshift| > CENTROID\_MISMATCH\_THRESHOLD * exp(nativeBasis.getMu())}), 
+    set {\tt CentroidMismatch} flag
+  \item Else clear {\tt CentroidMismatch} flag
+  \item Put likelihood-maximizing centroid into {\tt galaxyBasis} 
+    {\bf [why do you want to do that, Gary?]}
+  \end{itemize}
+\item Marginalize over centroid and size by extracting just the E1/E2/Size parts of the 
+  covariance and tests: {\tt covE23 = Ctot.subSymMatrix(0, nRe), dE23 = dE.subVector(0,nRe)}
+\item If any {\tt tmv::Singular} thrown, set {\tt Singularity} flag and throw {\tt FDNTError}
+\end{enumerate}
+
+\subsection{\texttt{FDNT<>::sumTests}}
+An internal routine to sum over ``Fourier domain null test'' results over each {\tt ExposureGroups}.
+
+Produces {\tt Fisher} as total Fisher matrix over the Ellipse variables.
+{\tt DCinvT} is the sum of $(dt/dE)^T C_t^{-1}$ where {\tt t} is the test vector;
+{\tt DCinvdTdlnS} is the sum of $(dt/dE)^T C_t^{-1} (dt/d(\ln s))$.
+Passing in zero pointers bypasses evaluation of these matrices.
+Size of weight function taken from {\tt galaxyBasis}.  
+{\tt phaseCenter} is origin of tests, unless {\tt centerIsFixed}, in which case the 
+{\tt phaseCenter} is reset to the {\tt galaxyBasis} center.
+
+Flags set are {\tt Singularity}; other flags may be set in the call to 
+{\tt ExposureGroup<>::tests()}.
+
+\begin{enumerate}
+\item Set up incidies for test array ({\tt ExposureGroup<>::setIndices()}), set to correct dimensions
+\item Check input matrix/vector sizes for {\tt Fisher, DCinvT, DCinvdTdlnS}; set all to zero 
+(sum initialization)
+\item Set {\tt wg} scale from {\tt galaxyBasis} ({\tt wg} is actually set properly in 
+{\tt FDNT<>::prepare()}, and is not strictly necessary, especially since the bug in {\tt GaussKsq}
+constructor has been fixed!)
+\item Set shrink factor $\exp(\eta/2)$ to {\tt psf.T0sq} of all exposures
+\item If ({\tt centerIsFixed}), i.e., not marginalizing over the centroid, fix the center of tests 
+to current {\tt galaxyBasis} centroid
+\item Set up vectors and matricies {\tt dtdE, dtdlnS, t, Ceg} for individual exposure groups
+\item Increment {\tt evaluationCount} (which is initialized to 0 at {\tt FDNT} constructor)
+\item For each {\tt i}th exposure group:
+\begin{itemize}
+  \item If ({\tt !useEG[i]}) (set during {\tt FDNT<>::prepare()}), {\tt continue}
+  \item Call {\tt ExposureGroup<>::tests()} on the exposure group, which... {\tt [does what?]}
+  \item Calculate {\tt CinvD = dtdE/Ceg} ($=D/C$)
+  \item Make {\tt Fisher} summands: {\tt Fisher += dtdE.transpoe() * CinvD}
+  \item Make {\tt dE} summands: {\tt DCinvT += t * CinvD, DCinvdTdlnS += dTdlnS * CinvD}
+  \item Set {\tt Singularity} flag if {\tt Fisher} matrix no good, {\tt throw FDNTError}
+\end{itemize}
+\item Catch any {\tt tmv::Singular} errors in the above loop, set {\tt Singularity} flag and 
+{\tt throw FDNTError} if such an error caught
+\end{enumerate}
+
+\subsection{\texttt{ExposureGroup<>::tests()}}
+Performs and returns ``Fourier domain null tests'' \citep{bernstein:2010}, {\tt t}, 
+for the given exposure group and {\tt targetS}.  Also calculates quantities of interest, 
+{\tt dMdE, dMdlns, covM}.  Assumes properly set scale factors in {\tt wg} and {\tt T0sq} going in 
+(these quantities are set in {\tt FDNT<>::sumTests}).
+
+Sets the flags...
+
+\begin{enumerate}
+\item Extract {\tt nk=ktruex->size()}, the number of points in $k$ space
+\item Set up incidies for test array ({\tt ExposureGroup<>::setIndices()}), set to correct 
+  dimensions, and set the test-related dimensional numbers {\tt nTests, nRe, nIm}
+\item Generate indicies of $x,y$ tests in the imaginary-valued test array
+\item Initialize test array {\tt outM} to zero, with size {\tt nTests}
+\item Get a bunch of workspace arrays: {\tt arrayPtr = new TestArrays(nk, nRe, nIm)}, which 
+contains {\tt tRe, tIm, tRedE, tImdE, T0sq, vwg, T0sqDeriv, wgDeriv, ksq, kxxyy, kxy};
+make references to these for notational convenience
+\item Check for array sizes, if derivatives or covariances are made/taken: {\tt dMdE, covM, dMdlns}
+\item Initialze accumulate varilables {\tt sum\_wT0, sum\_wT0\_ksq, sum\_wDerivT0, 
+sum\_wDeriveT0\_ksq, sum\_wT0Deriv, sum\_wT0Deriv\_ksq}
+\item For every {\tt i}th point in $k$:
+  \begin{itemize}
+  \item Calculate $k$ in the sheared frame, {\tt ktarget = targetS.fwd(ktrue)} 
+  \item Calculate $|k|^2$, {\tt kcircsq}
+  \item Calculate $Q$ (quadrupole) kernel in $k$-space {\tt kxxyy}, an array saved as a 
+    {\tt 2*nk} matrix
+  \item Calculate $x,y$ (dipole) kernel in $k$-space {\tt kxy}, an array saved as a 
+    {\tt 2*nk} matrix
+  \item Set circular galaxy weight {\tt vwg} and PSF weight {\tt T0sq} (to avoid underfitting bias),
+    given {\tt kcircsq}
+  \item Calculate $d(T^2_0)/d(\ln s)$, {\tt T0sqDeriv}, for use in {\tt dMdlns}
+  \item If ({\tt iSize>=0}):
+    \begin{itemize}
+    \item Add to $\sum\tilde{w}_g(k)\tilde{T}^2_0(k)$ and $\sum|k|^2\,\tilde{w}_g(k)\tilde{T}^2_0(k)$
+      ({\tt sum\_wT0, sum\_wT0\_ksq})
+    \item Calculate $d\tilde{w}_g/d(\ln \sigma)(k)$, {\tt wgDeriv}, and add to 
+      $\sum[d\tilde{w}_g/d(\ln \sigma)](k) \tilde{T}^2_0(k)$ and 
+      $\sum |k|^2 \,[d\tilde{w}_g/d(\ln \sigma)](k) \tilde{T}^2_0(k)$ 
+      ({\tt sum\_wDerivT0, sum\_wDerivT0\_ksq}) for use in {\tt dMdE}
+    \item Add to $\sum\tilde{w}_g(k) [d\tilde{T}^2_0/d(\ln s)](k)$ and 
+      $\sum |k|^2\, \tilde{w}_g(k) [d\tilde{T}^2_0/d(\ln s)](k)$ 
+      ({\tt sum\_wT0Deriv, sum\_wT0Deriv\_ksq}) for use in {\tt dMdlns}
+    \end{itemize}
+  \end{itemize}
+\item Build the test matrix (i.e., the test kernel times the weight):
+  \begin{itemize}
+  \item $k$ shape: $\left(\begin{smallmatrix} k_x^2 - k_y^2 \\ -2k_x k_y \end{smallmatrix}\right)
+    \tilde{T}^2_0 \tilde{w}_g$, {\tt tRe = kxxyy*T0sq*vwg}
+  \item $k$ size: $ |k|^2 \tilde{T}^2_0 \sum[\tilde{w}_g \tilde{T}_0^2] - 
+    \tilde{T}^2_0\sum[|k|^2 \,\tilde{w}_g \tilde{T}_0^2]$, 
+          {\tt tRe = T0sq*ksq*sum\_wT0-T0sq.diag()*sum\_wT0\_ksq}
+          {\bf [I don't understand why this gives the size!]}
+  \item If ({\tt dMdE || dMdlns}): calculate {\tt sum\_IT0 = } $\tilde{T}_0^2(k) {\rm Re}(\tilde{I})$
+    and {\tt sum\_IT0\_ksq = } $|k|^2\,\tilde{T}_0^2(k) {\rm Re}(\tilde{I})$
+  \item $k$ centroid: $\left(\begin{smallmatrix}k_x\\k_y\end{smallmatrix}\right) \tilde{T}^2_0 \tilde{w}_g$, {\tt tIm = kxy*T0sq*vwg}
+  \end{itemize}
+\item Calculate the values of the test $t$ and other matricies:
+  \begin{itemize}
+  \item The real part Re$(t)$: {\tt outM.subVector(0, nRe) = tRe * (deconvRe)}
+  \item The imagniary part Im$(t)$: {\tt outM.subVector(nRe, nTests) = -tIm * (deconvIm)}
+  \item The covariance matrix $C_t$: {\tt covM = covarianceOf(tRe, tIm)}
+  \item The first derivative $dt/dE$ ({\tt =dMdE}): 
+    \begin{itemize}
+    \item how the test results $t$ changes with respect to the shape and centroid,
+      $\left(\begin{smallmatrix}k_x^2-k_y^2\\ -2k_x k_y\\ -k_x\\ -k_y\end{smallmatrix}\right)
+      \tilde{T}^2_0\tilde{w}_g
+      \left(\begin{array}{c}\partial \tilde{I}/\partial x\\ \partial \tilde{I}/\partial y\end{array}\right)$
+      {\bf [Gary's ominous comments about possibly needing to swap real and imaginary parts here]}
+    \item how the shape test changes with respect to the change in size,
+      $\left(\begin{smallmatrix}k_x^2-k_y^2\\ -2k_x k_y\end{smallmatrix}\right)
+      \frac{\partial\tilde{w}_g}{\partial (\ln \sigma)} \, \tilde{T}^2_0 {\rm Re}(\tilde{I})$
+    \item how the centroid test changes with respect to the change in size,
+      $\left(\begin{smallmatrix}-k_x \\ -k_y\end{smallmatrix}\right)
+      \frac{\partial\tilde{w}_g}{\partial (\ln \sigma)} \, \tilde{T}^2_0 {\rm Im}(\tilde{I})$
+    \item how the size test changes with respect to the change in size, 
+      $\left(\sum |k|^2 \tilde{T}^2_0 \tilde{I}(k) \right)   
+      \left(\sum\frac{\partial\tilde{w}_g}{\partial (\ln \sigma)}\tilde{T}^2_0\right)
+      - \left(\sum\tilde{T}^2_0 \tilde{I}(k)\right)
+      \left(\sum|k|^2 \frac{\partial\tilde{w}_g}{\partial (\ln \sigma)}\tilde{T}^2_0\right)$
+    \item (how $t$ changes with respect to the change in shape is calculated below)
+    \end{itemize}
+  \item The derivative with respect to the shrink factor $dt/d\ln s$ ({\tt =dMdlns}):
+    \begin{itemize}
+    \item how the shape test changes with respect to $s$,
+      $\left(\begin{smallmatrix}k_x^2-k_y^2\\ -2k_x k_y\end{smallmatrix}\right)
+      \tilde{w}_g \, \frac{\partial \tilde{T}^2_0}{\partial (\ln \sigma)}{\rm Re}(\tilde{I})$
+    \item how the centroid test changes with respect to $s$,
+      $\left(\begin{smallmatrix}-k_x \\ -k_y\end{smallmatrix}\right)
+      \tilde{w}_g \, \frac{\partial \tilde{T}^2_0}{\partial (\ln \sigma)}{\rm Im}(\tilde{I})$
+    \item how the size test changes with respect to $s$,
+      $\left(\sum |k|^2 \tilde{T}^2_0 \tilde{I}(k) \right)   
+      \left(\sum\tilde{w}_g \, \frac{\partial\tilde{T}^2_0}{\partial (\ln s)}\right)
+      - \left(\sum \tilde{T}^2_0 \tilde{I}(k) \right)   
+      \left(\sum |k|^2 \tilde{w}_g \, \frac{\partial\tilde{T}^2_0}{\partial (\ln s)}\right)
+      + \left( \sum |k|^2 \, \frac{\partial\tilde{T}^2_0}{\partial (\ln s)} {\rm Re}(\tilde{I})
+      \right) \left(\sum \tilde{w}_g \tilde{T}^2_0 \right)
+      - \left(\sum \frac{\partial\tilde{T}^2_0}{\partial (\ln s)} {\rm Re}(\tilde{I}) \right)
+      \left(\sum |k|^2 \tilde{w}_g  \tilde{T}^2_0 \right)$
+    \end{itemize}
+  \item The derivative with respect to the change in shape (part of {\tt dMdE}):
+    \begin{itemize}
+    \item Make differential shears
+    \item Loop over two directions of shear
+    \item Calculate new $|k|^2, \tilde{w}_g, \tilde{T}^2_0$ based on new shear
+    \item Calculate $dt/dE$ ({\tt =tRedE} and {\tt tImdE}):
+      \begin{itemize}
+      \item new shear test result with new shear:
+        $\left(\begin{smallmatrix}k_x^2-k_y^2\\ +2k_x k_y\end{smallmatrix}\right)
+        \tilde{w}_g \, \tilde{T}^2_0$ {\bf [why did the $k_xk_y$ change signs?]}
+      \item new size test result with new shear:
+        $ |k|^2 \tilde{T}^2_0 \sum[\tilde{w}_g \tilde{T}_0^2] - 
+        \tilde{T}^2_0\sum[|k|^2 \,\tilde{w}_g \tilde{T}_0^2]$, 
+      \item new centroid test result with new shear:
+        $\left(\begin{smallmatrix}k_x\\ k_y\end{smallmatrix}\right)
+        \tilde{w}_g \, \tilde{T}^2_0$
+      \end{itemize}
+    \item Subtract current result from new result (i.e., take numerical differentiation)
+    \end{itemize}
+  \end{itemize}
+\item Return the test results: {\tt return outM}
+\end{enumerate}
+
+
+\subsection{\texttt{FDNT<>::prepare()}}
+Prepare the necessary data for shape measurements for the set of exposures, given the 
+galaxy images and PSFs.  For each exposure, take the deconvolution (without any weights applied),
+and find the optimal galaxy weight {\tt wg} based on estimated true galaxy size.  
+Determine the relative weights of the exposures.  Keep track of the exposure with the smallest PSF.
+
+Flags that can be set here come directly from {\tt ExposureGroup<>::prepare()}.
+\begin{enumerate}
+\item Get rid of any previous results and clear previous flags
+\item For each Exposure Group:
+\begin{itemize}
+  \item Call \texttt{ExposureGroup<>::prepare()}, which returns {\tt sn}, the S/N of object in that exposure
+  \item Set weights based on S/N: {\tt wt=sn*sn}
+  \item Set {\tt success=true} if any of the {\tt sn} is $>0$
+  \item Within this set of exposure groups, keep track of (1) sum of the weights {\tt wt}, (2) smallest PSF {\tt leastPSFSigma}
+  \item Keep track of weighted sum of PSF $Q$ moments ($xx$, $yy$, $xy$)
+\end{itemize}
+\item If ({\tt !success}), set union of all {\tt ExposureGroup} flags as the {\tt FDNT} flag
+{\bf [Shouldn't this be done even for the {\tt success} case?]}
+\item If ({\tt success}):
+\begin{itemize}
+  \item Calculate galaxy ``size'' {\tt galaxySigma} via subtraction of squares from the initial 
+(given) {\tt nativeBasis} {\bf [Probably can improve this by using {\tt nativeBasis} results 
+obtained in {\tt ExposureGroup<>::prepare()}]}.  
+  \item Reset some minimum size of galaxy wrt the PSF, if {\tt galaxySigma} too small
+  \item Set the galaxy weight as {\tt wg = new GaussKsq(galaxySigma)}
+  \item Set {\tt galaxyBasis} from {\tt nativeBases} and galaxy weight radius {\tt galaxySigma}
+\end{itemize}
+\item return {\tt success}
+\end{enumerate}
+
+
+\subsection{\texttt{ExposureGroupFT<>::prepare()}}
+This calculates the simple, noisy deconvolution
+\begin{equation}
+\tilde{I}_o(k) / \tilde{T}(k) \equiv \tilde{I} 
+\end{equation}
+for the given galaxy in the given exposure ({\tt deconvRe, deconvIm}),
+where $\tilde{I}_o(k)$ is the Fourier transform of the observed galaxy image, and 
+$\tilde{T}(k)$ is the modulation transfer function (MTF, i.e., Fourier transform of the PSF).
+It also stores the relevant quantities $k$ ({\tt ktruex, ktruey}), variance (noise per pixel 
+after division by MTF, {\tt varRe}), and the derivative wrt $x$ and $y$ ({\tt dRedxy, dImdxy}).
+The weight function $w$ have not been applied yet, as $w$ varies depending on the assumed shape
+of the galaxy.
+
+Flags that can be set here are: (1) {\tt GLFailure} upon failure of {\tt GLSimple} fit,
+(2) {\tt Edge} if the FFT bounds exceeds data range, (3) {\tt OutOfBounds} if FFT bounds cannot 
+be made large enough or if a pixel is masked (masking not allowed with FFT).
+\begin{enumerate}
+\item Start by measuring the size of this object on this image (GL decomposition)
+\item (set order 4, hold to common center for all exposures, save the origin for FT)
+\item Set up {\tt GLSimple<> gl(FitExposure, startBasis, initialOrder)}
+\item Run {\tt gl.solve()} to get the GL decomposition of the native basis; 
+if failure, return {\tt sn=0}, otherwise set {\tt nativeBasis=gl.getBasis()}
+\item Get pixel coordinates of centroid, make it the reference pixel coordinates (keep track of 
+sub-pixel offset)
+\item Get the size of the box that will hold the object, suitable for FFT.  Will try to adjust to 
+smaller size if possible; if not, {\tt OutOfBounds} flag is set
+\item Collect galaxy data
+\item {\tt OutOfBounds} flag is set if any of the pixels have no weight, and returns 0
+\item Fourier transform the galaxy image, translate the correct sub-pixel amount
+\item {\tt ftnorm} is the normalization of that pixel in World Coordinates
+\item {\tt componentVariance} is the sum of variance over all pixels, then normalized to World 
+Coordinate ``pixels''
+\item Allocate $k$-space related arrays ($k$ and {\tt deconvRe, deconvIm, var})
+\item For each pixel:
+\begin{itemize}
+  \item calculate $k$ in World Coordinates, from pixel value and pixel map
+  \item Get MTF$(k)$, do nothing and continue if its value is too low (default $<0.001^2$)
+  \item Save $k$
+  \item Save $\tilde{I}_o(k)/$MTF$(k)$ (normalized to the pixel area) as {\tt deconvRe, deconvIm}
+  \item Save {\tt var} as {\tt componentVariance / norm(mtf)}
+\end{itemize}
+\item Create derivatives by running {\tt ExposureGroup<>::createdXdY}
+\item Return significance of GL flux from the {\tt gl} results
+\end{enumerate}
+
+
+\subsection{\texttt{ExposureGroupGL<>::prepare()}}
+Preparation for the GL decomposition version of the FDNT.  TBW.
+
+
+\subsection{\texttt{ExposureGroup<>::createdXdY()}}
+Generates the $dx$, $dy$ gradient of the image, in Fourier space.
+
+Called by {\tt ExposureGroup<>::prepare()} (either methods, FT or GL).  
+Fills {\tt dRedxy, dImdxy}; in $k$ space, derivatives are simply multiplication by $k$.
+
+
+\subsection{\texttt{GLSimple<>::solve()} (from {\tt GLSimple3.cpp})}
+An iterative method to satisfy the centroid/size/shear tests, based on the Gauss-Laguerre 
+decomposition ``roundness test'' \citep{bernstein/jarvis:2002}.  Returns {\tt true} on success.
+
+Solve for {\tt bestE} (a vector which contains the centroid/size/shear information) 
+with Dogleg trust region method, using current GL {\tt order} and current {\tt basis} ellipse
+as the starting point.  The {\tt basis} is continuously updated with the {\tt bestE} information.
+
+Re-mask at start of the fit and if the basis changes by more than {\tt REMASK\_THRESHOLD} (=0.2)
+in any direction, up to {\tt MAXIMUM\_REMASK} (=3) times.
+
+Sets the flag {\tt isSolved} to {\tt true} if the centroid/size/shear search is successful.
+
+Exceeding {\tt MAXIMUM\_ETA} (=2) halts iteration and sets flag for this.   Exceeding 
+{\tt maxIterations} (=?) also halts and sets convergence flag, as does a matrix 
+singularity or a trust region that gets too small.
+
+Final solution with mismatched mask sets flag too.
+
+A successful step {\tt dE} that is below threshold size signals {\tt success}.
+
+Flags can also be set at calls to {\tt reMask()}, {\tt linearSolution()}.
+
+\begin{enumerate}
+\item If already solved ({\tt isSolved==true}), return {\tt true}
+\item Clear relevant flags: {\tt BDegeneracy, Singularity} {\bf [any other flags?]}
+\item Set up test indices in {\tt whatFit}, an array that keeps track of what quantities to 
+measure (i.e., any of centroid, shape, size)
+\item Scale $x,y$ with {\tt xyscale}, which is set to the size of the gaussian in the GL 
+decomposition, such that all 5 ellipse components vary by order unity
+\item Initialize: {\tt restart=true}, {\tt nRemasks=0}, and {\tt trustRadius=INITIAL\_TRUST\_RADIUS}
+\item Allocate vectors and matricies: {\tt bestE, bestMsq, f, J}
+\item For each iteration step:
+\begin{enumerate}
+  \item if ({\tt restart}),
+  \begin{itemize}
+    \item Reset {\tt trustRadius = INTIAL\_TRUST\_RADIUS}
+    \item Re-draw mask with {\tt reMask()}; return {\tt false} if failed to re-mask
+    \item Increment {\tt nRemasks}
+    \item Call {\tt linearSolution()} and find the GL coefficients given the current mask, 
+{\tt order} and {\tt basis}.  This sets the quantities {\tt b} (vector of GL coefficients),
+{\tt A} (the design matrix), {\tt DOF} (degrees of freedom), and {\tt var00, f00} (quantities 
+necessary for S/N determination); and the flags {\tt fitIsValid, BDegeneracy, Singularity}.
+    \item If ({\tt !fitIsValid}), return {\tt false}
+    \item Extract {\tt eta1, eta2} from current {\tt basis} {\bf [what for?]}
+    \item Fill in {\tt bestE} with the current {\tt basis} information; 
+rescale the basis $x,y$ with {\tt xyscale}
+    \item ``Roundness test'': {\tt f = Mtests()}, which is simply a multiplcation of the GL 
+coefficients {\tt b} with the ``test matrix'' {\tt M}, which picks out the coefficient that 
+tests for each ellipse component.  We are looking for {\tt f=0} as the solution
+    \item Calculate the Jacobian {\bf [Hessian?]}: {\tt J = dMdE(xyscale);}
+    \item {\tt bestMsq = f*f;} ($\geq0$), the measure for how close we are to passing the 
+roundness test
+    \item {\tt restart = false;} (proceed with current mask)
+  \end{itemize}
+  \item Find zero in {\tt f} with Newton-Raphson method {\tt nr = -f/J}; catch any singularity in 
+the matrix operation. If singular, set {\tt Singularity, DidNotConverge} flags and return {\tt false}
+  \item If ({\tt nr*nr < trustRadius * trustRadius}): set the next step to {\tt dE = nr}
+(i.e., try {\tt bestE += dE} for the next roundness test)
+  \item else if {\tt nr} exceeds the {\tt trustRadius}
+    \begin{itemize}
+    \item Calculate steepest descent vector {\tt grad = -(norm) * J * J.transpose() * f} %where 
+%{\tt norm = (f.transpose() * J * J.transpose() * f) / (f.transpose() * J * J.transpose() * J * 
+%J.transpose() * f) }
+    \item If ({\tt grad * grad > trustRadius * trustRadius}): use shortened steepest descent:
+{\tt dE = grad * trustRadius / sqrt(grad * grad)}
+    \item else do the dogleg method: {\tt dE = grad + alpha * vb}
+    \end{itemize}
+  \item Set {\tt basis} to the suggested trial: {\tt tryE = bestE + dE}
+  \item If ({\tt centering}), set new centroid
+  \item If ({\tt shearing}), set new shear
+  \item {\tt invalidateFit()} (sets {\tt isSolved = fitIsValid = false})
+  \item If trial is out of eta bounds {\tt MAXIMUM\_ETA}, set {\tt TooElliptical} flag
+and return {\tt false} {\bf [this section can use some tweaking]} 
+  \item If mask has drifted by more than the fraction {\tt REMASK\_THRESHOLD} (=0.2) set
+{\tt restart = true} (i.e., run {\tt reMask()})
+  \item Calculate the expected reduction in {\tt f} and {\tt f*f} {\bf [check algebra here]}: 
+{\tt expectedDM = J * dE}, {\tt expectedDMsq = -2. * (f*expectedDM) - expectedDM*expectedDM}
+  \item With the new {\tt tryE}, make a new roundness test measurement: call
+{\tt linearSolution()}; if ({\tt !fitIsValid}), return {\tt false}
+  \item {\tt Mnow = Mtests()};  {\tt Msq = Mnow*Mnow}
+  \item Calculate the actual {\tt gainFactor = (bestMsq - Msq) / expectedDMsq} relative to the 
+expected
+  \item If there was improvement ({\tt gainFactor > 0.})
+    \begin{itemize}
+      \item Update the best point: {\tt bestE = tryE}, {\tt bestMsq = Msq}
+      \item Save the function and Hessian {\tt f = Mnow, J=dMdE(xyscale)}
+{\bf [{\tt xyscale} needs to be updated?]}
+      \item if ({\tt dE * dE < tolerance * tolerance}), success!  
+Check whether the fit finished with a good mask fit (if not, set the {\tt MaskMismatch} flag);
+set {\tt isSolved=true} and return {\tt true}
+    \end{itemize}
+  \item Adjust the {\tt trustRadius}: if ({\tt gainFactor < 0.25}), shrink {\tt trustRadius *= 0.5};
+else if ({\tt gainFactor > 0.75}) increase {\tt trustRadius = MAX(trustRadius, 3.*sqrt(dE*dE))},
+but only up to {\tt INITIAL\_TRUST\_RADIUS}
+  \item Abort if trust radius becomes too small, {\tt trustRadius < MINIMUM\_TRUST\_RADIUS} (=0.03),
+set {\tt DidNotConverge} flag, and return {\tt false}
+\end{enumerate}
+\item If this point is reached, we are outside the iteration loop, exceeding 
+{\tt maxIterations} (=40); set {\tt DidNotConverge} flag, and return {\tt false}
+\end{enumerate}
+
+
+\subsection{\texttt{GLSimple<>::linearSolution()}}
+Performs GL decomposition, finds GL coefficients {\tt b}.  
+
+Sets the flags {\tt BDegeneracy, Singularity} if {\tt DOF<0} or design matrix {\tt A} is 
+singular, or sets {\tt BDegeneracy} if the {\tt b} coefficients are degenerate.
+Also sets the flag {\tt fitIsValid}.
+
+\subsection{\texttt{GLSimple<>::reMask()}}
+Invalidates data, constructs mask and obtains all data within the mask.
+
+Sets the flags ...
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Summary and conclusion}
+\label{sec:conclusion}
+
+
+\section*{Acknowledgments}
+This is the Acknowledgement section.
+
+
+\bibliographystyle{mn2e}
+%\bibliographystyle{apj}
+\bibliography{shape}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\appendix
+
+\section{Appendix}
+This is the appendix.
+
+\end{document}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{figure}
+%\includegraphics[width=84mm]{fig1.eps}
+\caption{
+This is the caption.
+}
+\label{fig:calib_subsets} %% fig:110411
+\end{figure}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{table}
+%\begin{tabular}{@{}l @{}rr rr}
+%\end{tabular}
+\caption{This is the caption}
+\label{tab:calibcounts}
+\end{table}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
