@@ -24,27 +24,27 @@ SUBOBJ = utilities2/BinomFact.o images/FITS.o utilities2/Interpolant.o utilities
 	astrometry2/PixelMap.o astrometry2/Astrometry.o astrometry2/PolyMap.o \
 	astrometry2/PixelMapCollection.o
 
-OBJ = Laguerre.o Shear.o LTransforms.o GLSimple.o SBProfile.o \
+OBJ = Laguerre.o Shear.o LTransforms.o GLSimple.o SBProfile.o SBPixel.o SCAMPMap.o PSFEx.o \
 	FDNT.o ExposureGroup.o Lance.o $(SUBOBJ)
 
 all: depend subs
 
 FDNTColorGrad: FDNTColorGrad.o ColorGrad.o EnclosedFluxRadius.o SBParse.o $(OBJ)
 	$(CXX) $(CXXFLAGS) $^  $(LIBS) -o ../bin/$@
-FDNTPSFEx: FDNTPSFEx.o PSFEx.o EnclosedFluxRadius.o SBParse.o $(OBJ)
-	$(CXX) $(CXXFLAGS) $^  $(LIBS) -o $@
+FDNTPSFEx: FDNTPSFEx.o EnclosedFluxRadius.o SBParse.o $(OBJ)
+	$(CXX) $(CXXFLAGS) $^  $(LIBS) -o ../bin/$@
 FDNTGrid: FDNTGrid.o EnclosedFluxRadius.o SBParse.o $(OBJ)
-	$(CXX) $(CXXFLAGS) $^  $(LIBS) -o $@
+	$(CXX) $(CXXFLAGS) $^  $(LIBS) -o ../bin/$@
 FDNTRing_spl: FDNTRing_spl.o EnclosedFluxRadius.o SBParse.o $(OBJ)
-	$(CXX) $(CXXFLAGS) $^  $(LIBS) -o $@
+	$(CXX) $(CXXFLAGS) $^  $(LIBS) -o ../bin/$@
 FDNTRing_omp: FDNTRing_omp.o EnclosedFluxRadius.o SBParse.o $(OBJ)
-	$(CXX) $(CXXFLAGS) $^  $(LIBS) -o $@
+	$(CXX) $(CXXFLAGS) $^  $(LIBS) -o ../bin/$@
 FDNTRing: FDNTRing.o EnclosedFluxRadius.o SBParse.o $(OBJ)
-	$(CXX) $(CXXFLAGS) $^  $(LIBS) -o $@
+	$(CXX) $(CXXFLAGS) $^  $(LIBS) -o ../bin/$@
 FDNTEllipse: FDNTEllipse.o EnclosedFluxRadius.o SBParse.o Lance.o $(OBJ)
-	$(CXX) $(CXXFLAGS) $^  $(LIBS) -o $@
+	$(CXX) $(CXXFLAGS) $^  $(LIBS) -o ../bin/$@
 FDNTGreat: FDNTGreat.o $(OBJ)
-	$(CXX) $(CXXFLAGS) $^  $(LIBS) -o $@
+	$(CXX) $(CXXFLAGS) $^  $(LIBS) -o ../bin/$@
 
 ###############################################################
 ## Standard stuff:
