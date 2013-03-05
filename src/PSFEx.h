@@ -23,9 +23,10 @@ namespace sbp {
     ~PSFExModel();
 
     const SBPixel* sb() const {return sbp;}
-    void fieldPosition(double x, double y);
+    void fieldPosition(double x, double y, int maxorder=-1);
     // Note that setting flux will be un-done whenever new field 
     // position is set.
+    // maxorder can be used to limit the polynomial order of the PSF variation at run-time
     void setFlux(double flux) {sbp->setFlux(flux);}
 
     // Set this to use cubic interpolant in k space instead of default quintic if you're
@@ -40,6 +41,10 @@ namespace sbp {
     int getOrder() const {return order;}
     // A number provided by PSFEx:
     double getFWHM() const {return fwhm;}
+    
+    bool selfTest(double tolerance=0.01, int grid=3, int order=-1);
+    // Checks on a grid of gridxgrid positions covering the field
+    // for PSF pixels with negative flux below -tolerance*central_pixel_flux
 
   private:
     int polnaxis;  // Note we are only accepting 2-axis polynomials
