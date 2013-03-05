@@ -1,7 +1,7 @@
 
-```
- Copyright 2010, 2013  Gary Bernstein
- https://github.com/reikonakajima/FDNT
+
+* Copyright 2010, 2013  Gary Bernstein
+ https://github.com/reikonakajima/FDNT *
 
  This file is part of FDNT.
 
@@ -17,7 +17,7 @@
  <http://www.gnu.org/licenses/>
 
  This WARNING must be distributed with any product making use of FDNT code.
-```
+
 
 === PLEASE NOTE ===
 
