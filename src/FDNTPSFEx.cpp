@@ -48,6 +48,7 @@ main(int argc,
   string fitsName;
   string catName;
   string psfName;
+  int    psfOrder;
   string weightName;
   string wcsName;
   string segmentationName;
