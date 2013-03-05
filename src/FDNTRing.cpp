@@ -294,6 +294,7 @@ main(int argc,
 
 	  FitExposure<> fe(sci, wt, xw, yw, 0);
 	  FDNT<> fd(fe, psfinfo, startBasis, order);
+	  fd.setSizing(false);
 	  fd.GLAll();
 	  fd.setMaskSigma(6.);
 	  bool success = fd.prepare();
