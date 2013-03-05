@@ -1,4 +1,4 @@
-// $Id: PSFEx.cpp,v 1.9 2012/01/09 19:09:49 garyb Exp $
+// $Id: PSFEx.cpp,v 1.10 2012/08/13 17:51:29 dgru Exp $
 #include "PSFEx.h"
 #include "Interpolant.h"
 #include <fstream>
@@ -19,12 +19,24 @@ InterpolantXY
 PSFExModel::quintic_2d(quintic);
 
 void
-PSFExModel::fieldPosition(double x, double y) {
+PSFExModel::fieldPosition(double x, double y, int maxorder) {
+// use only up to maxorder polynomial order from the model (unless maxorder is <= 0, then use all available monomials)
+
+  if(xOrder.size()<2) // catch constant PSF
+  {
+   DVector wts(1);
+   wts[0]=1.;
+   sbp->setWeights(wts);
+   return;
+  }
   double xscale = (x-polzero[0])/polscal[0];
   double yscale = (y-polzero[1])/polscal[1];
   DVector wts(xOrder.size());
   for (int i=0; i<xOrder.size(); i++) {
-    wts[i] = pow(xscale, xOrder[i]) * pow(yscale, yOrder[i]);
+    if(maxorder>=0 && xOrder[i]+yOrder[i]>maxorder)
+      wts[i]=0.;
+    else
+      wts[i] = pow(xscale, xOrder[i]) * pow(yscale, yOrder[i]);
   }
   sbp->setWeights(wts);
 }
@@ -50,7 +62,7 @@ PSFExModel::PSFExModel(const char *filename, PSFExFormat format): sbp(0), fwhm(0
   int psfnaxis = 0;
   double chi2;	// discarded after reading.
   vector<int> psfaxis;
-
+  
   do {
     in >> buf;
     if (!buf.compare("LOADED"))	{
@@ -60,8 +72,8 @@ PSFExModel::PSFExModel(const char *filename, PSFExFormat format): sbp(0), fwhm(0
       int junk; in >> junk;
       // Not used
     } else if(!buf.compare("POLNAXIS"))	{
-      if( !(in >> polnaxis) || polnaxis!=2)
-	FormatAndThrow<PSFExError> () << "PSFEx only accepts POLNAXIS==2, read " << polnaxis;
+      if( !(in >> polnaxis) || (polnaxis!=2 && polnaxis) )
+	FormatAndThrow<PSFExError> () << "PSFEx only accepts POLNAXIS==0 or 2, read " << polnaxis;
       polgrp.resize(polnaxis, 0);
       polname.resize(polnaxis, "UNKNOWN");
       polzero.resize(polnaxis, 0.);
@@ -93,8 +105,8 @@ PSFExModel::PSFExModel(const char *filename, PSFExFormat format): sbp(0), fwhm(0
     } else if(!buf.compare("POLNGRP")) {
       if (!(in >> polngrp))
 	throw PSFExError("PSFEx could not read POLNGRP");
-      if (polngrp!=1) 
-	FormatAndThrow<PSFExError> () << "PSFEx can only use POLNGRP==1, read " << polngrp;
+      if (polngrp>1) 
+	FormatAndThrow<PSFExError> () << "PSFEx can only use POLNGRP<=1, read " << polngrp;
 
       poldeg.resize(polngrp, 0);
       polngrpread = true;
@@ -140,7 +152,7 @@ PSFExModel::PSFExModel(const char *filename, PSFExFormat format): sbp(0), fwhm(0
     }
 
   } while(!headerread && !in.eof());
-
+  
   if ( !headerread || !psfnaxisread || !polngrpread || !polnaxisread 
      || psfnaxis!=3 || psfaxis[0]<=0 || psfaxis[1]<=0 || psfaxis[2]<=0)
     FormatAndThrow<PSFExError>() << "PSFEx is missing header information in " << filename;
@@ -148,7 +160,10 @@ PSFExModel::PSFExModel(const char *filename, PSFExFormat format): sbp(0), fwhm(0
   // Make sure that psfaxis[2] matches the number of polynomial terms needed:
   xOrder.clear();
   yOrder.clear();
-  order = poldeg[0];
+  if(polngrp>0)
+   order = poldeg[0];
+  else
+   order = 0;
   for(int ny=0; ny<=order; ny++) { 
     for (int nx = 0; nx<=order-ny; nx++) {
       xOrder.push_back(nx);
@@ -178,6 +193,41 @@ PSFExModel::PSFExModel(const char *filename, PSFExFormat format): sbp(0), fwhm(0
       }
     }
   }
+}
+
+bool PSFExModel::selfTest(double tolerance, int grid, int order) {
+// very simple self test of the PSF model, where we demand that the pixel with the least flux has more than -tolerance*brightest_pixel flux at some positions sampled over the field
+  int n = sbp->getNin();
+  
+  for (int ix=0; ix<grid; ix++)
+    for (int iy=0; iy<grid; iy++)
+    {
+      if(xOrder.size()>1)
+       fieldPosition(polzero[0]+(double(ix)/(grid-1.)-0.5)*polscal[0],polzero[1]+(double(iy)/(grid-1.)-0.5)*polscal[1], order);
+      else
+       fieldPosition(0,0,order);
+      double pmin=0.;
+      double pmax=0.;
+      double pminx=0.;
+      double pminy=0.;
+      double pmaxx=0.;
+      double pmaxy=0.;
+      for(int py=-n/2; py<n/2; py++)
+	for(int px=-n/2; px<n/2; px++)
+	{
+	  double p = sbp->getPixel(px,py,-1);
+	  if(p>pmax) { pmax=p; pmaxx=px; pmaxy=py; }
+	  if(p<pmin) { pmin=p; pminx=px; pminy=py; }
+        }
+      if(-pmin>tolerance*pmax)
+      {
+	cerr << "PSFEx self-test failed at pmax=" << pmax << " in pixel " << pmaxx << "," << pmaxy << "; pmin=" << pmin << " in pixel " << pminx << "," << pminy << endl;
+	cerr << "near field position " << polzero[0]+(double(ix)/(grid-1.)-0.5)*polscal[0] << "," << polzero[1]+(double(iy)/(grid-1.)-0.5)*polscal[1] << endl;
+	cerr << sbp->getWeights();
+	return false;
+      }
+    }
+   return true;
 }
 
 PSFExModel::~PSFExModel() {

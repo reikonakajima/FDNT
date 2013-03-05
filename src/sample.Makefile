@@ -31,7 +31,7 @@ all: depend subs
 
 FDNTColorGrad: FDNTColorGrad.o ColorGrad.o EnclosedFluxRadius.o SBParse.o $(OBJ)
 	$(CXX) $(CXXFLAGS) $^  $(LIBS) -o ../bin/$@
-FDNTPSFEx: FDNTPSFEx.o EnclosedFluxRadius.o SBParse.o $(OBJ)
+FDNTPSFEx: FDNTPSFEx.o EnclosedFluxRadius.o SBParse.o images/HeaderFromStream.o $(OBJ)
 	$(CXX) $(CXXFLAGS) $^  $(LIBS) -o ../bin/$@
 FDNTGrid: FDNTGrid.o EnclosedFluxRadius.o SBParse.o $(OBJ)
 	$(CXX) $(CXXFLAGS) $^  $(LIBS) -o ../bin/$@
