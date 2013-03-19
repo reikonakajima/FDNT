@@ -41,6 +41,8 @@ namespace sbp {
     double getFlux() const;
     void setFlux(double flux=1.);  // This will scale the weights vector
 
+    double getDx() const {return dx; }
+
     /////////////////////
     // Methods peculiar to SBPixel
 
