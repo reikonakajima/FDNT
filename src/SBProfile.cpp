@@ -1258,7 +1258,7 @@ private:
 SBMoffat::SBMoffat(double beta_, double truncationFWHM,
 		   double flux_, double re): beta(beta_),
 					   flux(flux_),
-					   ft(Table<>::spline),
+					   ft(GTable<>::spline),
 					   norm(1.),
 					   rD(1.)
 {

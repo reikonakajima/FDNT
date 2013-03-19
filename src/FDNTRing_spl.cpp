@@ -305,7 +305,6 @@ main(int argc,
 	      sci(ix,iy) += g*imgRMS;
 	  FitExposure<> fe(sci, wt, xw, yw, 0);
 	  FDNT<> fd(fe, psfinfo, startBasis, order);
-	  fd.setSizing(false);
 	  fd.GLAll();
 	  fd.setMaskSigma(6.);
 	  bool success = fd.prepare();
@@ -326,7 +325,8 @@ main(int argc,
 	  if (!success) {
 	    failNoise++;
 	    nFailTheta++;
-	    if (failNoise > 10 && failNoise > 4*realizationsPerDither) {
+	    if ( ((realizationsPerDither > 100) && (failNoise > realizationsPerDither / 3)) 
+		 || (failNoise > 4*realizationsPerDither)) {
 	      // ?? Check limits above - quit if ~>50% of trials failing 
 	      cerr << "Too many failures at one dither" << endl;
 	      exit(1);

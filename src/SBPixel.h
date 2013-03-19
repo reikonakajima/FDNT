@@ -41,8 +41,6 @@ namespace sbp {
     double getFlux() const;
     void setFlux(double flux=1.);  // This will scale the weights vector
 
-    double getDx() const {return dx; }
-
     /////////////////////
     // Methods peculiar to SBPixel
 
@@ -50,7 +48,7 @@ namespace sbp {
     // Note that input data required to have -Npix/2 <= ix,iy < Npix/2
     // and 0 <= iz < Nimages.
     void setPixel(double value, int ix, int iy, int iz=0); //!! resets FTs
-    double getPixel(int ix, int iy, int iz=0) const; // return pixel of iz'th image; if iz==-1, return weighted sum of that pixel over all 0<=iz<=Nimages
+    double getPixel(int ix, int iy, int iz=0) const;
 
     // Set/get the weight vector applied to different planes
     void setWeights(const DVector& wts_); // ??? check dimensions first!

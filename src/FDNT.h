@@ -15,7 +15,7 @@
 #include "Image.h"
 #include "Laguerre.h"
 #include "SBProfile.h"
-#include "Table.h"
+#include "GTable.h"
 #include "GLSimple.h"
 #include "Lance.h"
 #include "Random.h"
@@ -83,7 +83,7 @@ namespace laguerre {
     }
   private:
     double maxksq;
-    Table<> tab;
+    GTable<> tab;
   };
 
   // Structure to give all the info we want about a PSF:

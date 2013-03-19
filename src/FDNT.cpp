@@ -52,7 +52,7 @@ FDNT<T>::setDefaults() {
   localPSFInfo = 0;
   localFitExposure = 0;
   centerIsFixed = false;
-  sizeIsFixed = false;
+  sizeIsFixed = true;
   maskSigma = -1.;
   flags = 0.;
   evaluationCount = 0;
@@ -325,8 +325,7 @@ FDNT<T>::sumTests(Shear targetS,
   wg->setScaleFactor( exp(galaxyBasis.getMu()) );
   //**/cerr << "*** logProb using sigma= " << wg->getScaleFactor() << endl;
   // Choose shrink Factor, apply to all T0sq filters:
-  float SHRINK_FUDGE_FACTOR = 0.5;  // must be < 1.0
-  setShrinkFactor( shrinkFactor(targetS) * SHRINK_FUDGE_FACTOR );
+  setShrinkFactor( shrinkFactor(targetS) );
 
   // If we are not marginalizing over centroid, need to
   // fix center of tests to current position

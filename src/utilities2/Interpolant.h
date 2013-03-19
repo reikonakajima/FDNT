@@ -3,7 +3,7 @@
 #ifndef INTERPOLANT_H
 #define INTERPOLANT_H
 
-#include "Table.h"
+#include "GTable.h"
 #include <cmath>
 
 namespace fft {
@@ -185,7 +185,7 @@ public:
 class Lanczos: public Interpolant {
 public:
  Lanczos(int n_, bool fluxConserve_=false, double tol=1e-3): 
-  n(n_), fluxConserve(fluxConserve_), tolerance(tol), tab(Table<>::spline) {setup();}
+  n(n_), fluxConserve(fluxConserve_), tolerance(tol), tab(GTable<>::spline) {setup();}
   ~Lanczos() {}
   // tol is error level desired for the Fourier transform
   double getTolerance() const {return tolerance;}
@@ -215,7 +215,7 @@ private:
   double tolerance;    
   double uMax;
   double u1;	// coefficient for flux correction
-  Table<> tab;
+  GTable<> tab;
   void setup();
 };
 
@@ -225,7 +225,8 @@ private:
 class Cubic: public Interpolant {
 public:
  Cubic(double tol=1e-4): 
-  tolerance(tol), tab(Table<>::spline) {setup();}
+  tolerance(tol), tab(GTable<>::spline) {setup();}
+
   ~Cubic() {}
   // tol is error level desired for the Fourier transform
   double getTolerance() const {return tolerance;}
@@ -246,7 +247,7 @@ private:
   double range; // Reduce range slightly from n so we're not using zero-valued endpoints.
   double tolerance;    
   double uMax;
-  Table<> tab;
+  GTable<> tab;
   void setup();
 };
 
@@ -256,7 +257,7 @@ private:
 class Quintic: public Interpolant {
 public:
  Quintic(double tol=1e-4): 
-  tolerance(tol), tab(Table<>::spline) {setup();}
+  tolerance(tol), tab(GTable<>::spline) {setup();}
   ~Quintic() {}
   // tol is error level desired for the Fourier transform
   double getTolerance() const {return tolerance;}
@@ -278,7 +279,7 @@ private:
   double range; // Reduce range slightly from n so we're not using zero-valued endpoints.
   double tolerance;    
   double uMax;
-  Table<> tab;
+  GTable<> tab;
   void setup();
 };
 
