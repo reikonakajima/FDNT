@@ -183,7 +183,7 @@ SBProfile::fourierDraw(Image<> I, double dx, int wmult) const {
   if (NFT*dk/2 > maxK()) {
     // No aliasing: build KTable and transform
     KTable kt(NFT,dk);
-    /**/cerr << "no aliasing, NFT " << NFT << " dk " << dk << endl;
+    //cerr << "no aliasing, NFT " << NFT << " dk " << dk << endl;
     fillKGrid(kt); 
     xtmp = kt.transform();
   } else {
@@ -192,7 +192,7 @@ SBProfile::fourierDraw(Image<> I, double dx, int wmult) const {
     int Nk = static_cast<int> (ceil(maxK()/dk)) * 2;
     KTable kt(Nk, dk);
     fillKGrid(kt);
-    /**/cerr << "aliasing, NFT " << NFT << " dk " << dk << " Nk " << Nk << endl;
+    //cerr << "aliasing, NFT " << NFT << " dk " << dk << " Nk " << Nk << endl;
     KTable* kt2 = kt.wrap(NFT);
     xtmp = kt2->transform();
     delete kt2;
