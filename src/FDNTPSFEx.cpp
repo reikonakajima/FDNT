@@ -185,7 +185,7 @@ main(int argc,
     PSFExModel *model;
     try
     {
-      model = new PSFExModel(psfName.c_str());
+	model = new PSFExModel(psfName.c_str());
     }
     catch (PSFExError &e)
     {
@@ -239,7 +239,7 @@ main(int argc,
     HdrRecordBase* weightScaleRecord = h.find(weightScaleKey);
     double weightScale = 1.0;
     if(weightScaleRecord) {
-      weightScale = atof(weightScaleRecord->getValueString().c_str());
+	weightScale = atof(weightScaleRecord->getValueString().c_str());
     }
     else
     {
