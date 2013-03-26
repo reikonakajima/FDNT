@@ -16,7 +16,7 @@ SUBDIRS = utilities2 images astrometry2
 
 TMV_LINK := $(shell cat /usr/local/share/tmv-link)
 
-LIBS = -lm -L/opt/local/lib -lfftw3 -lcfitsio -ltmv_symband $(TMV_LINK) 
+LIBS = -lm -L/opt/local/lib -lfftw3 -lcfitsio -ltmv_symband $(TMV_LINK) -L/usr/lib/x86_64-linux-gnu/ -lCCfits
 
 SUBOBJ = utilities2/BinomFact.o images/FITS.o utilities2/Interpolant.o utilities2/BinomFact.o \
 	utilities2/StringStuff.o images/Image.o images/FITSImage.o \
