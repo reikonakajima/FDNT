@@ -215,7 +215,8 @@ main(int argc,
     cerr << ", header " << flush;
     ifstream mapfs(wcsName.c_str());
     if (!mapfs) {
-	cerr << "Could not open map spec file " << wcsName << "; trying FITS header in science frame" << endl;
+	cerr << "Could not open map spec file " << wcsName 
+	     << "; trying FITS header in science frame" << endl;
 	h = *(sci.header());
     }
     else {
@@ -225,7 +226,7 @@ main(int argc,
     double xw,yw;
     fullmap->toWorld(0,0,xw,yw);
 #ifdef DEBUGFDNTPSFEX
-    cerr << "# WCS " << xw << " " << yw << " is the origin" << endl;
+    cerr << "# WCS " << xw << " " << yw << " is the (0,0) pixel WC w.r.t. the TP" << endl;
 #endif
 
     cerr << ", weight " << flush;
@@ -356,11 +357,13 @@ main(int argc,
       x_wc /= DEGREE;
       y_wc /= DEGREE;
       try {
+	  cerr << "# object at WCS " << x_wc << " " << y_wc << endl; // DEBUG
 	  fullmap->toPix(x_wc,y_wc,x_pix,y_pix);
       }
       catch  (AstrometryError& e) {
-          cout << "toPix failure" << endl;
 	  cerr << e.what() << endl;
+	  cerr << "processing object at (RA,dec)=(" << ra0 << "," << dec0 << ")" << endl;
+	  cout << "toPix failure" << endl;
 	  exit(0);
       }
       

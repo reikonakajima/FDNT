@@ -52,11 +52,11 @@ PixelMap::NewtonInverse(double xworld, double yworld,
     toWorld(xpix,ypix,xout,yout);
     xout -= xworld;
     yout -= yworld;
-    /**cerr << nIter << " world " << xworld << " " << yworld
+    /*/cerr << nIter << " world " << xworld << " " << yworld
 	     << " pix " << xpix << " " << ypix 
 	     << " resid " << xout << " " << yout
-	     << endl; //**/
-    if ( hypot(xout,yout)<worldTolerance) return;
+	     << endl; /**/
+    if (hypot(xout,yout) < worldTolerance) return;
     Matrix22 dPdW = dWorlddPix(xpix,ypix).inverse();
     xpix -= xout * dPdW(0,0) + yout * dPdW(0,1);
     ypix -= xout * dPdW(1,0) + yout * dPdW(1,1);
