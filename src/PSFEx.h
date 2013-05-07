@@ -2,6 +2,7 @@
 #define PSFEX_H
 
 #include "SBPixel.h"
+#include <CCfits/CCfits>
 
 namespace sbp {
 
@@ -13,12 +14,8 @@ namespace sbp {
   class PSFExModel
   {
   public:
-    enum PSFExFormat {
-      TEXT,
-      FITS
-    };
      
-    PSFExModel(const char *filename, PSFExFormat format=TEXT);
+    PSFExModel(const char *filename);
     PSFExModel(const PSFExModel& rhs);
     ~PSFExModel();
 
@@ -70,6 +67,10 @@ namespace sbp {
     static InterpolantXY lanczos3_2d;
     static InterpolantXY cubic_2d;
     static InterpolantXY quintic_2d;
+
+    template <class TT>
+    void readTableLKeyword(CCfits::ExtHDU& table, string kWord, TT&  parT);
+
   };
 
 } // namespace sbp

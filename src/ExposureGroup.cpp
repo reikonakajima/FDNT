@@ -27,7 +27,7 @@ const double FFT_BOX_SIGMA = 4.; // Default # object sigma native box extends?
 const double MINIMUM_FFT_SIGMA = 3.0; // Min # object sigma native box includes?
 const int MINIMUM_FFT_SIZE=16;
 
-CircularizedSB::CircularizedSB(const sbp::SBProfile& sb): tab(Table<>::spline),
+CircularizedSB::CircularizedSB(const sbp::SBProfile& sb): tab(GTable<>::spline),
 							  maxksq(0.) {
   // tabulate the inverse-square mean of the SBProfile:
   const int NPTS=16;	// How many points for azimuthal averaging

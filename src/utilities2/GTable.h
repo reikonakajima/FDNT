@@ -3,9 +3,9 @@
 // operations, and +-*/ for interpolation.
 // D is the value class, which must have + and * operations
 // to permit interpolation.
-// 	$Id: Table.h,v 1.3 2012/01/01 18:31:33 garyb Exp $
-#ifndef TABLE_H
-#define TABLE_H
+// 	$Id: GTable.h,v 1.3 2012/01/01 18:31:33 garyb Exp $
+#ifndef GTABLE_H
+#define GTABLE_H
 
 #include "Function1d.h"
 #include "Std.h"
@@ -55,15 +55,15 @@ public:
 
 // The Table itself:
 template<class V=double, class A=double>
-class Table: public Function1d<V,A> {
+class GTable: public Function1d<V,A> {
 public:
   enum interpolant {linear, spline, floor, ceil};
   //Construct empty table
-  Table(interpolant i=linear): v(), iType(i), isReady(false), y2() {} 
+  GTable(interpolant i=linear): v(), iType(i), isReady(false), y2() {} 
   //Table from two arrays:
-  Table(const A* argvec, const V* valvec, int N, interpolant in=linear) ;
-  Table(const vector<A> &a, const vector<V> &v, interpolant in=linear) ;
-  Table(istream &is, interpolant in=linear): v(), iType(in), isReady(),
+  GTable(const A* argvec, const V* valvec, int N, interpolant in=linear) ;
+  GTable(const vector<A> &a, const vector<V> &v, interpolant in=linear) ;
+  GTable(istream &is, interpolant in=linear): v(), iType(in), isReady(),
 					     y2() {read(is);}
   void clear() {v.clear(); isReady=false;}
   void read(istream &is);

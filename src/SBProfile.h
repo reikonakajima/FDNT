@@ -13,7 +13,7 @@
 #include "Image.h"
 #include "fft.h"
 #include "Laguerre.h"
-#include "Table.h"
+#include "GTable.h"
 
 using namespace laguerre;
 using namespace std;
@@ -646,7 +646,7 @@ namespace sbp {
     double FWHMrD;
     double rerD;
   
-    Table<> ft;
+    GTable<> ft;
 
   public:
     // Constructor
