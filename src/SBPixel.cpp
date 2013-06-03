@@ -135,10 +135,17 @@ SBPixel::setPixel(double value, int ix, int iy, int iz) {
 
 double
 SBPixel::getPixel(int ix, int iy, int iz) const {
-  if (iz < 0 || iz>=Nimages)
+  if (iz < -1 || iz>=Nimages)
     FormatAndThrow<SBError>() << "SBPixel::getPixel image number " << iz << " out of bounds";
   
-  return vx[iz]->xval(ix, iy);
+  if(iz>=0)
+    return vx[iz]->xval(ix, iy);
+
+  double v=0.;
+  for (int i=0; i<Nimages; i++) // return weighted sum if iz=-1
+    v += wts[i]*vx[i]->xval(ix, iy);
+  return v;
+
 }
 
 void

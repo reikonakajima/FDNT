@@ -215,7 +215,8 @@ main(int argc,
     cerr << ", header " << flush;
     ifstream mapfs(wcsName.c_str());
     if (!mapfs) {
-	cerr << "Could not open map spec file " << wcsName << "; trying FITS header in science frame" << endl;
+	cerr << "Could not open map spec file " << wcsName 
+	     << "; trying FITS header in science frame" << endl;
 	h = *(sci.header());
     }
     else {
@@ -225,7 +226,7 @@ main(int argc,
     double xw,yw;
     fullmap->toWorld(0,0,xw,yw);
 #ifdef DEBUGFDNTPSFEX
-    cerr << "# WCS " << xw << " " << yw << " is the origin" << endl;
+    cerr << "# WCS " << xw << " " << yw << " is the (0,0) pixel WC w.r.t. the TP" << endl;
 #endif
 
     cerr << ", weight " << flush;
@@ -238,7 +239,7 @@ main(int argc,
     
     HdrRecordBase* weightScaleRecord = h.find(weightScaleKey);
     double weightScale = 1.0;
-    if(weightScaleRecord) {
+    if (weightScaleRecord) {
 	weightScale = atof(weightScaleRecord->getValueString().c_str());
     }
     else
@@ -249,10 +250,10 @@ main(int argc,
     
     HdrRecordBase* fluxScaleRecord = h.find(fluxScaleKey);
     double fluxScale = 1.0;
-    if(fluxScaleRecord)
-      fluxScale = atof(fluxScaleRecord->getValueString().c_str());
+    if (fluxScaleRecord)
+	fluxScale = atof(fluxScaleRecord->getValueString().c_str());
     else
-      cerr << "WARNING: flux scale key not found in header; assuming flux scale is 1.0" << endl;
+	cerr << "WARNING: flux scale key not found in header; assuming flux scale is 1.0" << endl;
     
     cerr << "flux scale: " << fluxScale << endl;
     
@@ -268,12 +269,12 @@ main(int argc,
     
     weightScale = weightScale/(fluxScale*fluxScale); // that's how the inverse variance scales with flux
     for (int iy=bounds.getYMin(); iy<=bounds.getYMax(); iy++)
-      for (int ix=bounds.getXMin(); ix<=bounds.getXMax(); ix++) {
+	for (int ix=bounds.getXMin(); ix<=bounds.getXMax(); ix++) {
 	
-	// weight map just rescaled sky inverse-variance:
-	wt(ix,iy)  = wt(ix,iy)*weightScale;
-	sci(ix,iy) = sci(ix,iy)*fluxScale;
-      }    
+	    // weight map just rescaled sky inverse-variance:
+	    wt(ix,iy)  = wt(ix,iy)*weightScale;
+	    sci(ix,iy) = sci(ix,iy)*fluxScale;
+	}    
     
     // initialize sums
     UnweightedShearEstimator se;
@@ -302,8 +303,8 @@ main(int argc,
     vector<string> readvals(nread);
     ifstream ccat(catName.c_str());
     if (!ccat) {
-      cerr << "Error opening catalog file " << catName << endl;
-      exit(1);
+	cerr << "Error opening catalog file " << catName << endl;
+	exit(1);
     }
     string buffer;
     tmv::SymMatrix<double> covE(2);
@@ -312,12 +313,13 @@ main(int argc,
 
 
     while (stringstuff::getlineNoComment(ccat, buffer)) { // all objects
-      cerr << "######################################################\n// (a) Acquire info of object " << flush;
+      cerr << "######################################################" << endl
+	   << "// (a) Acquire info of object " << flush;
       istringstream iss(buffer);
       for (int i=0; i<nread; i++) iss >> readvals[i];
       if (!iss) {
-	cerr << "Bad catalog input line: " << buffer;
-	exit(1);
+	  cerr << "Bad catalog input line: " << buffer;
+	  exit(1);
       }
       string id = readvals[idCol-1];
       cerr << id << endl;
@@ -330,21 +332,21 @@ main(int argc,
       double g1_wc = atof(readvals[g1Col-1].c_str());
       double g2_wc = atof(readvals[g2Col-1].c_str());
       double gabs = sqrt(g1_wc*g1_wc+g2_wc*g2_wc);
-      if(gabs>0.95) { // sanitize shear
-	g1_wc=g1_wc*0.95/gabs;
-	g2_wc=g2_wc*0.95/gabs;
+      if (gabs > 0.95) { // sanitize shear
+	  g1_wc=g1_wc*0.95/gabs;
+	  g2_wc=g2_wc*0.95/gabs;
       }
       double bg = 0.;
-      if(bgCol>0)
-	bg = atof(readvals[bgCol-1].c_str());
+      if (bgCol > 0)
+	  bg = atof(readvals[bgCol-1].c_str());
       string fwd = "";
-      if(fwdColStart<=fwdColEnd && fwdColEnd>0)
+      if (fwdColStart <= fwdColEnd && fwdColEnd > 0)
       {
-	for(int i=max(1,fwdColStart); i<=fwdColEnd; i++)
-	{
-	  fwd += readvals[i-1];
-	  fwd += " ";
-	}
+	  for (int i=max(1,fwdColStart); i<=fwdColEnd; i++)
+	  {
+	      fwd += readvals[i-1];
+	      fwd += " ";
+	  }
       }
       double x_wc, y_wc; // tangent plane coordinates
       double x_pix, y_pix;       // pixel coordinates
@@ -355,10 +357,13 @@ main(int argc,
       x_wc /= DEGREE;
       y_wc /= DEGREE;
       try {
+	  cerr << "# object at WCS " << x_wc << " " << y_wc << endl; // DEBUG
 	  fullmap->toPix(x_wc,y_wc,x_pix,y_pix);
       }
       catch  (AstrometryError& e) {
-          cout << "toPix failure" << endl;
+	  cerr << e.what() << endl;
+	  cerr << "processing object at (RA,dec)=(" << ra0 << "," << dec0 << ")" << endl;
+	  cout << "toPix failure" << endl;
 	  exit(0);
       }
       
