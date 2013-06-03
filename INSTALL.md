@@ -12,6 +12,7 @@ Required software
 
 Install the following libraries
 
+  - CCfits
   - cfitsio
   - tmv v0.70  or later   from Mike Jarvis
   - fftw v3.0  or later
