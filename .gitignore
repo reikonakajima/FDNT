@@ -11,3 +11,4 @@ CVS
 *.fits
 *.out
 *.par
+bin/*

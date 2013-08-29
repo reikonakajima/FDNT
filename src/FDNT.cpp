@@ -678,11 +678,11 @@ FDNT<T>::shape2(double& logLikelihood,
 
   // Set flag if not enough points over likely region
   if (current.size() < MINPOINTS){
-    cerr << "only " << current.size() << " points over likely region: undersampled!" << endl;
+    //cerr << "only " << current.size() << " points over likely region: undersampled!" << endl;
     flags |= UnderSampled;
   }
   else {
-    cerr << "a good " << current.size() << " points over likely region." << endl;
+    //cerr << "a good " << current.size() << " points over likely region." << endl;
     flags &= ~UnderSampled;
   }
 
@@ -724,6 +724,7 @@ FDNT<T>::shape2(double& logLikelihood,
 		  3*pow(eta1, 4.)) * pow(covE(0,0),-2.) - 3.;
   double kurty = (sumyyyy/sump - 4*sumyyy*eta2/sump + 6*covE(1,1)*eta2*eta2 + 
 		  3*pow(eta2, 4.)) * pow(covE(1,1),-2.) - 3.;
+  /*
   cerr << "#Skew " << skewx << " " << skewy << " kurt " << kurtx << " " << kurty  
        << " debias " << sx/sp << " " << sy/sp
        << endl;
