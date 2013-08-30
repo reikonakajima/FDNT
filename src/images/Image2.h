@@ -143,7 +143,7 @@ namespace img {
       return *ptr;
     }
     ImageChk_iter operator++() {++ptr; ++col; return *this;}
-    ImageChk_iter operator--() {++ptr; ++col; return *this;}
+    ImageChk_iter operator--() {--ptr; --col; return *this;}
     ImageChk_iter operator+=(int i) {ptr+=i; col+=i; return *this;}
     ImageChk_iter operator-=(int i) {ptr-=i; col-=i; return *this;}
     bool operator<(const ImageChk_iter rhs) const {return ptr<rhs.ptr;}
@@ -177,7 +177,7 @@ namespace img {
       return *ptr;
     }
     ImageChk_citer operator++() {++ptr; ++col; return *this;}
-    ImageChk_citer operator--() {++ptr; ++col; return *this;}
+    ImageChk_citer operator--() {--ptr; --col; return *this;}
     ImageChk_citer operator+=(int i) {ptr+=i; col+=i; return *this;}
     ImageChk_citer operator-=(int i) {ptr-=i; col-=i; return *this;}
     bool operator<(const ImageChk_citer rhs) const {return ptr<rhs.ptr;}
