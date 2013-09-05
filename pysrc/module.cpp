@@ -1,5 +1,5 @@
 #include "boost/python.hpp"
-//#include "numpy/arrayobject.h"
+#include "numpy/arrayobject.h"
 
 
 // declare the export functions
