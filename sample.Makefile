@@ -8,7 +8,8 @@ OPTFLAGS = -O3 -DASSERT
 
 # INCLUDES can be relative paths, and will not be exported to subdirectory makes.
 INCLUDES = -I src -I src/utilities2 -I src/images -I src/astrometry2 -I /opt/local/include \
-	   -I /Users/reiko/2code/cfitsio/include 
+           -I /Users/reiko/2code/cfitsio/include \
+           -I /Library/Frameworks/EPD64.framework/Versions/7.2/include/python2.7 
 
 CXXFLAGS = $(OPTFLAGS) $(INCLUDES)
 SRC = $(shell ls *.cpp)
@@ -30,6 +31,11 @@ OBJ = src/Laguerre.o src/Shear.o src/LTransforms.o src/GLSimple.o src/SBProfile.
 	src/SCAMPMap.o src/PSFEx.o src/FDNT.o src/ExposureGroup.o src/Lance.o $(SUBOBJ)
 
 all: depend subs
+
+galsim: module.os
+
+module.os: pysrc/module.cpp
+	$(CXX) $(CXXFLAGS) $^ -c -o pysrc/.obj/$@
 
 FDNTColorGrad: src/FDNTColorGrad.o src/ColorGrad.o src/EnclosedFluxRadius.o SBParse.o $(OBJ)
 	$(CXX) $(CXXFLAGS) $^  $(LIBS) -o bin/$@
