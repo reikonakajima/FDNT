@@ -81,7 +81,7 @@ sbp(0), fwhm(0.), dx(0.), Nx(0), polnaxis(0)
 
 	try {
 		// open the fits table and go to the right extension
-	    pInfile.reset(new CCfits::FITS(filename, CCfits::Read, extension));
+	        pInfile.reset(new CCfits::FITS(filename, CCfits::Read, extension));
 	}
 	catch (CCfits::FITS::CantOpen &fitsError) {
 		FormatAndThrow<PSFExError>() << "Error opening the file with message: " << fitsError.message();
@@ -94,7 +94,7 @@ sbp(0), fwhm(0.), dx(0.), Nx(0), polnaxis(0)
 	}
 
 	// go to the right extension
-	CCfits::ExtHDU& table = pInfile->extension(extension);
+	CCfits::ExtHDU& table = pInfile->currentExtension();
 
 	// read the keyword "LOADED" - unused
 	//readTableLKeyword <int> (table, string("LOADED"), loaded);
