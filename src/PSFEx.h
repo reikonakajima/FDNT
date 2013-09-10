@@ -15,7 +15,7 @@ namespace sbp {
   {
   public:
      
-    PSFExModel(const char *filename);
+    PSFExModel(const char *filename, const int extension=1);
     PSFExModel(const PSFExModel& rhs);
     ~PSFExModel();
 

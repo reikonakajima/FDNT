@@ -53,7 +53,7 @@ PSFExModel::fieldPosition(double x, double y, int maxorder) {
   sbp->setWeights(wts);
 }
 
-PSFExModel::PSFExModel(const char *filename): 
+PSFExModel::PSFExModel(const char *filename, const int extension):
 sbp(0), fwhm(0.), dx(0.), Nx(0), polnaxis(0)
 {
 
@@ -77,13 +77,11 @@ sbp(0), fwhm(0.), dx(0.), Nx(0), polnaxis(0)
         double chi2;    // discarded after reading.
         vector<int> psfaxis;
 
-	const string psfData("PSF_DATA");
-
 	auto_ptr<CCfits::FITS> pInfile(0);
 
 	try {
 		// open the fits table and go to the right extension
-		pInfile.reset(new CCfits::FITS(filename,CCfits::Read, psfData));
+	    pInfile.reset(new CCfits::FITS(filename, CCfits::Read, extension));
 	}
 	catch (CCfits::FITS::CantOpen &fitsError) {
 		FormatAndThrow<PSFExError>() << "Error opening the file with message: " << fitsError.message();
@@ -96,7 +94,7 @@ sbp(0), fwhm(0.), dx(0.), Nx(0), polnaxis(0)
 	}
 
 	// go to the right extension
-	CCfits::ExtHDU& table = pInfile->extension(psfData);
+	CCfits::ExtHDU& table = pInfile->extension(extension);
 
 	// read the keyword "LOADED" - unused
 	//readTableLKeyword <int> (table, string("LOADED"), loaded);
