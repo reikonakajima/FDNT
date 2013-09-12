@@ -12,7 +12,7 @@
 //          4) get PSF model at that pixel coordinate
 //          5) meausure PSF model size and shape
 //          6) print output
-//
+// 
 
 #include "FDNT.h"
 #include "StringStuff.h"
@@ -40,11 +40,12 @@ main(int argc,
     
     // The fit:
     double maskSigma;
-    int    psfOrder = atoi(argv[3]);
+    int    psfOrder = atoi(argv[4]);
     
     // Input files
     string psfName = argv[1];
-    string wcsName = argv[2];
+    int chipNumber = atoi(argv[2]);
+    string wcsName = argv[3];
     
     // Data properties
     double sky = 0.;
@@ -57,12 +58,9 @@ main(int argc,
 	// (1) Read the PSF
 	PSFExModel *model;
 	try {
-	    model = new PSFExModel(psfName.c_str());
+	    model = new PSFExModel(psfName.c_str(), chipNumber);
 	} catch (PSFExError &e) {
 	    cerr << "Error reading PSFEx model: " << e.what() << "; exiting." << endl; 
-	    exit(1);
-	} catch (...) {
-	    cerr << "Error reading PSFEx model; exiting." << endl; 
 	    exit(1);
 	}
 	
@@ -74,9 +72,19 @@ main(int argc,
 	// (2) Read astrometry
 	img::ImageHeader h;
 	ifstream mapfs(wcsName.c_str());
+	Image<> sci;
 	if (!mapfs) {
-	    cerr << "Could not open astrometry file " << wcsName << endl;
-	    exit(1);
+	    cerr << "Could not open astrometry file " << wcsName
+		 << "; trying FITS header in science frame" << endl;
+	    try {
+		FITSImage<> fits(wcsName);
+		sci = fits.extract();
+	    } catch (AstrometryError& e) {
+		cerr << "Could not get header info from science (coadd) frame" << endl;
+		cerr << e.what() << endl;
+		exit(0);
+	    }
+	    h = *(sci.header());
 	}
 	else {
 	    h = img::HeaderFromStream(mapfs);
@@ -94,30 +102,9 @@ main(int argc,
 	int ngood = 0;
 	int nfail = 0;
 
-        //  Coadd (star/galaxy) catalog columns [from stdin]
-	//
-        //  1   1 FIELD_POS       Reference number to field parameters
-        //  2   2 SeqNr           Running object number
-        //  3 113 MAG_BEST        Best of MAG_AUTO and MAG_ISOCOR                 [mag]
-        //  4 116 BackGr          Background at centroid position                 [count]
-        //  5 117 Level           Detection threshold above background            [count]
-        //  6 133 ALPHA_J2000     Right ascension of barycenter (J2000)           [deg]
-        //  7 134 DELTA_J2000     Declination of barycenter (J2000)               [deg]
-        //  8 138 X2_WORLD        Variance along X-WORLD (alpha)                  [deg**2]
-        //  9 139 Y2_WORLD        Variance along Y-WORLD (delta)                  [deg**2]
-        // 10 140 XY_WORLD        Covariance between X-WORLD and Y-WORLD          [deg**2]
-        // 11 149 A_WORLD         Profile RMS along major axis (world units)      [deg]
-        // 12 150 B_WORLD         Profile RMS along minor axis (world units)      [deg]
-        // 13 152 THETA_WORLD     Position angle (CCW/world-x)                    [deg]
-        // 14 156 ELLIPTICITY     1 - B_IMAGE/A_IMAGE
-        // 15 178 FWHM_WORLD      FWHM assuming a gaussian core                   [deg]
-        // 16 187 Flag            Extraction flags
-        // 17 188 FLUX_RADIUS     Fraction-of-light radii                         [pixel]
-        // 18 193 MASK            mask value (addmask)            0==not in masked region
-
 	// define catalog item columns (0-indexed)
-	int idCol=2, raCol=6, decCol=7, aCol=11, bCol=12, paCol=13, rCol=17, bgCol=4, magCol=3;
-	int nread=18;
+	int raCol=0, decCol=1, magCol=2;
+	int nread=3;
 	vector<string> readvals(nread);
 
 	// For each catalog item
@@ -136,16 +123,12 @@ main(int argc,
 		cerr << "Bad catalog input line: " << buffer;
 		exit(1);
 	    }
-	    string id = readvals[idCol-1];
+	    string id = "00";
 	    // cerr << "ID: " << id << endl; // DEBUG
-	    double ra0 = atof(readvals[raCol-1].c_str());
-	    double dec0 = atof(readvals[decCol-1].c_str());
-            double a_wc = atof(readvals[aCol-1].c_str());
-            double b_wc = atof(readvals[bCol-1].c_str());
-            double pa_wc = atof(readvals[paCol-1].c_str());
-	    double r_pix = atof(readvals[rCol-1].c_str()); // FLUX_RADIUS in pixels, not wcs
-	    double bg = atof(readvals[bgCol-1].c_str());
-	    double mag = atof(readvals[magCol-1].c_str());
+	    double ra0 = atof(readvals[raCol].c_str());
+	    double dec0 = atof(readvals[decCol].c_str());
+	    double r_pix = -9.9; // FLUX_RADIUS in pixels, not wcs
+	    double mag = atof(readvals[magCol].c_str());
 	    
 	    double x_wc, y_wc; // tangent plane coordinates
 	    double x_pix, y_pix;
@@ -185,19 +168,14 @@ main(int argc,
 	    double ee50psf = model->getFWHM()/2.*rescale; 
 	    Ellipse psfBasis(0., 0., log(ee50psf/1.17));
 	    
-	    /*/ generate PSF image in WC
+	    // generate PSF image in WC
 	    SBDistort psfWCS(*(model->sb()),J(0,0),J(0,1),J(1,0),J(1,1));
 	    // sets flux of basis correctly to have flux normalization after distortion
 	    psfWCS.setFlux(1.); 
-	    /*/
-	    // use pixel-based interpolated PSF representation instead
-	    SBPixel psfPix = *(model->sb());
 	    
-	    // double dx = ee50psf / 2.35; // psfWCS: magic 4.7 factor from PSFEx
-	    double dx = model->getDx(); // psfPix: use input dx used to construct model
-	    cerr << "drawing psf postage stamp with dx=" << dx << endl;
-	    //Image<> ipsf = psfWCS.draw(dx);  // psfWCS
-	    Image<> ipsf = psfPix.draw(dx);  // psfPix
+	    double dx = ee50psf / 2.35; // psfWCS: magic 4.7 factor from PSFEx
+	    //cerr << "drawing psf postage stamp with dx=" << dx << endl;
+	    Image<> ipsf = psfWCS.draw(dx);
 	    
 	    // Measure PSF GL size & significance
 	    Image<> psfwt(ipsf.getBounds());
@@ -206,7 +184,7 @@ main(int argc,
 	    GLSimple<> gl(ipsf, psfwt, psfBasis, 4);
 	    if (!gl.solve()) {
 		cerr << "# Failed measuring psf, flags " << gl.getFlags() 
-		     << "; ignoring object " << id << endl;
+		     << "; ignoring object " << ra0 << " " << dec0 << endl;
 		nfail += 1;
 		continue;
 	    }
