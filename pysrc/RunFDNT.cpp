@@ -3,6 +3,7 @@
 
 #include "NumpyHelper.h"
 #include "FDNT.h"
+#include "Image.h"
 
 namespace bp = boost::python;
 
@@ -12,6 +13,10 @@ namespace galsim {
 
 
 void pyExportRunFDNT() {
+
+  // define the run code of FDNT
+  //
+
 }
 
 

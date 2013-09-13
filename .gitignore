@@ -12,3 +12,5 @@ CVS
 *.out
 *.par
 bin/*
+*.so
+.obj

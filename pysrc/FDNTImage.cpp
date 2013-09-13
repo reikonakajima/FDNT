@@ -12,6 +12,9 @@ namespace galsim {
 
 
 void pyExportFDNTImage() {
+
+  // define Gary's old Image class with BoostPython
+  // bp::class_<Image>("FDNTImage") ...;
 }
 
 
