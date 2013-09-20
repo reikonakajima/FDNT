@@ -4,6 +4,7 @@
 #include "NumpyHelper.h"
 #include "FDNT.h"
 #include "Image.h"
+#include "RunFDNT.h"
 
 namespace bp = boost::python;
 
@@ -16,6 +17,7 @@ void pyExportRunFDNT() {
 
   // define the run code of FDNT
   //
+  bp::def("greet", greet);
 
 }
 

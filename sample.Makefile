@@ -41,6 +41,7 @@ SUBOBJ = src/utilities2/BinomFact.o \
 	src/images/FITS.o \
 	src/images/Image.o \
 	src/images/FITSImage.o \
+	src/images/HeaderFromStream.o \
 	src/astrometry2/PixelMap.o \
 	src/astrometry2/Astrometry.o \
 	src/astrometry2/PolyMap.o \
