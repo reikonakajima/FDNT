@@ -61,8 +61,8 @@ OBJ = src/Laguerre.o \
 
 all: depend subs
 
-_fdnt: module.os FDNTImage.os RunFDNT.os $(OBJ)
-	$(CXX) -bundle pysrc/.obj/module.os pysrc/.obj/FDNTImage.os pysrc/.obj/RunFDNT.os \
+_fdnt: module.os FDNTImage.os RunFDNT.os RunFDNT.o $(OBJ)
+	$(CXX) -bundle pysrc/.obj/module.os pysrc/.obj/FDNTImage.os pysrc/.obj/RunFDNT.os src/.obj/RunFDNT.o \
 	$(LIBS) -o fdnt/$@.so
 
 module.os: pysrc/module.cpp
@@ -73,6 +73,9 @@ FDNTImage.os: pysrc/FDNTImage.cpp
 
 RunFDNT.os: pysrc/RunFDNT.cpp
 	$(CXX) $(CXXFLAGS) $^ -c -o pysrc/.obj/$@
+
+RunFDNT.o: src/RunFDNT.cpp
+	$(CXX) $(CXXFLAGS) $^ -c -o src/.obj/$@
 
 FDNTColorGrad: src/FDNTColorGrad.o src/ColorGrad.o src/EnclosedFluxRadius.o SBParse.o $(OBJ)
 	$(CXX) $(CXXFLAGS) $^  $(LIBS) -o bin/$@
