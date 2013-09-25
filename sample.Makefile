@@ -61,8 +61,8 @@ OBJ = src/Laguerre.o \
 
 all: depend subs
 
-_fdnt: module.os FDNTImage.os RunFDNT.os RunFDNT.o $(OBJ)
-	$(CXX) -bundle pysrc/.obj/module.os pysrc/.obj/FDNTImage.os pysrc/.obj/RunFDNT.os src/.obj/RunFDNT.o \
+_fdnt: module.os FDNTImage.os RunFDNT.os RunFDNT.o 
+	$(CXX) -bundle pysrc/.obj/module.os pysrc/.obj/FDNTImage.os pysrc/.obj/RunFDNT.os src/.obj/RunFDNT.o $(OBJ) \
 	$(LIBS) -o fdnt/$@.so
 
 module.os: pysrc/module.cpp
