@@ -19,7 +19,7 @@ struct PyFDNTImage {
   { return new Image<T>(rhs); }
 
   template <typename U, typename W>
-  static void wrapImageTemplates(W& wrapper) {
+  static void wrapFDNTImageTemplates(W& wrapper) {
     typedef Image<T>* (*constructFrom_func_type)(const Image<U>&);
     //typedef void (<Image<T>::* copyFrom_func_type)(const Image<U>&);
     wrapper
@@ -32,17 +32,17 @@ struct PyFDNTImage {
 	   )
       //.def("copyFrom", copyFrom_func_type(&Image<T>::copyFrom));
       ;
-  } // wrapImageTemplates()
+  } // wrapFDNTImageTemplates()
 
   static bp::object wrapFDNTImage(const std::string& suffix) {
 
     bp::class_< Image<T> >   // in Gary's code, it's an "Image<>" class
-      PyFDNTImage(("FDNTImage" + suffix).c_str(), "", bp::no_init);
-    PyFDNTImage
-      .def(bp::init<int, int>(bp::args("ncol", "nrow")))  // XXX check out the return type XXX
+      pyFDNTImage(("FDNTImage" + suffix).c_str(), "", bp::no_init);
+    pyFDNTImage
+      .def(bp::init<int, int>(bp::args("ncol", "nrow")))
       ;
-
-    wrapImageTemplates<float>(PyFDNTImage);
+    wrapFDNTImageTemplates<float>(pyFDNTImage);
+    return pyFDNTImage;
 
   } // wrapFDNTImage()
 
