@@ -1,17 +1,28 @@
-# $Id: Makefile,v 1.20 2012/01/02 19:25:58 garyb Exp $
-# make the test programs
+# A sample Makefile.  Edit to suit your platform.
 
 # CXX can specify any paths to includes that are absolute and will be passed to subdirs
 CXX = g++ -fopenmp
 # OPTFLAGS will be exported for subdir makes
 OPTFLAGS = -O3 -DASSERT
 
+# Note for compiling Boost.Python:
+#
+# Apple Python frameworks are under /System/Library/Frameworks/...
+# User-installed Python frameworks go into /Library/Frameworks/...
+#
+# Since I've compiled my Boost.Python against /Library/Frameworks/EPD64.framework,
+# and I also run the EPD64 version of Python,
+# I need to make sure that all the includes and libs are from this framework.
+# Otherwise, everything may compile, but when I load the fdnt module under python, I get the error:
+# > TypeError: __init__() should return None, not 'NoneType'
+# when instantiating C++ derived class.
+
 # INCLUDES can be relative paths, and will not be exported to subdirectory makes.
 INCLUDES = -I src -I src/utilities2 -I src/images -I src/astrometry2 -I pysrc \
-           -I /opt/local/include \
-           -I /Users/reiko/2code/cfitsio/include \
            -I /Library/Frameworks/EPD64.framework/Versions/7.2/include/python2.7 \
-           -I /System/Library/Frameworks/Python.framework/Versions/2.7/Extras/lib/python/numpy/core/include
+           -I /Library/Frameworks/EPD64.framework/Versions/7.2/lib/python2.7/site-packages/numpy/core/include \
+           -I /opt/local/include \
+           -I /Users/reiko/2code/cfitsio/include
 
 CXXFLAGS = $(OPTFLAGS) $(INCLUDES)
 SRC = $(shell ls *.cpp)
@@ -21,12 +32,12 @@ SUBDIRS = src/utilities2 src/images src/astrometry2
 TMV_LINK := $(shell cat /usr/local/share/tmv/tmv-link)
 
 LIBS = -lm \
+	-lboost_python \
+	-L/Library/Frameworks/EPD64.framework/Versions/7.2/lib -lpython2.7 \
 	-L/opt/local/lib -lfftw3 \
 	-L/Users/reiko/2code/cfitsio/lib -lcfitsio \
 	-ltmv_symband $(TMV_LINK) \
 	-lCCfits \
-	-lboost_python \
-	-lpython2.7 \
 	-ltmv_symband \
 	-ltmv \
 	-lpthread
