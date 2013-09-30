@@ -10,12 +10,13 @@ namespace bp = boost::python;
 namespace galsim {
 namespace fdnt {
 
-
+/*
+ * Wrapper struct for Image<T>
+ */
 template <typename T>
 struct PyFDNTImage {
 
-  template <typename U>
-  static Image<T>* MakeFromImage(const Image<U>& rhs)
+  static Image<T>* MakeFromImage(const Image<T>& rhs)
   { return new Image<T>(rhs); }
 
   template <typename U, typename W>
@@ -41,7 +42,16 @@ struct PyFDNTImage {
     pyFDNTImage
       .def(bp::init<int, int>(bp::args("ncol", "nrow")))
       ;
-    wrapFDNTImageTemplates<float>(pyFDNTImage);
+
+    // These lines allows for copy constructors between different types.  None allowed for now.
+    //wrapFDNTImageTemplates<int16_t>(pyFDNTImage);
+    //wrapFDNTImageTemplates<int32_t>(pyFDNTImage);
+    //wrapFDNTImageTemplates<float>(pyFDNTImage);
+    //wrapFDNTImageTemplates<double>(pyFDNTImage);
+
+    // copy constructor from its own type
+    wrapFDNTImageTemplates<T>(pyFDNTImage);
+
     return pyFDNTImage;
 
   } // wrapFDNTImage()
@@ -59,12 +69,12 @@ void pyExportFDNTImage() {
   PyFDNTImageData<int32_t>::wrapFDNTImageData("I");  // returns "FDNTImageDataI" class ... etc
   PyFDNTImageData<float>::wrapFDNTImageData("F");
   PyFDNTImageData<double>::wrapFDNTImageData("D");
+  */
 
   PyFDNTImage<int16_t>::wrapFDNTImage("S");  // returns "FDNTImageS" class
   PyFDNTImage<int32_t>::wrapFDNTImage("I");  // returns "FDNTImageI" class ... etc
-  */
   PyFDNTImage<float>::wrapFDNTImage("F");
-  //PyFDNTImage<double>::wrapFDNTImage("D");
+  PyFDNTImage<double>::wrapFDNTImage("D");
 
 }
 
