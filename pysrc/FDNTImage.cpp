@@ -11,6 +11,28 @@ namespace galsim {
 namespace fdnt {
 
 /*
+ * Wrapper struct for Image Header
+ */
+struct PyFDNTImageHeader{
+
+
+
+}; // struct PyFDNTImageHeader
+
+
+
+/*
+ * Wrapper struct for ImageData<T>
+ */
+template <typename T>
+struct PyFDNTImageData {
+
+  // XXX TODO: FILL ME XXX
+
+}; // struct PyFDNTImageData
+
+
+/*
  * Wrapper struct for Image<T>
  */
 template <typename T>
