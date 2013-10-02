@@ -1,4 +1,5 @@
 #include "boost/python.hpp"
+#define PY_ARRAY_UNIQUE_SYMBOL FDNT_ARRAY_API
 #include "numpy/arrayobject.h"
 
 
