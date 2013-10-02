@@ -9,6 +9,8 @@
 
 namespace galsim {
 
+  void pyExportBounds();
+
   namespace fdnt {
     
     void pyExportRunFDNT();
@@ -23,6 +25,7 @@ namespace galsim {
 
 BOOST_PYTHON_MODULE(_fdnt) {
   import_array(); // for numpy
+  galsim::pyExportBounds();
   galsim::fdnt::pyExportRunFDNT();
   galsim::fdnt::pyExportFDNTImage();
 
