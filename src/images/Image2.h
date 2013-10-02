@@ -16,6 +16,7 @@ namespace img {
   template <class T=float>
   class ImageData {
     //    template <class U>
+    friend struct PyFDNTImageData;
     //friend class FITSImage;
   public:
     // Create:
