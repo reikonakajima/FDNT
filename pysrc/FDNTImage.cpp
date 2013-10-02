@@ -27,7 +27,26 @@ struct PyFDNTImageHeader{
 template <typename T>
 struct PyFDNTImageData {
 
-  // XXX TODO: FILL ME XXX
+  static bp::object wrapFDNTImageData(const std::string& suffix) {
+
+    bp::class_< Image<T> >   // in Gary's code, it's an "Image<>" class
+      pyFDNTImageData(("FDNTImageData" + suffix).c_str(), "", bp::no_init);
+    pyFDNTImageData
+      .def(bp::init< Bounds<int>, T >(bp::args("bounds", "init_val")))
+      ;
+
+    // These lines allows for copy constructors between different types.  None allowed for now.
+    //wrapFDNTImageDataTemplates<int16_t>(pyFDNTImageData);
+    //wrapFDNTImageDataTemplates<int32_t>(pyFDNTImageData);
+    //wrapFDNTImageDataTemplates<float>(pyFDNTImageData);
+    //wrapFDNTImageDataTemplates<double>(pyFDNTImageData);
+
+    // copy constructor from its own type
+    //wrapFDNTImageDataTemplates<T>(pyFDNTImageData);
+
+    return pyFDNTImageData;
+
+  } // wrapFDNTImageData()
 
 }; // struct PyFDNTImageData
 
@@ -49,7 +68,7 @@ struct PyFDNTImage {
     const T* data = image.data()->location(image.getBounds().getXMin(), image.getBounds().getYMin());
     int n1 = image.getBounds().getYMax() - image.getBounds().getYMin() + 1;
     int n2 = image.getBounds().getXMax() - image.getBounds().getXMin() + 1;
-    int stride = n2;  // this will NOT work for subimages!  TEMOPRARY SOLUTION, checked by next line
+    int stride = n2;  // this will NOT work for subimages!  TEMPORARY SOLUTION, checked by next line
     if (!image.data()->contiguousData()) {
       throw ImageError("stride does not match X dimension");
     }
@@ -86,7 +105,7 @@ struct PyFDNTImage {
       pyFDNTImage(("FDNTImage" + suffix).c_str(), "", bp::no_init);
     pyFDNTImage
       .def(bp::init<int, int>(bp::args("ncol", "nrow")))
-      .add_property("array", &GetArray)
+      .add_property("array", &GetArray)  // getter only; set through ImageData constructor
       ;
 
     // These lines allows for copy constructors between different types.  None allowed for now.
@@ -110,12 +129,12 @@ void pyExportFDNTImage() {
 
   /*
   PyFDNTImageHeader::wrapFDNTImageHeader;  // returns "FDNTImageHeader" class
+  */
 
   PyFDNTImageData<int16_t>::wrapFDNTImageData("S");  // returns "FDNTImageDataS" class
   PyFDNTImageData<int32_t>::wrapFDNTImageData("I");  // returns "FDNTImageDataI" class ... etc
   PyFDNTImageData<float>::wrapFDNTImageData("F");
   PyFDNTImageData<double>::wrapFDNTImageData("D");
-  */
 
   PyFDNTImage<int16_t>::wrapFDNTImage("S");  // returns "FDNTImageS" class
   PyFDNTImage<int32_t>::wrapFDNTImage("I");  // returns "FDNTImageI" class ... etc
