@@ -36,6 +36,9 @@ public:
   Position operator*(const T rhs) const {
     return Position(x*rhs, y*rhs); 
   }
+  friend Position<T> operator*(const T lhs, const Position<T>& rhs) {
+    return rhs*lhs;
+  }
   Position operator/(const T rhs) const {
     return Position(x/rhs, y/rhs); 
   }
