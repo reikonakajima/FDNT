@@ -19,7 +19,7 @@ namespace galsim {
 // generate the galsim FDNT module
 
 BOOST_PYTHON_MODULE(_fdnt) {
-
+  import_array(); // for numpy
   galsim::fdnt::pyExportRunFDNT();
   galsim::fdnt::pyExportFDNTImage();
 
