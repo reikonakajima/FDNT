@@ -204,13 +204,9 @@ struct PyFDNTImage {
 
 void pyExportFDNTImage() {
 
-  /*
-  PyFDNTImageHeader::wrapFDNTImageHeader;  // returns "FDNTImageHeader" class
-  */
-
-  //PyFDNTImageData<int16_t>::wrapFDNTImageData("S");  // returns "FDNTImageDataS" class
-  //PyFDNTImageData<int32_t>::wrapFDNTImageData("I");  // returns "FDNTImageDataI" class ... etc
-  //PyFDNTImageData<float>::wrapFDNTImageData("F");
+  PyFDNTImageData<int16_t>::wrapFDNTImageData("S");  // returns "FDNTImageDataS" class
+  PyFDNTImageData<int32_t>::wrapFDNTImageData("I");  // returns "FDNTImageDataI" class ... etc
+  PyFDNTImageData<float>::wrapFDNTImageData("F");
   PyFDNTImageData<double>::wrapFDNTImageData("D");
 
   PyFDNTImage<int16_t>::wrapFDNTImage("S");  // returns "FDNTImageS" class
