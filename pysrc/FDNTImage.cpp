@@ -10,16 +10,6 @@ using img::ImageData;
 namespace galsim {
 namespace fdnt {
 
-/*
- * Wrapper struct for Image Header
- */
-struct PyFDNTImageHeader{
-
-
-
-}; // struct PyFDNTImageHeader
-
-
 
 /*
  * Wrapper struct for ImageData<T>
@@ -32,7 +22,7 @@ struct PyFDNTImageData {
     T* data = 0;                  // set in CheckNumpyArray()
     const int ndim = 2;           // array must be 2 dimensional
     bool isConst = true;          // won't work if false, but I don't understand why (ask Jim?)
-    boost::shared_ptr<T> owner;   // ImageData is never the owner
+    boost::shared_ptr<T> owner;   // ImageData is never the owner (someone else made the array)
     int stride = 0;               // set in CheckNumpyArray()
     CheckNumpyArray(array, ndim, isConst, data, owner, stride);
 
@@ -48,7 +38,7 @@ struct PyFDNTImageData {
       virtual_data_ptr += xsize;
     }
 
-    bool contiguous = true; // because GalSim generated image arrays will be contiguous
+    bool contiguous = true; // assuming GalSim generated image arrays will always be contiguous
 
     // Construct ImageData without owning the data (does not have data delete previliges)
     return new ImageData<T>(bounds, row_ptrs, contiguous);
@@ -122,6 +112,17 @@ struct PyFDNTImageData {
 template <typename T>
 struct PyFDNTImage {
 
+  static Image<T>* MakeFromArray(bp::object& array, int xmin, int ymin)
+  {
+    // Construct ImageData without owning the data (does not have data delete previliges)
+    ImageData<T> *imdata_ptr = PyFDNTImageData<T>::MakeFromArray(array, xmin, ymin);
+
+    ImageHeader *imhead_ptr = new ImageHeader();
+
+    // Now construct the ImageData
+    return new Image<T>(imdata_ptr, imhead_ptr);
+  }
+
   static bp::object GetArrayImpl(bp::object self, bool isConst)
   {
     // --- Try to get cached array ---
@@ -166,11 +167,20 @@ struct PyFDNTImage {
 
   static bp::object wrapFDNTImage(const std::string& suffix) {
 
+    typedef Image<T>* (*constructFromArray_func_type)(bp::object&, int, int);
+
     bp::class_< Image<T> >   // in Gary's code, it's an "Image<>" class
       pyFDNTImage(("FDNTImage" + suffix).c_str(), "", bp::no_init);
     pyFDNTImage
       .def(bp::init<int, int>(bp::args("ncol", "nrow")))
       .add_property("array", &GetArray)  // getter only; set through ImageData constructor
+      .def(
+	   "__init__",
+	   bp::make_constructor(
+		constructFromArray_func_type(&MakeFromArray),
+		bp::default_call_policies(), bp::args("array", "xmin", "ymin")
+				)
+	   )
       .def("getBounds", &Image<T>::getBounds)
       .add_property("bounds", &Image<T>::getBounds)
       ;
