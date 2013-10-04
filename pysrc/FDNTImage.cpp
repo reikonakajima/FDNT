@@ -40,9 +40,9 @@ struct PyFDNTImageData {
     int ysize = GetNumpyArrayDim(array.ptr(), 0);
     Bounds<int> bounds(xmin, xmin+xsize-1, ymin, ymin+ysize-1);
 
-    T *virtual_data_ptr = data - bounds.getYMin();    // yikes!  (inherited NR ugliness)
+    T *virtual_data_ptr = data - bounds.getXMin();    // yikes!  (inherited NR ugliness)
     T **true_row_ptrs = new T*[ysize];
-    T **row_ptrs = true_row_ptrs - bounds.getXMin();  // yikes!
+    T **row_ptrs = true_row_ptrs - bounds.getYMin();  // yikes!
     for (int i=bounds.getYMin(); i<=bounds.getYMax(); i++) {
       row_ptrs[i] = virtual_data_ptr;
       virtual_data_ptr += xsize;
@@ -95,6 +95,8 @@ struct PyFDNTImageData {
 				)
 	   )
       .add_property("array", &GetArray)  // getter only; set through ImageData constructor
+      .def("getBounds", &ImageData<T>::getBounds)
+      .add_property("bounds", &ImageData<T>::getBounds)
       ;
 
     // These lines allows for copy constructors between different types.  None allowed for now.
@@ -168,6 +170,8 @@ struct PyFDNTImage {
     pyFDNTImage
       .def(bp::init<int, int>(bp::args("ncol", "nrow")))
       .add_property("array", &GetArray)  // getter only; set through ImageData constructor
+      .def("getBounds", &Image<T>::getBounds)
+      .add_property("bounds", &Image<T>::getBounds)
       ;
 
     // These lines allows for copy constructors between different types.  None allowed for now.
