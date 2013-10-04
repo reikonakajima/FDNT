@@ -32,7 +32,7 @@ struct PyFDNTImageData {
     T* data = 0;                  // set in CheckNumpyArray()
     const int ndim = 2;           // array must be 2 dimensional
     bool isConst = true;          // won't work if false, but I don't understand why (ask Jim?)
-    boost::shared_ptr<T> owner;   // set in CheckNumpyArray()
+    boost::shared_ptr<T> owner;   // ImageData is never the owner
     int stride = 0;               // set in CheckNumpyArray()
     CheckNumpyArray(array, ndim, isConst, data, owner, stride);
 
@@ -50,6 +50,7 @@ struct PyFDNTImageData {
 
     bool contiguous = true; // because GalSim generated image arrays will be contiguous
 
+    // Construct ImageData without owning the data (does not have data delete previliges)
     return new ImageData<T>(bounds, row_ptrs, contiguous);
   }
 
