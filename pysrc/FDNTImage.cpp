@@ -40,7 +40,7 @@ struct PyFDNTImageData {
 
     bool contiguous = true; // assuming GalSim generated image arrays will always be contiguous
 
-    // Construct ImageData without owning the data (does not have data delete previliges)
+    // Construct ImageData without owning the data (does not have array data delete previliges)
     return new ImageData<T>(bounds, row_ptrs, contiguous);
   }
 
