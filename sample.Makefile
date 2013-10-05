@@ -72,8 +72,8 @@ OBJ = src/Laguerre.o \
 
 all: depend subs
 
-_fdnt: module.os FDNTImage.os RunFDNT.os RunFDNT.o 
-	$(CXX) -bundle pysrc/.obj/module.os pysrc/.obj/FDNTImage.os pysrc/.obj/RunFDNT.os src/.obj/RunFDNT.o $(OBJ) \
+_fdnt: module.os FDNTImage.os RunFDNT.os RunFDNT.o Bounds.os
+	$(CXX) -bundle pysrc/.obj/module.os pysrc/.obj/FDNTImage.os pysrc/.obj/RunFDNT.os pysrc/.obj/Bounds.os src/.obj/RunFDNT.o $(OBJ) \
 	$(LIBS) -o fdnt/$@.so
 
 module.os: pysrc/module.cpp
@@ -83,6 +83,9 @@ FDNTImage.os: pysrc/FDNTImage.cpp
 	$(CXX) $(CXXFLAGS) $^ -c -o pysrc/.obj/$@
 
 RunFDNT.os: pysrc/RunFDNT.cpp
+	$(CXX) $(CXXFLAGS) $^ -c -o pysrc/.obj/$@
+
+Bounds.os: pysrc/Bounds.cpp
 	$(CXX) $(CXXFLAGS) $^ -c -o pysrc/.obj/$@
 
 RunFDNT.o: src/RunFDNT.cpp
