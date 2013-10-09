@@ -35,12 +35,21 @@ double EnclosedFluxRadius(Image<> img, double enclosedFraction=0.5) {
   double yc = ysum/flux;
 
   list<Pair> lp;
-  for (int j=b.getYMin(); j<=b.getYMax(); j++)
-    for (int i=b.getXMin(); i<=b.getXMax(); i++) {
-      double rad=hypot(i-xc, j-yc);
-      double val=img(i,j);
-      lp.push_back(Pair(rad,val));
-    }
+  // Sometimes crashes here if the bounds is too large, due to memory issues.
+  // The workaround is to increase the memory allocation: "#$ -l h_vmem=4g" in the MPE clusters
+  // However, when it crashes, it does not throw exceptions nor generate error messages...
+  try {
+    for (int j=b.getYMin(); j<=b.getYMax(); j++)
+      for (int i=b.getXMin(); i<=b.getXMax(); i++) {
+        double rad=hypot(i-xc, j-yc);
+        double val=img(i,j);
+        lp.push_back(Pair(rad,val));
+      }
+  } catch (exception& e) {
+    cout << "bounds " << b << endl;   // ...hence this is probably moot.
+    cout << e.what() << endl;
+    exit(99);
+  }
   lp.sort();
   double fsum=0.;
   double eer=0.;
