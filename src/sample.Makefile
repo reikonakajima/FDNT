@@ -7,20 +7,20 @@ CXX = g++ -fopenmp
 OPTFLAGS = -O3 -DASSERT
 
 # INCLUDES can be relative paths, and will not be exported to subdirectory makes.
-INCLUDES = -I utilities2 -I images -I astrometry2 -I /opt/local/include
+INCLUDES = -I utilities2 -I images -I astrometry2 -I /euclid/data02/euclid01/local/include
 
 CXXFLAGS = $(OPTFLAGS) $(INCLUDES)
 SRC = $(shell ls *.cpp)
 
 SUBDIRS = utilities2 images astrometry2
 
-TMV_LINK := $(shell cat /usr/local/share/tmv-link)
+TMV_LINK := $(shell cat /euclid/data02/euclid01/local/share/tmv/tmv-link)
 
-LIBS = -lm -L/opt/local/lib -lfftw3 -lcfitsio -ltmv_symband $(TMV_LINK) -L/usr/lib/x86_64-linux-gnu/ -lCCfits
+LIBS = -lm -L/opt/local/lib -lfftw3 -lcfitsio -ltmv_symband $(TMV_LINK) -L/usr/lib/x86_64-linux-gnu/ -lCCfits -L/euclid/data02/euclid01/local/lib
 
 SUBOBJ = utilities2/BinomFact.o images/FITS.o utilities2/Interpolant.o utilities2/BinomFact.o \
 	utilities2/StringStuff.o images/Image.o images/FITSImage.o \
-	utilities2/fft.o utilities2/Table.o utilities2/Pset.o utilities2/Poly2d.o \
+	utilities2/fft.o utilities2/GTable.o utilities2/Pset.o utilities2/Poly2d.o \
 	astrometry2/PixelMap.o astrometry2/Astrometry.o astrometry2/PolyMap.o \
 	astrometry2/PixelMapCollection.o
 

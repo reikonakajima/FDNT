@@ -3,5 +3,5 @@
 #include "SBProfile.h"
 
 namespace sbp {
-  extern SBProfile* SBParse(string in);
+  extern SBProfile* SBParse(string in, Shear& s);
 }
