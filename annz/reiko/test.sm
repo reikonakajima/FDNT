@@ -51,8 +51,8 @@ filter2 3
  ############## end dependencies
 
 
-varrad 3
-# varrad NET_FILE SN E: vary radius, fix S/N and ellipticity
+varrad_m 3
+# varrad_[m/c] NET_FILE SN E: vary radius, fix S/N and ellipticity
 
 	# (1) generate inputs for annz_test
 	set rad = $(exp(-5)),(exp(-1)),0.001  # note we're using exp(-r)
@@ -93,3 +93,45 @@ varrad 3
 	points tr tm
         error_y tr tm tdm
 	ctype black
+
+varrad_c 3
+
+	# (1) generate inputs for annz_test
+	set rad = $(exp(-5)),(exp(-1)),0.001  # note we're using exp(-r)
+	set sn  = 0*rad + 1./$2/$2            # note we're using 1/sn^2
+        set e   = 0*rad + $3
+	set drad = 0*rad
+	set de = 0*rad
+	set dsn = 0*rad
+	set blah = 0*rad
+
+	define print_noheader 1
+	print tmp.txt {sn e rad dsn de drad blah}
+
+	! echo ../src/annz_test tmp.txt tmp.out $1
+	! ../src/annz_test tmp.txt tmp.out $1
+
+	# (2) plot annz_test output
+
+	data tmp.out
+	read { c 2 }
+
+	set rad = -ln(rad)
+
+	plotl rad c 0.5 5 -0.5 0.5
+
+	# (3) overplot training data
+
+	data all_c.train
+	read { sn 1 e 2 r 3 c 7 dc 8 }
+	set vecc = { sn e r c dc }
+
+	# transform sn back from 1/sn^2
+	filter  sn $(1./$2/$2*0.99) $(1./$2/$2*1.01)
+	filter2 e $($3*0.99) $($3*1.01)
+	ctype red
+	set tr = -ln(tr)
+	points tr tc
+        error_y tr tc tdc
+	ctype black
+
