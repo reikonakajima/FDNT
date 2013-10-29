@@ -29,6 +29,8 @@ OBJ = Laguerre.o Shear.o LTransforms.o GLSimple.o SBProfile.o SBPixel.o SCAMPMap
 
 all: depend subs
 
+FDNTRing_spl_noisy_ic: FDNTRing_spl_noisy_ic.o EnclosedFluxRadius.o SBParse.o $(OBJ)
+	$(CXX) $(CXXFLAGS) $^  $(LIBS) -o ../bin/$@
 FDNTRing_spl_true_ic: FDNTRing_spl_true_ic.o EnclosedFluxRadius.o SBParse.o $(OBJ)
 	$(CXX) $(CXXFLAGS) $^  $(LIBS) -o ../bin/$@
 FDNTColorGrad: FDNTColorGrad.o ColorGrad.o EnclosedFluxRadius.o SBParse.o $(OBJ)
