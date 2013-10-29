@@ -1,0 +1,95 @@
+ ############### dependencies
+
+plotlnaked 6
+        limits $3 $4 $5 $6
+        plotbp $1 $2
+
+plotbp 2
+        lweight 3
+        expand 1.5
+        box
+        expand 2
+
+        ctype black
+        expand 2
+        points $1 $2
+
+plotl 6
+        normal
+        erase
+        plotlnaked $1 $2 $3 $4 $5 $6
+
+        xlabel $1
+        ylabel $2
+        expand 1.5
+
+normal
+        ctype 2 ltype 0 ptype 4 1 expand 1 lweight 1
+        location 6500 30000 4500 30000
+
+filter 3
+# filter X min max -- filter galaxies with property X between min and max and save temporarily in vectors prefixed "t"
+        DO 4=0,dimen(vecc)-1 {
+                set t$(vecc[$4]) = $(vecc[$4]) if ($1 >= $2 && $1 <= $3)
+        }
+        if($verbose>0) {
+                echo filter returned $(dimen(t$(vecc[0]))) objects with $1 between $2 and $3
+        }
+
+filter2 3
+# filter2: filter temporary objects again by second criterium
+        DO 4=0,dimen(vecc)-1 {
+                set tt$(vecc[$4]) = t$(vecc[$4]) if (t$1 >= $2 && t$1 <= $3)
+        }
+        DO 4=0,dimen(vecc)-1 {
+                set t$(vecc[$4]) = tt$(vecc[$4])
+        }
+        if($verbose>0) {
+                echo filter2 returned $(dimen(t$(vecc[0]))) objects with $1 between $2 and $3
+        }
+
+ ############## end dependencies
+
+
+varrad 3
+# varrad NET_FILE SN E: vary radius, fix S/N and ellipticity
+
+	# (1) generate inputs for annz_test
+	set rad = $(exp(-5)),(exp(-1)),0.001  # note we're using exp(-r)
+	set sn  = 0*rad + 1./$2/$2            # note we're using 1/sn^2
+        set e   = 0*rad + $3
+	set drad = 0*rad
+	set de = 0*rad
+	set dsn = 0*rad
+	set blah = 0*rad
+
+	define print_noheader 1
+	print tmp.txt {sn e rad dsn de drad blah}
+
+	! echo ../src/annz_test tmp.txt tmp.out $1
+	! ../src/annz_test tmp.txt tmp.out $1
+
+
+	# (2) plot annz_test output
+
+	data tmp.out
+	read { m 2 }
+
+	set rad = -ln(rad)
+
+	plotl rad m 0.5 5 0.9 1.4
+
+	# (3) overplot training data
+
+	data all.train
+	read { sn 1 e 2 r 3 m 7 dm 8 }
+	set vecc = { sn e r m dm }
+
+	# transform sn back from 1/sn^2
+	filter  sn $(1./$2/$2*0.99) $(1./$2/$2*1.01)
+	filter2 e $($3*0.99) $($3*1.01)
+	ctype red
+	set tr = -ln(tr)
+	points tr tm
+        error_y tr tm tdm
+	ctype black
