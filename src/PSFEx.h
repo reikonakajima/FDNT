@@ -15,7 +15,9 @@ namespace sbp {
   {
   public:
      
-    PSFExModel(const char *filename);
+    // assume that all relevant extensions have EXTNAME='PSF_DATA'
+    // so distinguish the multiple PSF_DATA extensions by the EXTVER number
+    PSFExModel(const char *filename, const int extVersion=1);
     PSFExModel(const PSFExModel& rhs);
     ~PSFExModel();
 

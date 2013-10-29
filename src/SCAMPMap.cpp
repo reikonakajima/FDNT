@@ -105,7 +105,10 @@ ReadPV(const ImageHeader* h, int ipv) {
   }
 
   // If no keywords were found, return a zero-order polynomial
-  if (coeffs.empty()) return Poly2d(0);
+  if (coeffs.empty()) {
+      cerr << "SCAMP poly coeffs empty, identity matrix substituted" << endl;
+      return Poly2d(0);
+  }
 
   // Now convert coefficient vector into a matrix
   // What is the order of polynomial? Make it linear, at least

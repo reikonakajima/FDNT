@@ -181,8 +181,8 @@ main(int argc,
       //  gl.setCentering(false);
       if (!gl.solve()) {
 	cerr << "Failed measuring clean galaxy, flags " << gl.getFlags() << endl;
-	clean.shift(1,1);
-	FITSImage<>::writeToFITS("clean.fits", clean);
+	//clean.shift(1,1);
+	//FITSImage<>::writeToFITS("clean.fits", clean);
 	exit(1);
       }
       cleanBasis = gl.getBasis();
@@ -203,8 +203,8 @@ main(int argc,
       cout << "# Observed ideal S/N: " << sqrt(sigsum)*dx/imgRMS << endl;
 
       // save the object as a FITS file
-      clean.shift(1,1);
-      FITSImage<>::writeToFITS("clean.fits", clean);
+      //clean.shift(1,1);
+      //FITSImage<>::writeToFITS("clean.fits", clean);
     }
 
     // Make a PSFInfo structure - do a GL fit to get its basis

@@ -1,6 +1,7 @@
 #include <iostream>
 #include <iomanip>
 using namespace std;
+#include "SCAMPMap.h"
 
 main() {
   int a = 1<<1;
