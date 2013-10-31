@@ -36,6 +36,7 @@ double TrainNetwork::En(const std::vector<double>& inputs, const std::vector<dou
   for (int i = 0; i < nOutputs; ++i) {
     dif = (nodes[outputLayer[i]]->activation - trues[i]);
     sumsq += dif * dif / sigma2s[i];
+    //std::cerr << dif << " " << sqrt(sigma2s[i]) << std::endl;
   }
 
   return sumsq;

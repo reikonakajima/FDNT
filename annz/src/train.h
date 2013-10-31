@@ -25,7 +25,7 @@ class Training {
   std::vector<Pattern> trainSet, validSet;
   
   // Read in dataset from given filename.
-  static bool read_dataset(char fileName[], int nIn, int nOut, std::vector<Pattern> & data);
+  static bool read_dataset(char fileName[], int nIn, int nOut, std::vector<Pattern> & data, double sigma2tolerance);
   
   // Normalisation parameters.
   std::vector<double> meanIn, sigmaIn;
@@ -59,7 +59,7 @@ class Training {
 public:
   
   // Constructor.
-  Training(char archFile[], char trainFile[], char validFile[]);
+  Training(char archFile[], char trainFile[], char validFile[], double sigma2tolerance);
   
   // Conduct nIter iterations of training.
   int train(int nIter) { vmmin(nIter); }

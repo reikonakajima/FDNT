@@ -188,31 +188,31 @@ plotssnc 2
 	ctype black
 
 
-varrad_m 3
-# varrad_[m/c] NET_FILE SN E: vary radius, fix S/N and ellipticity
+varrad_m 4
+# varrad_[m/c] NET_FILE TRAIN_FILE SN E: vary radius, fix S/N and ellipticity; NET_FILE is the trained network, TRAIN_FILE the training input file
 	
-	get_network_output $1 $2 $3
+	get_network_output $1 $3 $4
 
 	set m = nnout
 
 	plotl rad m 0.5 5 0.9 1.4
 
-	get_training_data all.train $2 $3
+	get_training_data $2 $3 $4
 	
         ctype red
 	points rad truth
         error_y rad truth dtruth
 	ctype black
 
-varrad_c 3
+varrad_c 4
 	
-	get_network_output $1 $2 $3
+	get_network_output $1 $3 $4
 
 	set c = nnout
 
 	plotl rad c 0.5 5 -0.3 0.3
 
-	get_training_data all_c.train $2 $3
+	get_training_data $2 $3 $4
 	
         ctype red
 	points rad truth

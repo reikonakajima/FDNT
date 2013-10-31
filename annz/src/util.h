@@ -10,7 +10,7 @@ namespace annz_util {
   // Parse a line of input data (e.g. magnitudes/errors and optional redshift).
   bool parse_input_data(const std::string data, const int nIn, const int nOut, 
                       bool & truesPresent, std::vector<double> & inputs, 
-                      std::vector<double> & errors, std::vector<double> & trues, std::vector<double> & sigma2s);
+                      std::vector<double> & errors, std::vector<double> & trues, std::vector<double> & sigma2s, double sigma2tolerance);
   
   // Skip past comments/blank lines in the given input file stream.
   void skip_comments(std::ifstream& fstr);

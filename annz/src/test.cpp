@@ -149,7 +149,7 @@ bool Testing::test(char test_file[], char out_file[]) {
     
     // Extract data from string.
     bool thisSp;
-    if (!annz_util::parse_input_data(buffer, nInputs, nOutputs, thisSp, inputs, errors, trues, sigma2s))
+    if (!annz_util::parse_input_data(buffer, nInputs, nOutputs, thisSp, inputs, errors, trues, sigma2s, 0.)) // zero tolerance in testing
       return false;
     
     // Check for consistency of specs.

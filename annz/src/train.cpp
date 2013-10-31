@@ -178,7 +178,7 @@ void Training::vmmin(const int iter) {
     if (val_rms < val_best) {
       val_best = val_rms;
       best_wts = w;
-      std::cerr << "  (best RMS)";
+      std::cerr << "  (best)";
     }
     std::cerr << std::endl;
       
@@ -274,10 +274,10 @@ double Training::E(const std::vector<double> & wts) {
   // Calculate weight decay.
   double wtDecay = 0.0;
   for (int i = 0; i < wts.size(); ++i) {
-//    wtDecay += wts[i] * wts[i];
+    wtDecay += wts[i] * wts[i];
   }
 
-  cout << "sumsq=" << beta * 0.5 * sumsq << " wtDecay=" << alpha * 0.5 * wtDecay << endl;
+  //cout << "sumsq=" << beta * 0.5 * sumsq << " wtDecay=" << alpha * 0.5 * wtDecay << endl;
   
   // Return total cost function.
   return beta * 0.5 * sumsq + alpha * 0.5 * wtDecay;
@@ -351,7 +351,7 @@ void Training::recompute_hyperparams(const std::vector<double> & wts, std::vecto
 //==========================================================================
 
 // Constructor.
-Training::Training(char archFile[], char trainFile[], char validFile[]) :
+Training::Training(char archFile[], char trainFile[], char validFile[], double sigma2tolerance) :
       myNetwork(TrainNetwork(archFile)), alpha(1), beta(1) {
 
   // Set local record of numbers of inputs and outputs.
@@ -359,11 +359,11 @@ Training::Training(char archFile[], char trainFile[], char validFile[]) :
   nOutputs = myNetwork.getNOutputs();
   
   // Read training set.
-  read_dataset(trainFile, nInputs, nOutputs, trainSet);
+  read_dataset(trainFile, nInputs, nOutputs, trainSet, sigma2tolerance);
   std::cerr << "Training set: " << trainFile << " contains " << trainSet.size() << " patterns." << std::endl;
   
   // Read validation set.
-  read_dataset(validFile, nInputs, nOutputs, validSet);
+  read_dataset(validFile, nInputs, nOutputs, validSet, sigma2tolerance);
   std::cerr << "Validation set: " << validFile << " contains " << validSet.size() << " patterns." << std::endl << std::endl;
   
   // Normalise training and validation sets.
@@ -377,7 +377,7 @@ Training::Training(char archFile[], char trainFile[], char validFile[]) :
 
 //----------------------------------------------------------------------------------
 // Read in dataset from given filename.
-bool Training::read_dataset(char fileName[], int nIn, int nOut, std::vector<Pattern> & data) {
+bool Training::read_dataset(char fileName[], int nIn, int nOut, std::vector<Pattern> & data, double sigma2tolerance) {
  
   // Open data file.
   std::ifstream test_file_stream(fileName);
@@ -406,7 +406,7 @@ bool Training::read_dataset(char fileName[], int nIn, int nOut, std::vector<Patt
       break;
       
     // Extract data from string.
-    if (!annz_util::parse_input_data(buffer, nIn, nOut, specs, inputs, errors, trues, sigma2s))
+    if (!annz_util::parse_input_data(buffer, nIn, nOut, specs, inputs, errors, trues, sigma2s, sigma2tolerance))
       return false;
       
     // Check for consistency of specs.
@@ -486,6 +486,9 @@ void Training::normalise() {
     sigmaOut[oup] = sqrt(nPatt/(nPatt - 1.0) * (sumsqOut[oup]/nPatt - meanOut[oup]*meanOut[oup]));
   }
 
+  //for (int oup = 0; oup < nOutputs; ++oup) {
+  //  std::cerr << "normalizing output #" << oup+1 << " by dividing by " << sigmaOut[oup] << std::endl;
+  //}
 
   //----------------------------------------------------------
   // Apply normalisation to data.
@@ -497,7 +500,7 @@ void Training::normalise() {
     }
     for (int oup = 0; oup < nOutputs; ++oup) {
       trainSet[pat].trues[oup] = (trainSet[pat].trues[oup] - meanOut[oup])/sigmaOut[oup];
-      trainSet[pat].sigma2s[oup] /= sigmaOut[oup]*sigmaOut[oup];
+      trainSet[pat].sigma2s[oup] = sigmaOut[oup]*sigmaOut[oup];
     }
   }
   
@@ -508,7 +511,7 @@ void Training::normalise() {
     }
     for (int oup = 0; oup < nOutputs; ++oup) {
       validSet[pat].trues[oup] = (validSet[pat].trues[oup] - meanOut[oup])/sigmaOut[oup];
-      trainSet[pat].sigma2s[oup] /= sigmaOut[oup]*sigmaOut[oup];
+      validSet[pat].sigma2s[oup] /= sigmaOut[oup]*sigmaOut[oup];
     }
   }
 

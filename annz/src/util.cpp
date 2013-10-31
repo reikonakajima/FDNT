@@ -5,7 +5,7 @@
 
 bool annz_util::parse_input_data(const std::string data, const int nIn, const int nOut, 
 		     bool& truesPresent, std::vector<double>& inputs, 
-		     std::vector<double>& errors, std::vector<double>& trues, std::vector<double>& sigma2s) {
+		     std::vector<double>& errors, std::vector<double>& trues, std::vector<double>& sigma2s, double sigma2tolerance) {
 
   // Clear data vectors.
   inputs.clear();
@@ -60,12 +60,12 @@ bool annz_util::parse_input_data(const std::string data, const int nIn, const in
     // Is there yet more?
     if (ss >> temp) {
       // assume it's the standard deviations of truth
-      sigma2s.push_back(temp*temp);
+      sigma2s.push_back(temp*temp + sigma2tolerance);
 
       // Look for the rest of the outputs
       for(int ii=1; ii<nOut; ii++) {
         if (ss >> temp) {
-          sigma2s.push_back(temp*temp);
+          sigma2s.push_back(temp*temp + sigma2tolerance);
         } else {
           std::cerr << "ERROR: Bad input data (insufficient fields)" << std::endl;
           return false;
