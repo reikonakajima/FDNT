@@ -93,7 +93,7 @@ get_training_data 3
 #### plotting ####	
 
 plotssnm 2
-# plotssnm TRAIN_FILE E
+# plotssnm TRAIN_FILE E: plot bias m as a function of (SN x size) for fixed ellipticity; train file should probably be all.train
 	data $1
         read { sn 1 e 2 rad 3 truth 7 dtruth 8 }
         set vecc = { sn e rad truth dtruth ssn }
@@ -136,7 +136,7 @@ plotssnm 2
 	ctype black
 
 plotssnc 2
-# plotssnc TRAIN_FILE E
+# plotssnc TRAIN_FILE E: plot bias c as a function of (SN x size) for fixed ellipticity; train file should probably be all_c.train
 	data $1
         read { sn 1 e 2 rad 3 truth 7 dtruth 8 }
         set vecc = { sn e rad truth dtruth ssn }
@@ -262,7 +262,7 @@ mplot 1
 
 
 cplot 1
-# cplot E: make a plot of m as a function of r for e=$1 and three different S/N
+# cplot E: make a plot of c/e_psf as a function of r for e=$1 and three different S/N
 	
 	lweight 5 expand 2.5
 	limits 1 4.5 -0.3 0.05
