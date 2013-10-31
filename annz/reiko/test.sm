@@ -28,7 +28,7 @@ normal
         location 6500 30000 4500 30000
 
 filter 3
-# filter X min max -- filter galaxies with property X between min and max and save temporarily in vectors prefixed "t"
+   # filter X min max -- filter galaxies with property X between min and max and save temporarily in vectors prefixed "t"
         DO 4=0,dimen(vecc)-1 {
                 set t$(vecc[$4]) = $(vecc[$4]) if ($1 >= $2 && $1 <= $3)
         }
@@ -37,7 +37,7 @@ filter 3
         }
 
 filter2 3
-# filter2: filter temporary objects again by second criterium
+   # filter2: filter temporary objects again by second criterium
         DO 4=0,dimen(vecc)-1 {
                 set tt$(vecc[$4]) = t$(vecc[$4]) if (t$1 >= $2 && t$1 <= $3)
         }
@@ -47,6 +47,15 @@ filter2 3
         if($verbose>0) {
                 echo filter2 returned $(dimen(t$(vecc[0]))) objects with $1 between $2 and $3
         }
+
+
+savefiltered
+   # savefiltered -- save to vectors with prefix t removed
+        DO 1=0,dimen(vecc)-1 {
+                set $(vecc[$1]) = t$(vecc[$1])
+        }
+
+
 
  ############## end dependencies on my standard sm macros
 
