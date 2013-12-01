@@ -54,6 +54,13 @@ def get_file_info_header_string(line, dir_name):
     psf_e2 = float(ls[1].split('_')[4]) / 10.
     sn = float(ls[2])
     gal_type = ls[3]
+    gal_e = float(ls[4])
+    if dir_name == 'moffatR15.exp.s10s00.p00p01':   ### FIX ME ###
+        psf_e1 = float(ls[2])
+        psf_e2 = float(ls[3])
+        sn = float(ls[4])
+        gal_type = ls[5]
+        gal_e = float(ls[6])
     try:
         gal_index = float(gal_type) / 10.
     except ValueError:
@@ -63,7 +70,6 @@ def get_file_info_header_string(line, dir_name):
             gal_index = 4.0
         else:
             raise ValueError('unknown galaxy type '+gal_type)
-    gal_e = float(ls[4])
     # get applied shear info from directory name
     dist1 = float(dir_name.split('.')[2].split('s')[1]) / 100.
     dist2 = float(dir_name.split('.')[2].split('s')[2]) / 100.
@@ -92,6 +98,7 @@ for f in file_list:
     for line in open(f).readlines():
         if is_first_line:
             header_str = get_file_info_header_string(line, dir_name)
+            psf_ee50 = float(header_str.split()[0])
             is_first_line = False
             ls = line.split()
         else:
@@ -130,15 +137,22 @@ outf = {(1,2,3,4,5,6): trainf } #,
 err_str = '0 0 0'   # errors on S/N, gal |e|, and gal ee50, not needed for training
 for line in open(out_filename).readlines():
     
-    (p1, p2, p3, sn, d1, d2, gi, gal_e, gal_size, gal_ee50, \
-         mean1, mean2, errm1, errm2, r1, r2, n1, n2) = line.split()
+    if dir_name == 'moffatR15.exp.s10s00.p00p01':   ### FIX ME  (this is the correct version) ###
+        (p1, p2, p3, sn, d1, d2, gi, gal_e, gal_size, gal_ee50, conv_size, \
+             mean1, mean2, errm1, errm2, r1, r2, n1, n2) = line.split()
+    else:
+        (p1, p2, p3, sn, d1, d2, gi, gal_e, gal_size, gal_ee50, \
+             mean1, mean2, errm1, errm2, r1, r2, n1, n2) = line.split()
     
     randindex = random.randint(1,6)
     for key in outf.keys():
         if randindex in key:
             break
-    if(float(gal_ee50)>1.5 and float(gal_e)<0.85 and psf_e2!=0):
-      print >> outf[key],  1./float(sn)/float(sn), gal_e, math.exp(-float(gal_ee50)),  err_str,  float(mean2)/psf_e2, float(errm2)/psf_e2
+    resolution = float(gal_ee50) / psf_ee50    
+    if resolution > 1.0 and float(gal_e) < 0.901 and psf_e2 != 0:
+      print >> outf[key], 1./float(sn)/float(sn), 
+      print >> outf[key], gal_e, math.exp(-resolution), err_str,
+      print >> outf[key], float(mean2)/psf_e2, float(errm2)/psf_e2
 
 
 trainf.close()
