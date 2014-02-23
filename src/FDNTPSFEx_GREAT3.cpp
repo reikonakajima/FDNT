@@ -1,4 +1,4 @@
-// FDNTPSFEx.cpp
+// FDNTPSFEx_GREAT3.cpp
 // Run FDNT on images with PSFEx psf model and SExtractor input catalog
 
 #include "FDNT.h"
@@ -79,16 +79,16 @@ main(int argc,
       parameters.addMemberNoValue("FILES:",0,
 				  "Input data");
       parameters.addMember("fitsName",&fitsName, def,
-			   "Image FITS file", "set0001.fit");
+			   "Image FITS file", "image-000-0.fits");
       parameters.addMember("catName",&catName, def,
-			   "Input SExtractor catalog", "set0001.scat");
+			   "Input SExtractor catalog", "sextractor-000-0.cat");
       parameters.addMember("psfName",&psfName, def,
-			   "Input PSFEx file", "model.txt");
+			   "Input PSFEx file", "psfex-000-0.psf");
       parameters.addMember("psfOrder",&psfOrder, def | low,
-			   "Maximum order of polynomial psf variation used; -1 for order od PSFEx model", -1, -1);
-      parameters.addMember("weightName",&weightName, def, "Input weight map proportional to inverse variance", "weight.fit");
+			   "Maximum order of polynomial psf variation used; -1 for order of PSFEx model", -1, -1);
+      parameters.addMember("weightName",&weightName, def, "Input weight map proportional to inverse variance", "weight-000-0.fits");
       parameters.addMember("wcsName",&wcsName, def,
-			   "World coordinate header file", "wcs.txt");
+			   "World coordinate header file", "wcs_is_pixel.txt");
       parameters.addMember("weightScaleKey",&weightScaleKey, def,
 			   "Scaling factor for weight map (e.g. from Swarp) keyword in WCS header", "WTSCALE");
 			   // this is the scale that transforms weight proportional to 1/sig^2 to weights EQUAL to 1/sig^2 of the respective single frame
@@ -96,11 +96,11 @@ main(int argc,
       parameters.addMember("fluxScaleKey",&fluxScaleKey, def,
 			   "Scaling factor for flux (e.g. from WCS header) keyword in WCS header", "FLXSCALE");
       parameters.addMember("segmentationName",&segmentationName, def,
-			   "segmentation map", "segment.fits");
+			   "segmentation map", "segmentation-000-0.fits");
       parameters.addMember("segmentationPadding",&segmentationPadding, def | low,
 			   "padding around segmentation maps [pix]", 0, 0);
       parameters.addMember("stampSize",&stampSize, def | low,
-			   "Pixel size of img postage stamps", 64, 3);
+			   "Pixel size of img postage stamps", 48, 3);
       parameters.addMemberNoValue("DATA PROPERTIES:",0,
 				  "Input data");
       parameters.addMember("sky",&sky, def,
@@ -120,7 +120,7 @@ main(int argc,
       parameters.addMember("idCol",&idCol, def | low,
 			   "Object ID", 1, 1);
       parameters.addMember("segIdCol",&segIdCol, def | low,
-			   "Object ID in segmentation map; determined automatically if 0", 1, 0);
+			   "Object ID in segmentation map; determined automatically if 0", 0, 0);
       parameters.addMember("raCol",&raCol, def | low,
 			   "RA centroid", 2, 1);
       parameters.addMember("decCol",&decCol, def | low,
@@ -128,7 +128,7 @@ main(int argc,
       //parameters.addMember("magCol",&magCol, def | low,
 	//		   "Magnitude", 4, 1);
       parameters.addMember("bgCol",&bgCol, def | low,
-			   "photometric background flux (zero if bgCol==0)", 5, 0);
+			   "photometric background flux (zero if bgCol==0)", 0, 0);
       parameters.addMember("rCol",&rCol, def | low,
 			   "Half-light radius (in pixels)", 6, 1);
       parameters.addMember("g1Col",&g1Col, def | low,
@@ -136,11 +136,11 @@ main(int argc,
       parameters.addMember("g2Col",&g2Col, def | low,
 			   "g2 shape estimate (pixel coordinates)", 8, 1);
       parameters.addMember("aCol",&aCol, def | low,
-			   "Major axis (in WC)", 9, 1);
+			   "Major axis (in WC)", 7, 1);
       parameters.addMember("bCol",&bCol, def | low,
-			   "Minor axis (in WC)", 10, 1);
+			   "Minor axis (in WC)", 8, 1);
       parameters.addMember("paCol",&paCol, def | low,
-			   "Position angle (in WC)", 11, 1);
+			   "Position angle (in WC)", 9, 1);
       parameters.addMember("fwdColStart",&fwdColStart, def | low,
 			   "first forwarded column from input catalog", 0, 1);
       parameters.addMember("fwdColEnd",&fwdColEnd, def | low,

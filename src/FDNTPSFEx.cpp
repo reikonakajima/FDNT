@@ -85,7 +85,7 @@ main(int argc,
       parameters.addMember("psfName",&psfName, def,
 			   "Input PSFEx file", "model.txt");
       parameters.addMember("psfOrder",&psfOrder, def | low,
-			   "Maximum order of polynomial psf variation used; -1 for order od PSFEx model", -1, -1);
+			   "Maximum order of polynomial psf variation used; -1 for order of PSFEx model", -1, -1);
       parameters.addMember("weightName",&weightName, def, "Input weight map proportional to inverse variance", "weight.fit");
       parameters.addMember("wcsName",&wcsName, def,
 			   "World coordinate header file", "wcs.txt");
