@@ -118,8 +118,7 @@ main(int argc,
     parameters.dump(cout);
 
     // First create the galaxy
-    Shear s;
-    SBProfile* unlensed=SBParse(sbGalaxy, s);
+    SBProfile* unlensed=SBParse(sbGalaxy);
     // Measure half-light radius
     double ee50g = EnclosedFluxRadius(*unlensed);
     // Dilate if desired:
@@ -135,7 +134,7 @@ main(int argc,
     cout << "# Galaxy EE50: " << ee50g << endl;
 
     // Create PSF
-    SBProfile* psfraw=SBParse(sbPSF, s);
+    SBProfile* psfraw=SBParse(sbPSF);
     double ee50psf = EnclosedFluxRadius(*psfraw);
     // Dilate if desired:
     if (rhalfPSF > 0.) {
@@ -236,9 +235,9 @@ main(int argc,
     // begin: the iTheta "broken" loop
     { 
       // things that we need local copies of, for parallel prossessing
-      SBProfile* psfraw=SBParse(sbPSF, s);
+      SBProfile* psfraw=SBParse(sbPSF);
       PSFInformation psfinfo(*psfraw, psfBasis);
-      SBProfile* unlensed=SBParse(sbGalaxy, s);
+      SBProfile* unlensed=SBParse(sbGalaxy);
       UnweightedShearEstimator seRawTheta;
       UnweightedShearEstimator seNoFixTheta;
       double sum_sn = 0.;
