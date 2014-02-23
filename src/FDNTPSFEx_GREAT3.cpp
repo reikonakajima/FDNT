@@ -132,9 +132,9 @@ main(int argc,
       parameters.addMember("rCol",&rCol, def | low,
 			   "Half-light radius (in pixels)", 6, 1);
       parameters.addMember("g1Col",&g1Col, def | low,
-			   "g1 shape estimate (pixel coordinates)", 7, 1);
+			   "g1 shape estimate (pixel coordinates)", 0, 1);  // use native (g1,g2)
       parameters.addMember("g2Col",&g2Col, def | low,
-			   "g2 shape estimate (pixel coordinates)", 8, 1);
+			   "g2 shape estimate (pixel coordinates)", 0, 1);
       parameters.addMember("aCol",&aCol, def | low,
 			   "Major axis (in WC)", 7, 1);
       parameters.addMember("bCol",&bCol, def | low,
