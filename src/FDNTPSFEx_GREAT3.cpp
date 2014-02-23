@@ -132,9 +132,9 @@ main(int argc,
       parameters.addMember("rCol",&rCol, def | low,
 			   "Half-light radius (in pixels)", 6, 1);
       parameters.addMember("g1Col",&g1Col, def | low,
-			   "g1 shape estimate (pixel coordinates)", 0, 1);  // use native (g1,g2)
+			   "g1 shape estimate (pixel coordinates)", 0, 0);  // use native (g1,g2)
       parameters.addMember("g2Col",&g2Col, def | low,
-			   "g2 shape estimate (pixel coordinates)", 0, 1);
+			   "g2 shape estimate (pixel coordinates)", 0, 0);
       parameters.addMember("aCol",&aCol, def | low,
 			   "Major axis (in WC)", 7, 1);
       parameters.addMember("bCol",&bCol, def | low,
@@ -142,9 +142,9 @@ main(int argc,
       parameters.addMember("paCol",&paCol, def | low,
 			   "Position angle (in WC)", 9, 1);
       parameters.addMember("fwdColStart",&fwdColStart, def | low,
-			   "first forwarded column from input catalog", 0, 1);
+			   "first forwarded column from input catalog", 0, 0);
       parameters.addMember("fwdColEnd",&fwdColEnd, def | low,
-			   "last forwarded column from input catalog", 0, 1);
+			   "last forwarded column from input catalog", 0, 0);
       parameters.addMember("maxBadPixels",&maxBadPixels, def,
 			   "Maximum fraction of bad pixels in postage stamp", 0.1);
       parameters.addMember("maxBadFlux",&maxBadFlux, def,
