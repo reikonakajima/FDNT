@@ -338,14 +338,26 @@ main(int argc,
       double a_wc = atof(readvals[aCol-1].c_str());
       double b_wc = atof(readvals[bCol-1].c_str());
       double pa_wc = atof(readvals[paCol-1].c_str());
-      double r_pix = atof(readvals[rCol-1].c_str()); // FLUX_RADIUS is in pixels! there is no _WORLD alternative
-      double g1_wc = atof(readvals[g1Col-1].c_str());
-      double g2_wc = atof(readvals[g2Col-1].c_str());
+      // FLUX_RADIUS is in pixels! there is no _WORLD alternative
+      double r_pix = atof(readvals[rCol-1].c_str());
+
+      // set-up g1, g2
+      double e1start = (a_wc*a_wc-b_wc*b_wc)/(a_wc*a_wc+b_wc*b_wc);
+      double e2start = e1start * sin(2*pa_wc*PI/180.);
+      e1start *= cos(2*pa_wc*PI/180.);
+      Shear  sexS(e1start, e2start);
+      double g1_wc, g2_wc;
+      sexS.getG1G2(g1_wc, g2_wc);
+      if (g1Col <= 0)
+	  g1_wc = atof(readvals[g1Col-1].c_str());
+      if (g2Col <= 0)
+	  g2_wc = atof(readvals[g2Col-1].c_str());
       double gabs = sqrt(g1_wc*g1_wc+g2_wc*g2_wc);
       if (gabs > 0.95) { // sanitize shear
 	  g1_wc=g1_wc*0.95/gabs;
 	  g2_wc=g2_wc*0.95/gabs;
       }
+
       double bg = 0.;
       if (bgCol > 0)
 	  bg = atof(readvals[bgCol-1].c_str());
@@ -358,8 +370,10 @@ main(int argc,
 	      fwd += " ";
 	  }
       }
-      double x_wc, y_wc; // tangent plane coordinates
-      double x_pix, y_pix;       // pixel coordinates
+
+      double x_wc = ra0;
+      double y_wc = dec0;
+      double x_pix, y_pix;
       
       fullmap->toPix(x_wc,y_wc,x_pix,y_pix);
       /*
@@ -431,8 +445,8 @@ main(int argc,
       cerr << "// (d) Starting ellipse of galaxy" << endl;
 #endif
 
-      double e1start, e2start;
-      Shear initShear; initShear.setG1G2(g1_wc, g2_wc); initShear.getE1E2(e1start, e2start);
+      //double e1start, e2start;
+      //Shear initShear; initShear.setG1G2(g1_wc, g2_wc); initShear.getE1E2(e1start, e2start);
       cerr << "KSB ellipse r=" << r_pix*rescale << ", e=" << e1start << "," << e2start << endl;
       Ellipse initE(e1start, e2start, log(r_pix*rescale), x_wc, y_wc); // all in wcs
       
