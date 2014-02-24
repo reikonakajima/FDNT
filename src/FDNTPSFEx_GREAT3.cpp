@@ -685,7 +685,7 @@ main(int argc,
 #ifdef DEBUGFDNTPSFEX      
       cerr << "// (g) running FDNT..." << flush;
 #endif
-      FDNT<> fd(*fep, psfinfo, initE, order);
+      FDNT<> fd(*fep, psfinfo, sexE, order);
       fd.setMaskSigma(maskSigma);
       fd.GLAll();
       bool success = fd.prepare();
@@ -748,8 +748,8 @@ main(int argc,
 	  FITSImage<>::writeToFITS("check_"+id+"_sci_good.fits",scistamp);
 	  segstamp.shift(1,1);
 	  FITSImage<>::writeToFITS("check_"+id+"_seg_good.fits",segstamp);
-	  Image<> filter1 = fd.drawFilter1(targetS,initE);
-	  Image<> filter2 = fd.drawFilter2(targetS,initE);
+	  Image<> filter1 = fd.drawFilter1(targetS, sexE);
+	  Image<> filter2 = fd.drawFilter2(targetS, sexE);
 	  filter1.shift(1,1);
 	  FITSImage<>::writeToFITS("check_"+id+"_f1_good.fits",filter1);
 	  filter2.shift(1,1);
@@ -785,7 +785,7 @@ main(int argc,
       cout << id 
 	   << " " << x_pix
 	   << " " << y_pix 
-	   //<< " " << mag 
+	   << " " << obs_SN
 	   << " " << eta1 
 	   << " " << eta2
 	   << " " << sig1
