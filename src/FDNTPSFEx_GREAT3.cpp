@@ -323,6 +323,10 @@ main(int argc,
 
 
     while (stringstuff::getlineNoComment(ccat, buffer)) { // all objects
+
+	//
+	// acquire info of object
+	//
       cerr << "######################################################" << endl
 	   << "// (a) Acquire info of object " << flush;
       istringstream iss(buffer);
@@ -341,7 +345,7 @@ main(int argc,
       // FLUX_RADIUS is in pixels! there is no _WORLD alternative
       double r_pix = atof(readvals[rCol-1].c_str());
 
-      // set-up g1, g2
+      // set-up initial g1, g2 from native SExtractor value
       double e1start = (a_wc*a_wc-b_wc*b_wc)/(a_wc*a_wc+b_wc*b_wc);
       double e2start = e1start * sin(2*pa_wc*PI/180.);
       e1start *= cos(2*pa_wc*PI/180.);
@@ -376,23 +380,6 @@ main(int argc,
       double x_pix, y_pix;
       
       fullmap->toPix(x_wc,y_wc,x_pix,y_pix);
-      /*
-      SphericalICRS point(ra0*DEGREE, dec0*DEGREE);
-      TangentPlane tp(point, fullmap->projection());
-      tp.getLonLat(x_wc, y_wc);
-      x_wc /= DEGREE;
-      y_wc /= DEGREE;
-      try {
-	  cerr << "# object at WCS " << x_wc << " " << y_wc << endl; // DEBUG
-	  fullmap->toPix(x_wc,y_wc,x_pix,y_pix);
-      }
-      catch  (AstrometryError& e) {
-	  cerr << e.what() << endl;
-	  cerr << "processing object at (RA,dec)=(" << ra0 << "," << dec0 << ")" << endl;
-	  cout << "toPix failure" << endl;
-	  exit(0);
-      }
-      */
       
 #ifdef DEBUGFDNTPSFEX
       cerr << "processing object at (RA,dec)=(" << ra0 << "," << dec0 << ")=(" << x_wc << "," << y_wc << ") " << "(x,y)=(" << x_pix << "," << y_pix << ")" << endl;
@@ -403,21 +390,29 @@ main(int argc,
 #endif
       Matrix22 J = fullmap->dWorlddPix(x_pix,y_pix);
       double rescale = sqrt(fabs(J(0,0)*J(1,1)-J(0,1)*J(1,0)));
-      // distorted approximate pixel scale: how much the scales are enlarged by world coordinate trans
+      // distorted approximate pixel scale: how much the scales are enlarged by
+      // world coordinate transformation
 #ifdef DEBUGFDNTPSFEX
       cerr << "rescaling by " << rescale << endl;
+#endif
 
+      //
+      // get PSF model at the position
+      //
+#ifdef DEBUGFDNTPSFEX
       cerr << "// (c) get PSF model at the position" << endl;
 #endif
       model->fieldPosition(x_pix,y_pix); // model now holds the psf model at this position
       cerr << "flux before normalization: " << model->sb()->getFlux() << endl;
       model->setFlux(1.0);
-      double ee50psf = model->getFWHM()/2.*rescale; // FWHM is twice the half-light radius for Gaussian psf, scaled to world coords
+      // FWHM is twice the half-light radius for Gaussian psf, scaled to world coords
+      double ee50psf = model->getFWHM()/2.*rescale;
       Ellipse psfBasis(0., 0., log(ee50psf/1.17));
       SBDistort psfWCS(*(model->sb()),J(0,0),J(0,1),J(1,0),J(1,1));
       cerr << "dWorld/dPix " << J << endl; 
       cerr << ee50psf << endl;
-      psfWCS.setFlux(1.); // sets flux of basis correctly to have flux normalization after distortion
+      // set flux of basis correctly to have flux normalization after distortion
+      psfWCS.setFlux(1.);
       
       double dx = ee50psf / 2.35; // magic 4.7 factor from PSFEx
       cerr << "drawing psf postage stamp with dx=" << dx << endl;
@@ -438,24 +433,23 @@ main(int argc,
 	   << " " << exp(psfBasis.getMu())
 	   << endl;
 #endif
-      
+
       PSFInformation psfinfo(psfWCS, psfBasis);
 
+      //
+      // initialize galaxy ellipse value
+      //
 #ifdef DEBUGFDNTPSFEX
       cerr << "// (d) Starting ellipse of galaxy" << endl;
 #endif
 
-      //double e1start, e2start;
-      //Shear initShear; initShear.setG1G2(g1_wc, g2_wc); initShear.getE1E2(e1start, e2start);
-      cerr << "KSB ellipse r=" << r_pix*rescale << ", e=" << e1start << "," << e2start << endl;
-      Ellipse initE(e1start, e2start, log(r_pix*rescale), x_wc, y_wc); // all in wcs
+      cerr << "SExtractor ellipse r=" << r_pix*rescale << ", e="
+	   << e1start << "," << e2start << endl;
+      Ellipse sexE(e1start, e2start, log(r_pix*rescale), x_wc, y_wc);  // in wcs
       
-      double SExe1start = (a_wc*a_wc-b_wc*b_wc)/(a_wc*a_wc+b_wc*b_wc);
-      double SExe2start = SExe1start * sin(2*pa_wc*PI/180.);
-      SExe1start *= cos(2*pa_wc*PI/180.);
-      cerr << "SExtractor ellipse r=" << r_pix*rescale << ", e=" << SExe1start << "," << SExe2start << endl;
-      Ellipse sexE(SExe1start, SExe2start, log(r_pix*rescale), x_wc, y_wc); // all in wcs pixel coordinates
-      
+      //
+      // build FitExposure
+      //
 #ifdef DEBUGFDNTPSFEX
       cerr << "// (e) building FitExposure" << endl;
 #endif
@@ -471,7 +465,8 @@ main(int argc,
       if(yi0+stampSize+1>bounds.getYMax()) yi0 = bounds.getYMax()-stampSize-1;
 #ifdef DEBUGFDNTPSFEX
       cerr << "// " << xi0 << " " << xi0+stampSize-1 << " " << yi0 << " " << yi0+stampSize-1 << endl;
-      cerr << "// hopefully inside x=" << bounds.getXMin() << ".." << bounds.getXMax() << ", y=" << bounds.getYMin() << ".." << bounds.getYMax() << endl; 
+      cerr << "// hopefully inside x=" << bounds.getXMin() << ".." << bounds.getXMax()
+	   << ", y=" << bounds.getYMin() << ".." << bounds.getYMax() << endl;
 #endif      
       Bounds<int> stamp(xi0,xi0+stampSize-1, yi0, yi0+stampSize-1);
       cerr << "set bounds" << endl;
@@ -484,110 +479,120 @@ main(int argc,
       Image<double> xwstamp(stamp);
       Image<double> ywstamp(stamp);
       int segId=0;
-      if(segIdCol>0) segId = atoi(readvals[segIdCol-1].c_str());
+      if (segIdCol>0)
+	  segId = atoi(readvals[segIdCol-1].c_str());
       else {
-	bool badSegID=false;
-	for (int dx=0; dx<=1; dx++) {
-	 for (int dy=0; dy<=1; dy++) {
-          cerr << int(x_pix)+dx << " " << int(y_pix)+dy << endl;
-	  int dsegId=seg(int(x_pix)+dx,int(y_pix)+dy);
-	  if(!segId && dsegId) {
-	    segId=dsegId;
+	  bool badSegID=false;
+	  for (int dx=0; dx<=1; dx++) {
+	      for (int dy=0; dy<=1; dy++) {
+		  cerr << int(x_pix)+dx << " " << int(y_pix)+dy << endl;
+		  int dsegId=seg(int(x_pix)+dx,int(y_pix)+dy);
+		  if(!segId && dsegId) {
+		      segId=dsegId;
+		  }
+		  else if(dsegId && segId!=dsegId)
+		  {
+		      badSegID=true;
+		  }
+	      }
 	  }
-	  else if(dsegId && segId!=dsegId)
+
+	  if (badSegID)
 	  {
-	    badSegID=true;
-	  }
-         }
-        }
-        
-        if(badSegID)
-	{
-		cerr << "# fail: could not get segmentation id for " << id << endl;
+	      cerr << "# fail: could not get segmentation id for " << id << endl;
 #ifdef CHECKPLOTS
-		ipsf.shift(1,1);
-	        FITSImage<>::writeToFITS("check_"+id+"_psf_badseg.fits",ipsf);
-		wtstamp.shift(1,1);
-		FITSImage<>::writeToFITS("check_"+id+"_wt_badseg.fits",wtstamp);
-		scistamp.shift(1,1);
-		FITSImage<>::writeToFITS("check_"+id+"_sci_badseg.fits",scistamp);
-		segstamp.shift(1,1);
-		FITSImage<>::writeToFITS("check_"+id+"_seg_badseg.fits",segstamp);
+	      ipsf.shift(1,1);
+	      FITSImage<>::writeToFITS("check_"+id+"_psf_badseg.fits",ipsf);
+	      wtstamp.shift(1,1);
+	      FITSImage<>::writeToFITS("check_"+id+"_wt_badseg.fits",wtstamp);
+	      scistamp.shift(1,1);
+	      FITSImage<>::writeToFITS("check_"+id+"_sci_badseg.fits",scistamp);
+	      segstamp.shift(1,1);
+	      FITSImage<>::writeToFITS("check_"+id+"_seg_badseg.fits",segstamp);
 #endif
-	  	nfail++;
-	 	nfail_seg++;
-	  	continue; 
-	}
+	      nfail++;
+	      nfail_seg++;
+	      continue;
+	  }
       }
       
       cerr << "got segid" << endl;
       {
-	try {
-	  for (int iy=stamp.getYMin(); iy<=stamp.getYMax(); iy++)
-	  {
-	   for (int ix=stamp.getXMin(); ix<=stamp.getXMax(); ix++) {
-	     double dxw,dyw;
-	     fullmap->toWorld(ix,iy,dxw,dyw);
-	     xwstamp(ix,iy)=dxw;
-	     ywstamp(ix,iy)=dyw;
-	     if(segstamp(ix,iy) && segstamp(ix,iy)!=segId) //it's another object!
-	     {
-	       for (int iiy=max(stamp.getYMin(),iy-segmentationPadding); iiy<=min(stamp.getYMax(),iy+segmentationPadding); iiy++) 
-	       for (int iix=max(stamp.getXMin(),ix-segmentationPadding); iix<=min(stamp.getXMax(),ix+segmentationPadding); iix++) 
-	         wtstamp(iix,iiy)=0.;
-	     }
-	   }
-	  }
-	  fep = new FitExposure<>(scistamp, 
-				wtstamp, 
-				xwstamp, 
-				ywstamp, 0, sky+bg); // stack background with sky-subtracted single frames == photometric local background in stack flux scale 
+	  try {
+	      for (int iy=stamp.getYMin(); iy<=stamp.getYMax(); iy++)
+	      {
+		  for (int ix=stamp.getXMin(); ix<=stamp.getXMax(); ix++) {
+		      double dxw,dyw;
+		      fullmap->toWorld(ix,iy,dxw,dyw);
+		      xwstamp(ix,iy)=dxw;
+		      ywstamp(ix,iy)=dyw;
+		      if (segstamp(ix,iy) && segstamp(ix,iy)!=segId) //it's another object!
+		      {
+			  cerr << "WARNING: objid " << id << " is fractured" << endl;
+			  for (int iiy=max(stamp.getYMin(),iy-segmentationPadding);
+			       iiy<=min(stamp.getYMax(),iy+segmentationPadding);
+			       iiy++)
+			      for (int iix=max(stamp.getXMin(),ix-segmentationPadding);
+				   iix<=min(stamp.getXMax(),ix+segmentationPadding);
+				   iix++)
+				  wtstamp(iix,iiy)=0.;
+		      }
+		  }
+	      }
+	      // stack background with sky-subtracted single frames == photometric local background
+	      // in stack flux scale
+	      fep = new FitExposure<>(scistamp,
+				      wtstamp,
+				      xwstamp,
+				      ywstamp, 0, sky+bg);
 	}
 	catch (...)
 	{
-	  cerr << "# fail: could not get postage stamp for " << id << endl;
-	  nfail++;
-	  nfail_post++;
-	  delete fep; //delete map;
-	  continue;
+	    cerr << "# fail: could not get postage stamp for " << id << endl;
+	    nfail++;
+	    nfail_post++;
+	    delete fep; //delete map;
+	    continue;
 	}
       }
+
+      //
+      // check for bad pixels (there should be none in GREAT3!)
+      //
 #ifdef DEBUGFDNTPSFEX
       cerr << "// (f) checking bad pixels" << endl;
 #endif
       double meanweight=0.;
       vector< Position<int> > bp = fep->badPixels(meanweight);
       cerr << "mean weight: " << meanweight << endl;
-      if(bp.size()>maxBadPixels*stampSize*stampSize)
+      if (bp.size() > maxBadPixels*stampSize*stampSize)
       {
-	cerr << "# fail: " << id << " has too many bad pixels" << endl;
+	  cerr << "# fail: " << id << " has too many bad pixels" << endl;
 #ifdef CHECKPLOTS
-	ipsf.shift(1,1);
-	FITSImage<>::writeToFITS("check_"+id+"_psf_badpix.fits",ipsf);
-	wtstamp.shift(1,1);
-	FITSImage<>::writeToFITS("check_"+id+"_wt_badpix.fits",wtstamp);
-	scistamp.shift(1,1);
-	FITSImage<>::writeToFITS("check_"+id+"_sci_badpix.fits",scistamp);
-	segstamp.shift(1,1);
-	FITSImage<>::writeToFITS("check_"+id+"_seg_badpix.fits",segstamp);
+	  ipsf.shift(1,1);
+	  FITSImage<>::writeToFITS("check_"+id+"_psf_badpix.fits",ipsf);
+	  wtstamp.shift(1,1);
+	  FITSImage<>::writeToFITS("check_"+id+"_wt_badpix.fits",wtstamp);
+	  scistamp.shift(1,1);
+	  FITSImage<>::writeToFITS("check_"+id+"_sci_badpix.fits",scistamp);
+	  segstamp.shift(1,1);
+	  FITSImage<>::writeToFITS("check_"+id+"_seg_badpix.fits",segstamp);
 #endif
-	nfail++;
-	nfail_badpix++;
-	delete fep; //delete map;
-	continue;
+	  nfail++;
+	  nfail_badpix++;
+	  delete fep; // delete map;
+	  continue;
       }
 #ifdef DEBUGFDNTPSFEX
-      Image<float> glstamp = sci.subimage(stamp).duplicate(); // science image, from which we now subtract the GL model
+      // science image, from which we now subtract the GL model
+      Image<float> glstamp = sci.subimage(stamp).duplicate();
 #endif
       
-      if(bp.size()>0) // has bad pixels, but not too many to begin with: do GL interpolation
-      {
-#ifdef DEBUGFDNTPSFEX
-	cerr << "# trying to interpolate " << bp.size() << " bad pixels" << endl;
-	cerr << sexE << " " <<  interpolationOrder << endl;
-#endif
-	GLSimple<> gal(*fep, sexE, interpolationOrder); 
-	if(!gal.solve()) {
+      //
+      // calculate S/N & interpolate over bad pixels
+      //
+      GLSimple<> gal(*fep, sexE, interpolationOrder);
+      if (!gal.solve()) {
 	  cerr << "# fail: GL fit failed for " << id << endl;
 #ifdef CHECKPLOTS
 	  ipsf.shift(1,1);
@@ -603,64 +608,80 @@ main(int argc,
 	  nfail_bpgl++;
 	  delete fep;
 	  continue;
-	}
-	LVector bvec = gal.getB();
-	double fluxModel = bvec.flux();
-	Ellipse basis = gal.getBasis();
-	double missingFlux=0.;
-	double scaleFactor = exp(basis.getMu());
+      }
+      double f, varf;
+      gl.b00(f, varf);
+      double obs_SN = f / sqrt(varf);
+      cout << "# Observed GL S/N: " << obs_SN << endl;
 
-        for(vector< Position<int> >::iterator it=bp.begin(); it<bp.end(); it++) {
-	   LVector psi(bvec.getOrder());
-	   Position<double> xunit = basis.inv(Position<double>(xwstamp((*it).x,(*it).y),ywstamp((*it).x,(*it).y)));
-	   psi.fillBasis(xunit.x, xunit.y, scaleFactor);
-	   scistamp((*it).x,(*it).y)=bvec.dot(psi);
-	   wtstamp((*it).x,(*it).y)=meanweight;
-	   // the interpolated pixel is assumed to have the mean weight of the good pixels;
-	   // this makes sense because in the Fourier code homogeneous uncertainties are assumed
-	   missingFlux += scistamp((*it).x,(*it).y);
-	   scistamp((*it).x,(*it).y)+=sky+bg;
-	}
-	missingFlux *= rescale*rescale; // scale flux with coordinate system
+      if (bp.size() > 0) // has bad pixels, but not too many to begin with: do GL interpolation
+      {
+#ifdef DEBUGFDNTPSFEX
+	  cerr << "# trying to interpolate " << bp.size() << " bad pixels" << endl;
+	  cerr << sexE << " " <<  interpolationOrder << endl;
+#endif
+	  LVector bvec = gal.getB();
+	  double fluxModel = bvec.flux();
+	  Ellipse basis = gal.getBasis();
+	  double missingFlux=0.;
+	  double scaleFactor = exp(basis.getMu());
+
+	  for (vector< Position<int> >::iterator it=bp.begin(); it<bp.end(); it++) {
+	      LVector psi(bvec.getOrder());
+	      Position<double> xunit = basis.inv(Position<double>(xwstamp((*it).x,(*it).y),
+								  ywstamp((*it).x,(*it).y)));
+	      psi.fillBasis(xunit.x, xunit.y, scaleFactor);
+	      scistamp((*it).x,(*it).y)=bvec.dot(psi);
+	      wtstamp((*it).x,(*it).y)=meanweight;
+	      // the interpolated pixel is assumed to have the mean weight of the good pixels;
+	      // this makes sense because in the Fourier code homogeneous uncertainties are assumed
+	      missingFlux += scistamp((*it).x,(*it).y);
+	      scistamp((*it).x,(*it).y)+=sky+bg;
+	  }
+	  missingFlux *= rescale*rescale; // scale flux with coordinate system
 
 #ifdef DEBUGFDNTPSFEX
-	for (int iy=stamp.getYMin(); iy<=stamp.getYMax(); iy++)
+	  for (int iy=stamp.getYMin(); iy<=stamp.getYMax(); iy++)
 	  {
-	   for (int ix=stamp.getXMin(); ix<=stamp.getXMax(); ix++) {
-	     LVector psi(bvec.getOrder());
-	     Position<double> xunit = basis.inv(Position<double>(xwstamp(ix,iy),ywstamp(ix,iy)));
-	     psi.fillBasis(xunit.x, xunit.y, scaleFactor);
-	     glstamp(ix,iy) -= bvec.dot(psi);   
-	   }
+	      for (int ix=stamp.getXMin(); ix<=stamp.getXMax(); ix++) {
+		  LVector psi(bvec.getOrder());
+		  Position<double> xunit = basis.inv(Position<double>(xwstamp(ix,iy),
+								      ywstamp(ix,iy)));
+		  psi.fillBasis(xunit.x, xunit.y, scaleFactor);
+		  glstamp(ix,iy) -= bvec.dot(psi);
+	      }
 	  }
 
-	cerr << "# fluxModel=" << fluxModel << endl;
-	cerr << "# scaleFactor=" << scaleFactor << endl;
-	cerr << "# missingFlux=" << missingFlux << endl;
+	  cerr << "# fluxModel=" << fluxModel << endl;
+	  cerr << "# scaleFactor=" << scaleFactor << endl;
+	  cerr << "# missingFlux=" << missingFlux << endl;
 #endif
 
-	 if(missingFlux/fluxModel > maxBadFlux)
-	 {
-	   cerr << "# fail: bad pixels in " << id << " have too high flux fraction" << endl;
+	  if (missingFlux/fluxModel > maxBadFlux)
+	  {
+	      cerr << "# fail: bad pixels in " << id << " have too high flux fraction" << endl;
 #ifdef CHECKPLOTS
-	   ipsf.shift(1,1);
-	   FITSImage<>::writeToFITS("check_"+id+"_psf_bpff.fits",ipsf);
-	   wtstamp.shift(1,1);
-	   FITSImage<>::writeToFITS("check_"+id+"_wt_bpff.fits",wtstamp);
-	   scistamp.shift(1,1);
-	   FITSImage<>::writeToFITS("check_"+id+"_sci_bpff.fits",scistamp);
-	   segstamp.shift(1,1);
-	   FITSImage<>::writeToFITS("check_"+id+"_seg_bpff.fits",segstamp);
-	   glstamp.shift(1,1);
-	   FITSImage<>::writeToFITS("check_"+id+"_glr_bpff.fits",glstamp);
+	      ipsf.shift(1,1);
+	      FITSImage<>::writeToFITS("check_"+id+"_psf_bpff.fits",ipsf);
+	      wtstamp.shift(1,1);
+	      FITSImage<>::writeToFITS("check_"+id+"_wt_bpff.fits",wtstamp);
+	      scistamp.shift(1,1);
+	      FITSImage<>::writeToFITS("check_"+id+"_sci_bpff.fits",scistamp);
+	      segstamp.shift(1,1);
+	      FITSImage<>::writeToFITS("check_"+id+"_seg_bpff.fits",segstamp);
+	      glstamp.shift(1,1);
+	      FITSImage<>::writeToFITS("check_"+id+"_glr_bpff.fits",glstamp);
 #endif
-	   nfail++;
-	   nfail_bpff++;
-	   delete fep;
-	   continue;
-	 }
+	      nfail++;
+	      nfail_bpff++;
+	      delete fep;
+	      continue;
+	  }
       }
- 
+
+      //
+      // run FDNT
+      //
 #ifdef DEBUGFDNTPSFEX      
       cerr << "// (g) running FDNT..." << flush;
 #endif
@@ -669,9 +690,9 @@ main(int argc,
       fd.GLAll();
       bool success = fd.prepare();
       if(success)
-	cerr << " success!" << endl;
+	  cerr << " success!" << endl;
       else
-	cerr << " failed." << endl;
+	  cerr << " failed." << endl;
 
       
 #ifdef DEBUGFDNTPSFEX
@@ -684,11 +705,11 @@ main(int argc,
       if (success) {
 	  cerr << "making the actual measurement" << endl;
 	  try {
-	   targetS = fd.shape2(prob, covE);  // THIS IS THE ACTUAL MEASUREMENT!!
+	      targetS = fd.shape2(prob, covE);  // THIS IS THE ACTUAL MEASUREMENT!!
 	  }
 	  catch (...)
 	  {
-	   cerr << "an error occurred" << endl; 
+	      cerr << "an error occurred" << endl;
 	  }
 	  cerr << "made the actual measurement" << endl;
 	  // ??? Make flag mask an input parameter ???
@@ -702,44 +723,45 @@ main(int argc,
       double egFix=0.;
       double sig1=0., sig2=0.;
       if (success) {
-	try {
-	egFix = fd.shrinkResponse(targetS);
-	cerr << "got shrink response" << endl;
-	sig1 = sqrt(covE(0,0));
-	sig2 = sqrt(covE(1,1));
-	se.add(targetS, egFix, sig1, sig2);
-	cerr << "good " << targetS << " " << egFix << " " << sig1 << " " << sig2 << endl;
-	ngood++;
-	}
-	catch (...)
-	{
-		cerr << "an error occured on previously successful measurement" << endl;
-		nfail++;
-		nfail_postmeas++;
-		success=false;
-	}
+	  try {
+	      egFix = fd.shrinkResponse(targetS);
+	      cerr << "got shrink response" << endl;
+	      sig1 = sqrt(covE(0,0));
+	      sig2 = sqrt(covE(1,1));
+	      se.add(targetS, egFix, sig1, sig2);
+	      cerr << "good " << targetS << " " << egFix << " " << sig1 << " " << sig2 << endl;
+	      ngood++;
+	  }
+	  catch (...)
+	  {
+	      cerr << "an error occured on previously successful measurement" << endl;
+	      nfail++;
+	      nfail_postmeas++;
+	      success=false;
+	  }
 #ifdef CHECKPLOTS
-	ipsf.shift(1,1);
-	FITSImage<>::writeToFITS("check_"+id+"_psf_good.fits",ipsf);
-	wtstamp.shift(1,1);
-	FITSImage<>::writeToFITS("check_"+id+"_wt_good.fits",wtstamp);
-	scistamp.shift(1,1);
-	FITSImage<>::writeToFITS("check_"+id+"_sci_good.fits",scistamp);
-	segstamp.shift(1,1);
-	FITSImage<>::writeToFITS("check_"+id+"_seg_good.fits",segstamp);
-	Image<> filter1 = fd.drawFilter1(targetS,initE);
-	Image<> filter2 = fd.drawFilter2(targetS,initE);
-	filter1.shift(1,1);
-	FITSImage<>::writeToFITS("check_"+id+"_f1_good.fits",filter1);
-	filter2.shift(1,1);
-	FITSImage<>::writeToFITS("check_"+id+"_f2_good.fits",filter2);
-	if(bp.size()>0) {
-	glstamp.shift(1,1);
-	FITSImage<>::writeToFITS("check_"+id+"_glr_good.fits",glstamp);
-	}
+	  ipsf.shift(1,1);
+	  FITSImage<>::writeToFITS("check_"+id+"_psf_good.fits",ipsf);
+	  wtstamp.shift(1,1);
+	  FITSImage<>::writeToFITS("check_"+id+"_wt_good.fits",wtstamp);
+	  scistamp.shift(1,1);
+	  FITSImage<>::writeToFITS("check_"+id+"_sci_good.fits",scistamp);
+	  segstamp.shift(1,1);
+	  FITSImage<>::writeToFITS("check_"+id+"_seg_good.fits",segstamp);
+	  Image<> filter1 = fd.drawFilter1(targetS,initE);
+	  Image<> filter2 = fd.drawFilter2(targetS,initE);
+	  filter1.shift(1,1);
+	  FITSImage<>::writeToFITS("check_"+id+"_f1_good.fits",filter1);
+	  filter2.shift(1,1);
+	  FITSImage<>::writeToFITS("check_"+id+"_f2_good.fits",filter2);
+	  if(bp.size()>0) {
+	      glstamp.shift(1,1);
+	      FITSImage<>::writeToFITS("check_"+id+"_glr_good.fits",glstamp);
+	  }
 #endif
       } else {
-	cerr << "# fail: some obscure thing in FDNT::prepare() happens for " << id << ", flags " << fd.getFlags() << endl;
+	  cerr << "# fail: some obscure thing in FDNT::prepare() happens for " << id
+	       << ", flags " << fd.getFlags() << endl;
 	stringstream flags; flags << fd.getFlags();	
 #ifdef CHECKPLOTS
 	ipsf.shift(1,1);
