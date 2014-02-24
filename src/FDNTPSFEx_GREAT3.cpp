@@ -12,7 +12,7 @@
 #include "Astrometry.h"
 #include "Image.h"
 #include "HeaderFromStream.h"
-#include "SCAMPMap.h"
+#include "PolyMap.h"
 
 #define DEBUGFDNTPSFEX
 //#define CHECKPLOTS
@@ -210,26 +210,33 @@ main(int argc,
     FITSImage<> fits(fitsName);
     sci = fits.extract();
         
-    // (2) Read astrometry
+    // (2) Read astrometry: use pixel scales!  LinearMap
     img::ImageHeader h;
     cerr << ", header " << flush;
     ifstream mapfs(wcsName.c_str());
     if (!mapfs) {
+	cerr << "FIRST" << endl;
 	cerr << "Could not open map spec file " << wcsName 
 	     << "; trying FITS header in science frame" << endl;
 	h = *(sci.header());
     }
     else {
+	cerr << "SECOND" << endl;
         h = img::HeaderFromStream(mapfs);
     }
-    SCAMPMap *fullmap = new SCAMPMap(h,0);
+    // setup identity map
+    DVector v(6);
+    v[0] = 0.; v[1] = 1.; v[2] = 0.; v[3] = 0; v[4] = 0; v[5] = 1.;
+    LinearMap *fullmap = new LinearMap(v);
+    /*
     double xw,yw;
     fullmap->toWorld(0,0,xw,yw);
 #ifdef DEBUGFDNTPSFEX
     cerr << "# WCS " << xw << " " << yw << " is the (0,0) pixel WC w.r.t. the TP" << endl;
 #endif
-
+    */
     cerr << ", weight " << flush;
+
     // (4) Open weight image and read weight scale
     Image<> wt;
     FITSImage<> wtfits(weightName);
@@ -300,6 +307,9 @@ main(int argc,
     nread = MAX(nread, g1Col);
     nread = MAX(nread, g2Col);
     nread = MAX(nread, fwdColEnd);
+
+    cerr << "NREAD: " << nread << endl;
+
     vector<string> readvals(nread);
     ifstream ccat(catName.c_str());
     if (!ccat) {
@@ -351,6 +361,8 @@ main(int argc,
       double x_wc, y_wc; // tangent plane coordinates
       double x_pix, y_pix;       // pixel coordinates
       
+      fullmap->toPix(x_wc,y_wc,x_pix,y_pix);
+      /*
       SphericalICRS point(ra0*DEGREE, dec0*DEGREE);
       TangentPlane tp(point, fullmap->projection());
       tp.getLonLat(x_wc, y_wc);
@@ -366,6 +378,7 @@ main(int argc,
 	  cout << "toPix failure" << endl;
 	  exit(0);
       }
+      */
       
 #ifdef DEBUGFDNTPSFEX
       cerr << "processing object at (RA,dec)=(" << ra0 << "," << dec0 << ")=(" << x_wc << "," << y_wc << ") " << "(x,y)=(" << x_pix << "," << y_pix << ")" << endl;
