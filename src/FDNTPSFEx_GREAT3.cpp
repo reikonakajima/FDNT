@@ -613,9 +613,8 @@ main(int argc,
       double fluxModel = bvec.flux();   // this is the estimated signal
       Ellipse basis = gal.getBasis();
       
-
       // find half-light radius of observed galaxy
-      double ee50obs = 1.0;
+      double ee50obs = EnclosedFluxRadius(scistamp, xc, yc, fluxModel*0.5);
       // find the average rms... from the rms map!
       double imgRMS = 1.0;
       // calculate S/N based on half-light radius
