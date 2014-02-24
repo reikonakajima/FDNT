@@ -348,9 +348,9 @@ main(int argc,
       Shear  sexS(e1start, e2start);
       double g1_wc, g2_wc;
       sexS.getG1G2(g1_wc, g2_wc);
-      if (g1Col <= 0)
+      if (g1Col > 0)
 	  g1_wc = atof(readvals[g1Col-1].c_str());
-      if (g2Col <= 0)
+      if (g2Col > 0)
 	  g2_wc = atof(readvals[g2Col-1].c_str());
       double gabs = sqrt(g1_wc*g1_wc+g2_wc*g2_wc);
       if (gabs > 0.95) { // sanitize shear
