@@ -198,7 +198,7 @@ main(int argc,
       exit(1);
     }
     
-    if(!model->selfTest(1,3,psfOrder)) // this is a very lenient self-test
+    if (!model->selfTest(1,3,psfOrder)) // this is a very lenient self-test
     {
       cerr << "PSFEx model did not pass self test; exiting." << endl;
       exit(1);
@@ -458,11 +458,11 @@ main(int argc,
       cerr << "// get the postage stamp" << endl;
 #endif
       int xi0 = x_pix-stampSize/2;
-      if(xi0<bounds.getXMin()) xi0=bounds.getXMin();
-      if(xi0+stampSize+1>bounds.getXMax()) xi0 = bounds.getXMax()-stampSize-1;
+      if (xi0<bounds.getXMin()) xi0=bounds.getXMin();
+      if (xi0+stampSize+1>bounds.getXMax()) xi0 = bounds.getXMax()-stampSize-1;
       int yi0 = y_pix-stampSize/2;
-      if(yi0<bounds.getYMin()) yi0=bounds.getYMin();
-      if(yi0+stampSize+1>bounds.getYMax()) yi0 = bounds.getYMax()-stampSize-1;
+      if (yi0<bounds.getYMin()) yi0=bounds.getYMin();
+      if (yi0+stampSize+1>bounds.getYMax()) yi0 = bounds.getYMax()-stampSize-1;
 #ifdef DEBUGFDNTPSFEX
       cerr << "// " << xi0 << " " << xi0+stampSize-1 << " " << yi0 << " " << yi0+stampSize-1 << endl;
       cerr << "// hopefully inside x=" << bounds.getXMin() << ".." << bounds.getXMax()
@@ -487,10 +487,10 @@ main(int argc,
 	      for (int dy=0; dy<=1; dy++) {
 		  cerr << int(x_pix)+dx << " " << int(y_pix)+dy << endl;
 		  int dsegId=seg(int(x_pix)+dx,int(y_pix)+dy);
-		  if(!segId && dsegId) {
+		  if (!segId && dsegId) {
 		      segId=dsegId;
 		  }
-		  else if(dsegId && segId!=dsegId)
+		  else if (dsegId && segId!=dsegId)
 		  {
 		      badSegID=true;
 		  }
@@ -589,7 +589,7 @@ main(int argc,
 #endif
       
       //
-      // calculate S/N & interpolate over bad pixels
+      // estimate "signal" of signal-to-noise (S/N) & interpolate over bad pixels
       //
       GLSimple<> gal(*fep, sexE, interpolationOrder);
       if (!gal.solve()) {
@@ -609,10 +609,17 @@ main(int argc,
 	  delete fep;
 	  continue;
       }
-      double f, varf;
-      gl.b00(f, varf);
-      double obs_SN = f / sqrt(varf);
-      cout << "# Observed GL S/N: " << obs_SN << endl;
+      LVector bvec = gal.getB();
+      double fluxModel = bvec.flux();   // this is the estimated signal
+      Ellipse basis = gal.getBasis();
+      
+
+      // find half-light radius of observed galaxy
+      double ee50obs = 1.0;
+      // find the average rms... from the rms map!
+      double imgRMS = 1.0;
+      // calculate S/N based on half-light radius
+      
 
       if (bp.size() > 0) // has bad pixels, but not too many to begin with: do GL interpolation
       {
@@ -620,9 +627,6 @@ main(int argc,
 	  cerr << "# trying to interpolate " << bp.size() << " bad pixels" << endl;
 	  cerr << sexE << " " <<  interpolationOrder << endl;
 #endif
-	  LVector bvec = gal.getB();
-	  double fluxModel = bvec.flux();
-	  Ellipse basis = gal.getBasis();
 	  double missingFlux=0.;
 	  double scaleFactor = exp(basis.getMu());
 
@@ -689,7 +693,7 @@ main(int argc,
       fd.setMaskSigma(maskSigma);
       fd.GLAll();
       bool success = fd.prepare();
-      if(success)
+      if (success)
 	  cerr << " success!" << endl;
       else
 	  cerr << " failed." << endl;
@@ -754,7 +758,7 @@ main(int argc,
 	  FITSImage<>::writeToFITS("check_"+id+"_f1_good.fits",filter1);
 	  filter2.shift(1,1);
 	  FITSImage<>::writeToFITS("check_"+id+"_f2_good.fits",filter2);
-	  if(bp.size()>0) {
+	  if (bp.size()>0) {
 	      glstamp.shift(1,1);
 	      FITSImage<>::writeToFITS("check_"+id+"_glr_good.fits",glstamp);
 	  }
@@ -772,7 +776,7 @@ main(int argc,
 	FITSImage<>::writeToFITS("check_"+id+"_sci_fdnt_"+flags.str()+".fits",scistamp);
 	segstamp.shift(1,1);
 	FITSImage<>::writeToFITS("check_"+id+"_seg_fdnt_"+flags.str()+".fits",segstamp);
-	if(bp.size()>0) {
+	if (bp.size()>0) {
 	glstamp.shift(1,1);
 	FITSImage<>::writeToFITS("check_"+id+"_glr_fdnt_"+flags.str()+".fits",glstamp);
 	}
