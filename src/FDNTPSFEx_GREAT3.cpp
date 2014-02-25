@@ -321,7 +321,8 @@ main(int argc,
     string buffer;
     tmv::SymMatrix<double> covE(2);
 
-    cout << "# id x_pix y_pix eta1 eta2 sig1 sig2 mu egFix fdFlags considered_success forwarded_column" << endl;
+    cout << "# id x_pix y_pix obs_SN eta1 eta2 sig1 sig2 mu egFix fdFlags considered_success "
+	 << "forwarded_column" << endl;
 
 
     while (stringstuff::getlineNoComment(ccat, buffer)) { // all objects
@@ -624,6 +625,7 @@ main(int argc,
       rmsf.close();  // for good hygine
       // calculate S/N within half-light radius
       double obs_SN = (0.5*fluxModel) / (imgRMS * sqrt(PI) * ee50obs);
+      cerr << "# Observed S/N within HLR: " << obs_SN << endl;
 
       if (bp.size() > 0) // has bad pixels, but not too many to begin with: do GL interpolation
       {
