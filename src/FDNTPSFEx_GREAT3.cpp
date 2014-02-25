@@ -53,6 +53,7 @@ main(int argc,
   string wcsName;
   string segmentationName;
   int    segmentationPadding;
+  string rmsName;
   
   string weightScaleKey;
   string fluxScaleKey;
@@ -101,6 +102,8 @@ main(int argc,
 			   "padding around segmentation maps [pix]", 0, 0);
       parameters.addMember("stampSize",&stampSize, def | low,
 			   "Pixel size of img postage stamps", 48, 3);
+      parameters.addMember("rmsName",&rmsName, def,
+			   "Input RMS value text file", "bgrms_value-000-0.txt");
       parameters.addMemberNoValue("DATA PROPERTIES:",0,
 				  "Input data");
       parameters.addMember("sky",&sky, def,
@@ -616,7 +619,11 @@ main(int argc,
       // find half-light radius of observed galaxy
       double ee50obs = EnclosedFluxRadius(scistamp, xc, yc, fluxModel*0.5);
       // find the average rms... from the rms map!
-      double imgRMS = 1.0;
+      ifstream rmsf(rmsName.c_str());
+      double imgRMS;
+      rmsf >> imgRMS;
+      cerr << "imgRMS: " << imgRMS << endl;
+      exit(1);
       // calculate S/N based on half-light radius
       
 
