@@ -14,7 +14,7 @@
 #include "HeaderFromStream.h"
 #include "PolyMap.h"
 
-#define DEBUGFDNTPSFEX
+//#define DEBUGFDNTPSFEX
 //#define CHECKPLOTS
 
 using namespace laguerre;
@@ -237,36 +237,28 @@ main(int argc,
     cerr << "# WCS " << xw << " " << yw << " is the (0,0) pixel WC w.r.t. the TP" << endl;
 #endif
     */
-    cerr << ", weight " << flush;
+    cerr << ", weight" << flush;
 
     // (4) Open weight image and read weight scale
     Image<> wt;
     FITSImage<> wtfits(weightName);
     wt = wtfits.extract();
     
-    cerr << "read, " << flush;
-    
     HdrRecordBase* weightScaleRecord = h.find(weightScaleKey);
     double weightScale = 1.0;
     if (weightScaleRecord) {
+	cerr << "WARNING: weight scale set by header" << endl;
 	weightScale = atof(weightScaleRecord->getValueString().c_str());
     }
-    else
-    {
-      cerr << "WARNING: weight scale key not found in header; assuming weight scale is 1.0" << endl;
-    }
-    cerr << "weight scale: " << weightScale << endl;
     
     HdrRecordBase* fluxScaleRecord = h.find(fluxScaleKey);
     double fluxScale = 1.0;
-    if (fluxScaleRecord)
+    if (fluxScaleRecord) {
+	cerr << "WARNING: flux scale set by header" << endl;
 	fluxScale = atof(fluxScaleRecord->getValueString().c_str());
-    else
-	cerr << "WARNING: flux scale key not found in header; assuming flux scale is 1.0" << endl;
+    }
     
-    cerr << "flux scale: " << fluxScale << endl;
-    
-    cerr << " and segmentation map" << endl;
+    cerr << ", and segmentation map" << endl;
     
     // cerr << "reading segmentation map" << endl;
     Image<> seg;
@@ -310,8 +302,6 @@ main(int argc,
     nread = MAX(nread, g2Col);
     nread = MAX(nread, fwdColEnd);
 
-    cerr << "NREAD: " << nread << endl;
-
     vector<string> readvals(nread);
     ifstream ccat(catName.c_str());
     if (!ccat) {
@@ -330,8 +320,8 @@ main(int argc,
 	//
 	// acquire info of object
 	//
-      cerr << "######################################################" << endl
-	   << "// (a) Acquire info of object " << flush;
+	//cerr << "######################################################" << endl;
+	// cerr << "// (a) Acquire info of object " << flush;
       istringstream iss(buffer);
       for (int i=0; i<nread; i++) iss >> readvals[i];
       if (!iss) {
@@ -339,7 +329,7 @@ main(int argc,
 	  exit(1);
       }
       string id = readvals[idCol-1];
-      cerr << id << endl;
+      cerr << id << " ";
       double ra0 = atof(readvals[raCol-1].c_str());
       double dec0 = atof(readvals[decCol-1].c_str());
       double a_wc = atof(readvals[aCol-1].c_str());
@@ -406,19 +396,23 @@ main(int argc,
       cerr << "// (c) get PSF model at the position" << endl;
 #endif
       model->fieldPosition(x_pix,y_pix); // model now holds the psf model at this position
-      cerr << "flux before normalization: " << model->sb()->getFlux() << endl;
+      //cerr << "flux before normalization: " << model->sb()->getFlux() << endl;
       model->setFlux(1.0);
       // FWHM is twice the half-light radius for Gaussian psf, scaled to world coords
       double ee50psf = model->getFWHM()/2.*rescale;
       Ellipse psfBasis(0., 0., log(ee50psf/1.17));
       SBDistort psfWCS(*(model->sb()),J(0,0),J(0,1),J(1,0),J(1,1));
+#ifdef DEBUGFDNTPSFEX
       cerr << "dWorld/dPix " << J << endl; 
       cerr << ee50psf << endl;
+#endif
       // set flux of basis correctly to have flux normalization after distortion
       psfWCS.setFlux(1.);
       
       double dx = ee50psf / 2.35; // magic 4.7 factor from PSFEx
+#ifdef DEBUGFDNTPSFEX
       cerr << "drawing psf postage stamp with dx=" << dx << endl;
+#endif
       Image<> ipsf = psfWCS.draw(dx);
       // Measure PSF GL size & significance
       Image<> psfwt(ipsf.getBounds());
@@ -444,10 +438,9 @@ main(int argc,
       //
 #ifdef DEBUGFDNTPSFEX
       cerr << "// (d) Starting ellipse of galaxy" << endl;
-#endif
-
       cerr << "SExtractor ellipse r=" << r_pix*rescale << ", e="
 	   << e1start << "," << e2start << endl;
+#endif
       Ellipse sexE(e1start, e2start, log(r_pix*rescale), x_wc, y_wc);  // in wcs
       
       //
@@ -472,13 +465,13 @@ main(int argc,
 	   << ", y=" << bounds.getYMin() << ".." << bounds.getYMax() << endl;
 #endif      
       Bounds<int> stamp(xi0,xi0+stampSize-1, yi0, yi0+stampSize-1);
-      cerr << "set bounds" << endl;
+      //cerr << "set bounds" << endl;
       Image<float> scistamp = sci.subimage(stamp).duplicate();
-      cerr << "sci bounds" << endl;
+      //cerr << "sci bounds" << endl;
       Image<float> wtstamp  = wt.subimage(stamp).duplicate();
-      cerr << "wt  bounds" << endl;
+      //cerr << "wt  bounds" << endl;
       Image<float> segstamp = seg.subimage(stamp).duplicate();
-      cerr << "seg bounds" << endl;
+      //cerr << "seg bounds" << endl;
       Image<double> xwstamp(stamp);
       Image<double> ywstamp(stamp);
       int segId=0;
@@ -488,7 +481,7 @@ main(int argc,
 	  bool badSegID=false;
 	  for (int dx=0; dx<=1; dx++) {
 	      for (int dy=0; dy<=1; dy++) {
-		  cerr << int(x_pix)+dx << " " << int(y_pix)+dy << endl;
+		  //cerr << int(x_pix)+dx << " " << int(y_pix)+dy << endl;
 		  int dsegId=seg(int(x_pix)+dx,int(y_pix)+dy);
 		  if (!segId && dsegId) {
 		      segId=dsegId;
@@ -519,7 +512,9 @@ main(int argc,
 	  }
       }
       
+#ifdef DEBUGFDNTPSFEX
       cerr << "got segid" << endl;
+#endif
       {
 	  try {
 	      for (int iy=stamp.getYMin(); iy<=stamp.getYMax(); iy++)
@@ -567,7 +562,9 @@ main(int argc,
 #endif
       double meanweight=0.;
       vector< Position<int> > bp = fep->badPixels(meanweight);
+#ifdef DEBUGFDNTPSFEX
       cerr << "mean weight: " << meanweight << endl;
+#endif
       if (bp.size() > maxBadPixels*stampSize*stampSize)
       {
 	  cerr << "# fail: " << id << " has too many bad pixels" << endl;
@@ -625,7 +622,9 @@ main(int argc,
       rmsf.close();  // for good hygine
       // calculate S/N within half-light radius
       double hlr_SN = (0.5*fluxModel) / (imgRMS * sqrt(PI) * ee50obs);
+#ifdef DEBUGFDNTPSFEX
       cerr << "# Observed S/N within HLR: " << hlr_SN << endl;
+#endif
 
       if (bp.size() > 0) // has bad pixels, but not too many to begin with: do GL interpolation
       {
@@ -699,21 +698,26 @@ main(int argc,
       fd.setMaskSigma(maskSigma);
       fd.GLAll();
       bool success = fd.prepare();
+#ifdef DEBUGFDNTPSFEX
       if (success)
 	  cerr << " success!" << endl;
       else
 	  cerr << " failed." << endl;
-
+#endif
       
 #ifdef DEBUGFDNTPSFEX
       cerr << "// (h) evaluating FDNT" << endl;
 #endif    
       Shear targetS = fd.getBasis().getS();
-      cerr << targetS << endl;
+#ifdef DEBUGFDNTPSFEX
+      cerr << "targetS" << targetS << endl;
+#endif
       double prob;
       tmv::SymMatrix<double> covE(2,2);
       if (success) {
+#ifdef DEBUGFDNTPSFEX
 	  cerr << "making the actual measurement" << endl;
+#endif
 	  try {
 	      targetS = fd.shape2(prob, covE);  // THIS IS THE ACTUAL MEASUREMENT!!
 	  }
@@ -721,7 +725,9 @@ main(int argc,
 	  {
 	      cerr << "an error occurred" << endl;
 	  }
+#ifdef DEBUGFDNTPSFEX
 	  cerr << "made the actual measurement" << endl;
+#endif
 	  // ??? Make flag mask an input parameter ???
 	  success = !(fd.getFlags() & (DidNotConverge + Singularity
 				       + OutOfBounds + TooLarge + UnderSampled
@@ -735,11 +741,15 @@ main(int argc,
       if (success) {
 	  try {
 	      egFix = fd.shrinkResponse(targetS);
+#ifdef DEBUGFDNTPSFEX
 	      cerr << "got shrink response" << endl;
+#endif
 	      sig1 = sqrt(covE(0,0));
 	      sig2 = sqrt(covE(1,1));
 	      se.add(targetS, egFix, sig1, sig2);
+#ifdef DEBUGFDNTPSFEX
 	      cerr << "good " << targetS << " " << egFix << " " << sig1 << " " << sig2 << endl;
+#endif
 	      ngood++;
 	  }
 	  catch (...)
@@ -809,6 +819,8 @@ main(int argc,
 
       delete fep; //delete map;
     }
+
+    cerr << endl;
     
     delete model;
     delete fullmap;
