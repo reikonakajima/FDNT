@@ -218,17 +218,16 @@ main(int argc,
     cerr << ", header " << flush;
     ifstream mapfs(wcsName.c_str());
     if (!mapfs) {
-	cerr << "FIRST" << endl;
 	cerr << "Could not open map spec file " << wcsName 
 	     << "; trying FITS header in science frame" << endl;
 	h = *(sci.header());
     }
     else {
-	cerr << "SECOND" << endl;
         h = img::HeaderFromStream(mapfs);
     }
     // setup identity map
     DVector v(6);
+    // should read from "h"!!!  *** TODO ***
     v[0] = 0.; v[1] = 1.; v[2] = 0.; v[3] = 0; v[4] = 0; v[5] = 1.;
     LinearMap *fullmap = new LinearMap(v);
     /*
@@ -617,15 +616,14 @@ main(int argc,
       Ellipse basis = gal.getBasis();
       
       // find half-light radius of observed galaxy
-      double ee50obs = EnclosedFluxRadius(scistamp, xc, yc, fluxModel*0.5);
+      double ee50obs = EnclosedFluxRadius(scistamp, basis.getX0().x, basis.getX0().y, fluxModel*0.5);
       // find the average rms... from the rms map!
       ifstream rmsf(rmsName.c_str());
       double imgRMS;
       rmsf >> imgRMS;
-      cerr << "imgRMS: " << imgRMS << endl;
-      exit(1);
-      // calculate S/N based on half-light radius
-      
+      rmsf.close();  // for good hygine
+      // calculate S/N within half-light radius
+      double obs_SN = (0.5*fluxModel) / (imgRMS * sqrt(PI) * ee50obs);
 
       if (bp.size() > 0) // has bad pixels, but not too many to begin with: do GL interpolation
       {
