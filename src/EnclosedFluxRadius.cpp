@@ -20,7 +20,7 @@ public:
   bool operator<(const Pair& rhs) const {return x<rhs.x;}
 };
 
-double EnclosedFluxRadius(Image<> img, int xc, int yc, double enclosedFractionFlux) {
+double EnclosedFluxRadius(Image<> img, double xc, double yc, double enclosedFractionFlux) {
 
   Bounds<int> b=img.getBounds();
 

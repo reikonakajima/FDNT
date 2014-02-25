@@ -7,7 +7,7 @@
 #include "SBProfile.h"
 
 double EnclosedFluxRadius(Image<> img, double enclosedFraction=0.5);
-double EnclosedFluxRadius(Image<> img, int xc, int yc, double enclosedFractionFlux);
+double EnclosedFluxRadius(Image<> img, double xc, double yc, double enclosedFractionFlux);
 
 // Find EEradius for an SBProfile
 double EnclosedFluxRadius(const sbp::SBProfile& sbp, double enclosedFraction=0.5);
