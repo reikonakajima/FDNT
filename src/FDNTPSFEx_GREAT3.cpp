@@ -328,8 +328,15 @@ main(int argc,
 	  cerr << "Bad catalog input line: " << buffer;
 	  exit(1);
       }
-      string id = readvals[idCol-1];
-      cerr << id << " ";
+      int id = atoi(readvals[idCol-1].c_str());
+      if (id % 1000 == 0)
+	  cerr << " " << id << " ";
+      else if (id % 100 == 0)
+	  cerr << 'O';
+      else if (id % 10 == 0)
+	  cerr << 'o';
+      else
+	  cerr << '.';
       double ra0 = atof(readvals[raCol-1].c_str());
       double dec0 = atof(readvals[decCol-1].c_str());
       double a_wc = atof(readvals[aCol-1].c_str());
