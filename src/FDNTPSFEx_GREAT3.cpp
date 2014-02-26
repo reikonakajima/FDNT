@@ -213,7 +213,7 @@ main(int argc,
       exit(1);
     }
     
-    cerr << "reading image " << flush;
+    cerr << "reading image" << flush;
     // (3) Open image
     Image<> sci;
     FITSImage<> fits(fitsName);
@@ -221,7 +221,7 @@ main(int argc,
         
     // (2) Read astrometry: use pixel scales!  LinearMap
     img::ImageHeader h;
-    cerr << ", header " << flush;
+    cerr << ", header" << flush;
     ifstream mapfs(wcsName.c_str());
     if (!mapfs) {
 	cerr << "Could not open map spec file " << wcsName 
