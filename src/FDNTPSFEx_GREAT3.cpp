@@ -27,7 +27,7 @@ main(int argc,
 {
   // Parameters to set:
   // columns for necessary input:
-  int idCol;
+  int idCol;   // GREAT3 unique ID column
   int segIdCol;
   int raCol;
   int decCol;
@@ -39,6 +39,7 @@ main(int argc,
   int g2Col;
   int fwdColStart;
   int fwdColEnd;
+  int seIdCol;  // SExtractor ID column
 
   // The fit:
   int order;
@@ -124,7 +125,7 @@ main(int argc,
       parameters.addMemberNoValue("CATALOG TRANSLATION:",0,
 				  "Columns holding input data");
       parameters.addMember("idCol",&idCol, def | low,
-			   "Object ID", 1, 1);
+			   "GREAT3 Unique ID number", 1, 1);
       parameters.addMember("segIdCol",&segIdCol, def | low,
 			   "Object ID in segmentation map; determined automatically if 0", 0, 0);
       parameters.addMember("raCol",&raCol, def | low,
@@ -147,6 +148,8 @@ main(int argc,
 			   "Minor axis (in WC)", 8, 1);
       parameters.addMember("paCol",&paCol, def | low,
 			   "Position angle (in WC)", 9, 1);
+      parameters.addMember("seIdCol",&seIdCol, def | low,
+			   "SExtractor ID number", 17, 1);
       parameters.addMember("fwdColStart",&fwdColStart, def | low,
 			   "first forwarded column from input catalog", 0, 0);
       parameters.addMember("fwdColEnd",&fwdColEnd, def | low,
@@ -303,6 +306,7 @@ main(int argc,
     nread = MAX(nread, bgCol);
     nread = MAX(nread, g1Col);
     nread = MAX(nread, g2Col);
+    nread = MAX(nread, seIdCol);
     nread = MAX(nread, fwdColEnd);
 
     vector<string> readvals(nread);
@@ -316,7 +320,6 @@ main(int argc,
 
     cout << "# id x_pix y_pix hlr_SN eta1 eta2 sig1 sig2 mu egFix fdFlags considered_success "
 	 << "forwarded_column" << endl;
-
 
     while (stringstuff::getlineNoComment(ccat, buffer)) { // all objects
 
@@ -332,11 +335,12 @@ main(int argc,
 	  exit(1);
       }
       int id = atoi(readvals[idCol-1].c_str());
-      if (id % 1000 == 0)
-	  cerr << " " << id << " ";
-      else if (id % 100 == 0)
+      int se_id = atoi(readvals[seIdCol-1].c_str());
+      if (se_id % 1000 == 0)
+	  cerr << " " << se_id << " ";
+      else if (se_id % 100 == 0)
 	  cerr << 'O';
-      else if (id % 10 == 0)
+      else if (se_id % 10 == 0)
 	  cerr << 'o';
       else
 	  cerr << '.';
@@ -505,16 +509,17 @@ main(int argc,
 
 	  if (badSegID)
 	  {
-	      cerr << "# fail: could not get segmentation id for " << id << endl;
+	      cerr << "# fail: could not get segmentation id for " << id
+		   << ", (" << se_id << ")" << endl;
 #ifdef CHECKPLOTS
 	      ipsf.shift(1,1);
-	      FITSImage<>::writeToFITS("check_"+id+"_psf_badseg.fits",ipsf);
+	      FITSImage<>::writeToFITS("check_"+se_id+"_psf_badseg.fits",ipsf);
 	      wtstamp.shift(1,1);
-	      FITSImage<>::writeToFITS("check_"+id+"_wt_badseg.fits",wtstamp);
+	      FITSImage<>::writeToFITS("check_"+se_id+"_wt_badseg.fits",wtstamp);
 	      scistamp.shift(1,1);
-	      FITSImage<>::writeToFITS("check_"+id+"_sci_badseg.fits",scistamp);
+	      FITSImage<>::writeToFITS("check_"+se_id+"_sci_badseg.fits",scistamp);
 	      segstamp.shift(1,1);
-	      FITSImage<>::writeToFITS("check_"+id+"_seg_badseg.fits",segstamp);
+	      FITSImage<>::writeToFITS("check_"+se_id+"_seg_badseg.fits",segstamp);
 #endif
 	      nfail++;
 	      nfail_seg++;
@@ -537,7 +542,8 @@ main(int argc,
 		      if (maskSegmentation)
 			  if (segstamp(ix,iy) && segstamp(ix,iy)!=segId) //it's another object!
 			  {
-			      cerr << "WARNING: objid " << id << " is fractured" << endl;
+			      cerr << "WARNING: objid " << id << " (" << se_id << ") is fractured"
+				   << endl;
 			      for (int iiy=max(stamp.getYMin(),iy-segmentationPadding);
 				   iiy<=min(stamp.getYMax(),iy+segmentationPadding);
 				   iiy++)
@@ -557,7 +563,8 @@ main(int argc,
 	}
 	catch (...)
 	{
-	    cerr << "# fail: could not get postage stamp for " << id << endl;
+	    cerr << "# fail: could not get postage stamp for " << id
+		 << " (" << se_id << ")" << endl;
 	    nfail++;
 	    nfail_post++;
 	    delete fep; //delete map;
@@ -578,16 +585,16 @@ main(int argc,
 #endif
       if (bp.size() > maxBadPixels*stampSize*stampSize)
       {
-	  cerr << "# fail: " << id << " has too many bad pixels" << endl;
+	  cerr << "# fail: " << id << " (" << se_id << ") has too many bad pixels" << endl;
 #ifdef CHECKPLOTS
 	  ipsf.shift(1,1);
-	  FITSImage<>::writeToFITS("check_"+id+"_psf_badpix.fits",ipsf);
+	  FITSImage<>::writeToFITS("check_"+se_id+"_psf_badpix.fits",ipsf);
 	  wtstamp.shift(1,1);
-	  FITSImage<>::writeToFITS("check_"+id+"_wt_badpix.fits",wtstamp);
+	  FITSImage<>::writeToFITS("check_"+se_id+"_wt_badpix.fits",wtstamp);
 	  scistamp.shift(1,1);
-	  FITSImage<>::writeToFITS("check_"+id+"_sci_badpix.fits",scistamp);
+	  FITSImage<>::writeToFITS("check_"+se_id+"_sci_badpix.fits",scistamp);
 	  segstamp.shift(1,1);
-	  FITSImage<>::writeToFITS("check_"+id+"_seg_badpix.fits",segstamp);
+	  FITSImage<>::writeToFITS("check_"+se_id+"_seg_badpix.fits",segstamp);
 #endif
 	  nfail++;
 	  nfail_badpix++;
@@ -604,16 +611,16 @@ main(int argc,
       //
       GLSimple<> gal(*fep, sexE, interpolationOrder);
       if (!gal.solve()) {
-	  cerr << "# fail: GL fit failed for " << id << endl;
+	  cerr << endl << "# fail: GL fit failed for " << id << " (" << se_id << ")" << endl;
 #ifdef CHECKPLOTS
 	  ipsf.shift(1,1);
-	  FITSImage<>::writeToFITS("check_"+id+"_psf_bpgl.fits",ipsf);
+	  FITSImage<>::writeToFITS("check_"+se_id+"_psf_bpgl.fits",ipsf);
 	  wtstamp.shift(1,1);
-	  FITSImage<>::writeToFITS("check_"+id+"_wt_bpgl.fits",wtstamp);
+	  FITSImage<>::writeToFITS("check_"+se_id+"_wt_bpgl.fits",wtstamp);
 	  scistamp.shift(1,1);
-	  FITSImage<>::writeToFITS("check_"+id+"_sci_bpgl.fits",scistamp);
+	  FITSImage<>::writeToFITS("check_"+se_id+"_sci_bpgl.fits",scistamp);
 	  segstamp.shift(1,1);
-	  FITSImage<>::writeToFITS("check_"+id+"_seg_bpgl.fits",segstamp);
+	  FITSImage<>::writeToFITS("check_"+se_id+"_seg_bpgl.fits",segstamp);
 #endif
 	  nfail++;
 	  nfail_bpgl++;
@@ -679,18 +686,19 @@ main(int argc,
 
 	  if (missingFlux/fluxModel > maxBadFlux)
 	  {
-	      cerr << "# fail: bad pixels in " << id << " have too high flux fraction" << endl;
+	      cerr << "# fail: bad pixels in " << id
+		   << " (" << se_id << ") have too high flux fraction" << endl;
 #ifdef CHECKPLOTS
 	      ipsf.shift(1,1);
-	      FITSImage<>::writeToFITS("check_"+id+"_psf_bpff.fits",ipsf);
+	      FITSImage<>::writeToFITS("check_"+se_id+"_psf_bpff.fits",ipsf);
 	      wtstamp.shift(1,1);
-	      FITSImage<>::writeToFITS("check_"+id+"_wt_bpff.fits",wtstamp);
+	      FITSImage<>::writeToFITS("check_"+se_id+"_wt_bpff.fits",wtstamp);
 	      scistamp.shift(1,1);
-	      FITSImage<>::writeToFITS("check_"+id+"_sci_bpff.fits",scistamp);
+	      FITSImage<>::writeToFITS("check_"+se_id+"_sci_bpff.fits",scistamp);
 	      segstamp.shift(1,1);
-	      FITSImage<>::writeToFITS("check_"+id+"_seg_bpff.fits",segstamp);
+	      FITSImage<>::writeToFITS("check_"+se_id+"_seg_bpff.fits",segstamp);
 	      glstamp.shift(1,1);
-	      FITSImage<>::writeToFITS("check_"+id+"_glr_bpff.fits",glstamp);
+	      FITSImage<>::writeToFITS("check_"+se_id+"_glr_bpff.fits",glstamp);
 #endif
 	      nfail++;
 	      nfail_bpff++;
@@ -772,40 +780,40 @@ main(int argc,
 	  }
 #ifdef CHECKPLOTS
 	  ipsf.shift(1,1);
-	  FITSImage<>::writeToFITS("check_"+id+"_psf_good.fits",ipsf);
+	  FITSImage<>::writeToFITS("check_"+se_id+"_psf_good.fits",ipsf);
 	  wtstamp.shift(1,1);
-	  FITSImage<>::writeToFITS("check_"+id+"_wt_good.fits",wtstamp);
+	  FITSImage<>::writeToFITS("check_"+se_id+"_wt_good.fits",wtstamp);
 	  scistamp.shift(1,1);
-	  FITSImage<>::writeToFITS("check_"+id+"_sci_good.fits",scistamp);
+	  FITSImage<>::writeToFITS("check_"+se_id+"_sci_good.fits",scistamp);
 	  segstamp.shift(1,1);
-	  FITSImage<>::writeToFITS("check_"+id+"_seg_good.fits",segstamp);
+	  FITSImage<>::writeToFITS("check_"+se_id+"_seg_good.fits",segstamp);
 	  Image<> filter1 = fd.drawFilter1(targetS, sexE);
 	  Image<> filter2 = fd.drawFilter2(targetS, sexE);
 	  filter1.shift(1,1);
-	  FITSImage<>::writeToFITS("check_"+id+"_f1_good.fits",filter1);
+	  FITSImage<>::writeToFITS("check_"+se_id+"_f1_good.fits",filter1);
 	  filter2.shift(1,1);
-	  FITSImage<>::writeToFITS("check_"+id+"_f2_good.fits",filter2);
+	  FITSImage<>::writeToFITS("check_"+se_id+"_f2_good.fits",filter2);
 	  if (bp.size()>0) {
 	      glstamp.shift(1,1);
-	      FITSImage<>::writeToFITS("check_"+id+"_glr_good.fits",glstamp);
+	      FITSImage<>::writeToFITS("check_"+se_id+"_glr_good.fits",glstamp);
 	  }
 #endif
       } else {
 	  cerr << "# fail: some obscure thing in FDNT::prepare() happens for " << id
-	       << ", flags " << fd.getFlags() << endl;
+	       << " (" << se_id << "), flags " << fd.getFlags() << endl;
 	stringstream flags; flags << fd.getFlags();	
 #ifdef CHECKPLOTS
 	ipsf.shift(1,1);
-	FITSImage<>::writeToFITS("check_"+id+"_psf_fdnt_"+flags.str()+".fits",ipsf);
+	FITSImage<>::writeToFITS("check_"+se_id+"_psf_fdnt_"+flags.str()+".fits",ipsf);
 	wtstamp.shift(1,1);
-	FITSImage<>::writeToFITS("check_"+id+"_wt_fdnt_"+flags.str()+".fits",wtstamp);
+	FITSImage<>::writeToFITS("check_"+se_id+"_wt_fdnt_"+flags.str()+".fits",wtstamp);
 	scistamp.shift(1,1);
-	FITSImage<>::writeToFITS("check_"+id+"_sci_fdnt_"+flags.str()+".fits",scistamp);
+	FITSImage<>::writeToFITS("check_"+se_id+"_sci_fdnt_"+flags.str()+".fits",scistamp);
 	segstamp.shift(1,1);
-	FITSImage<>::writeToFITS("check_"+id+"_seg_fdnt_"+flags.str()+".fits",segstamp);
+	FITSImage<>::writeToFITS("check_"+se_id+"_seg_fdnt_"+flags.str()+".fits",segstamp);
 	if (bp.size()>0) {
 	glstamp.shift(1,1);
-	FITSImage<>::writeToFITS("check_"+id+"_glr_fdnt_"+flags.str()+".fits",glstamp);
+	FITSImage<>::writeToFITS("check_"+se_id+"_glr_fdnt_"+flags.str()+".fits",glstamp);
 	}
 #endif
 	
