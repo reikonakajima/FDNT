@@ -51,6 +51,7 @@ main(int argc,
   int    psfOrder;
   string weightName;
   string wcsName;
+  bool   maskSegmentation;
   string segmentationName;
   int    segmentationPadding;
   string rmsName;
@@ -96,6 +97,8 @@ main(int argc,
 			   // note that single frame rescaling is happening on top of this on both the science and weight frames
       parameters.addMember("fluxScaleKey",&fluxScaleKey, def,
 			   "Scaling factor for flux (e.g. from WCS header) keyword in WCS header", "FLXSCALE");
+      parameters.addMember("maskSegmentation", &maskSegmentation, def,
+			   "mask out segmented objects?", 0);
       parameters.addMember("segmentationName",&segmentationName, def,
 			   "segmentation map", "segmentation-000-0.fits");
       parameters.addMember("segmentationPadding",&segmentationPadding, def | low,
@@ -531,17 +534,18 @@ main(int argc,
 		      fullmap->toWorld(ix,iy,dxw,dyw);
 		      xwstamp(ix,iy)=dxw;
 		      ywstamp(ix,iy)=dyw;
-		      if (segstamp(ix,iy) && segstamp(ix,iy)!=segId) //it's another object!
-		      {
-			  cerr << "WARNING: objid " << id << " is fractured" << endl;
-			  for (int iiy=max(stamp.getYMin(),iy-segmentationPadding);
-			       iiy<=min(stamp.getYMax(),iy+segmentationPadding);
-			       iiy++)
-			      for (int iix=max(stamp.getXMin(),ix-segmentationPadding);
-				   iix<=min(stamp.getXMax(),ix+segmentationPadding);
-				   iix++)
-				  wtstamp(iix,iiy)=0.;
-		      }
+		      if (maskSegmentation)
+			  if (segstamp(ix,iy) && segstamp(ix,iy)!=segId) //it's another object!
+			  {
+			      cerr << "WARNING: objid " << id << " is fractured" << endl;
+			      for (int iiy=max(stamp.getYMin(),iy-segmentationPadding);
+				   iiy<=min(stamp.getYMax(),iy+segmentationPadding);
+				   iiy++)
+				  for (int iix=max(stamp.getXMin(),ix-segmentationPadding);
+				       iix<=min(stamp.getXMax(),ix+segmentationPadding);
+				       iix++)
+				      wtstamp(iix,iiy)=0.;
+			  }
 		  }
 	      }
 	      // stack background with sky-subtracted single frames == photometric local background
