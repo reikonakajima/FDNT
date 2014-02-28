@@ -443,8 +443,9 @@ main(int argc,
       }
       psfBasis = gl.getBasis();
       psfBasis.setMu( psfBasis.getMu() + log(dx));
+      Shear psfS = psfBasis.getS();
 #ifdef DEBUGFDNTPSFEX
-      cerr << "# PSF e and GL sigma: " << psfBasis.getS()
+      cerr << "# PSF e and GL sigma: " << psfS
 	   << " " << exp(psfBasis.getMu())
 	   << endl;
 #endif
@@ -844,6 +845,8 @@ main(int argc,
 	   << " " << success
 	   << " " << ee50obs
 	   << " " << ee50psf
+	   << " " << psfS.getE1()
+	   << " " << psfS.getE2()
 	   << " " << fwd
 	   << endl;
 
