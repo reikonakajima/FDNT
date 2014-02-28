@@ -93,11 +93,15 @@ main(int argc,
       parameters.addMember("wcsName",&wcsName, def,
 			   "World coordinate header file", "wcs_is_pixel.txt");
       parameters.addMember("weightScaleKey",&weightScaleKey, def,
-			   "Scaling factor for weight map (e.g. from Swarp) keyword in WCS header", "WTSCALE");
-			   // this is the scale that transforms weight proportional to 1/sig^2 to weights EQUAL to 1/sig^2 of the respective single frame
-			   // note that single frame rescaling is happening on top of this on both the science and weight frames
+			   "Scaling factor for weight map (e.g. from Swarp) keyword in WCS header",
+			   "WTSCALE");
+      // this is the scale that transforms weight proportional to 1/sig^2 to weights EQUAL to
+      // 1/sig^2 of the respective single frame.
+      // note that single frame rescaling is happening on top of this on both the science and
+      // weight frames
       parameters.addMember("fluxScaleKey",&fluxScaleKey, def,
-			   "Scaling factor for flux (e.g. from WCS header) keyword in WCS header", "FLXSCALE");
+			   "Scaling factor for flux (e.g. from WCS header) keyword in WCS header",
+			   "FLXSCALE");
       parameters.addMember("maskSegmentation", &maskSegmentation, def,
 			   "mask out segmented objects?", 0);
       parameters.addMember("segmentationName",&segmentationName, def,
@@ -151,7 +155,7 @@ main(int argc,
       parameters.addMember("seIdCol",&seIdCol, def | low,
 			   "SExtractor ID number", 17, 1);
       parameters.addMember("fwdColStart",&fwdColStart, def | low,
-			   "first forwarded column from input catalog", 0, 0);
+			   "first forwarded column from input catalog", 2, 0); // exclude ID
       parameters.addMember("fwdColEnd",&fwdColEnd, def | low,
 			   "last forwarded column from input catalog", 0, 0);
       parameters.addMember("maxBadPixels",&maxBadPixels, def,
@@ -319,7 +323,7 @@ main(int argc,
     tmv::SymMatrix<double> covE(2);
 
     cout << "# id x_pix y_pix hlr_SN eta1 eta2 sig1 sig2 mu egFix fdFlags considered_success "
-	 << "forwarded_column" << endl;
+	 << "ee50obs ee50psf forwarded_column" << endl;
 
     while (stringstuff::getlineNoComment(ccat, buffer)) { // all objects
 
@@ -446,6 +450,11 @@ main(int argc,
 #endif
 
       PSFInformation psfinfo(psfWCS, psfBasis);
+
+      //
+      // (re-)measure ee50psf for catalog output purposes
+      //
+      ee50psf = EnclosedFluxRadius(ipsf, psfBasis.getX0().x, psfBasis.getX0().y, 0.5);
 
       //
       // initialize galaxy ellipse value
@@ -633,7 +642,7 @@ main(int argc,
       
       // find half-light radius of observed galaxy
       double ee50obs = EnclosedFluxRadius(scistamp, basis.getX0().x, basis.getX0().y, fluxModel*0.5);
-      // find the average rms... from the rms map!
+      // get the average rms  (normally, one would get it from the rms map)
       ifstream rmsf(rmsName.c_str());
       double imgRMS;
       rmsf >> imgRMS;
@@ -833,6 +842,8 @@ main(int argc,
 	   << " " << egFix
 	   << " " << fd.getFlags()
 	   << " " << success
+	   << " " << ee50obs
+	   << " " << ee50psf
 	   << " " << fwd
 	   << endl;
 
