@@ -340,11 +340,11 @@ main(int argc,
       }
       int id = atoi(readvals[idCol-1].c_str());
       int se_id = atoi(readvals[seIdCol-1].c_str());
-      if (se_id % 1000 == 0)
-	  cerr << " " << se_id << " ";
-      else if (se_id % 100 == 0)
+      if (id % 10000 == 0)
+	  cerr << " " << id << " ";
+      else if (id % 1000 == 0)
 	  cerr << 'O';
-      else if (se_id % 10 == 0)
+      else if (id % 10 == 0)
 	  cerr << 'o';
       else
 	  cerr << '.';
