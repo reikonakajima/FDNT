@@ -799,7 +799,7 @@ main(int argc,
 	  }
 #endif
       } else {
-	  cerr << "# fail: some obscure thing in FDNT::prepare() happens for " << id
+	  cerr << endl << "# fail: some obscure thing in FDNT::prepare() happens for " << id
 	       << " (" << se_id << "), flags " << fd.getFlags() << endl;
 	stringstream flags; flags << fd.getFlags();	
 #ifdef CHECKPLOTS
