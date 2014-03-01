@@ -323,7 +323,7 @@ main(int argc,
     tmv::SymMatrix<double> covE(2);
 
     cout << "# id x_pix y_pix hlr_SN eta1 eta2 sig1 sig2 mu egFix fdFlags considered_success "
-	 << "ee50obs ee50psf forwarded_column" << endl;
+	 << "ee50obs ee50psf e1psf e2psf forwarded_column" << endl;
 
     while (stringstuff::getlineNoComment(ccat, buffer)) { // all objects
 
