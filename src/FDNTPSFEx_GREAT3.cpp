@@ -831,23 +831,23 @@ main(int argc,
 	nfail_fdnt++;
       }
       double mu = fd.getBasis().getMu();
-      cout << id 
-	   << " " << x_pix
-	   << " " << y_pix 
-	   << " " << hlr_SN
-	   << " " << eta1 
-	   << " " << eta2
-	   << " " << sig1
-	   << " " << sig2
-	   << " " << mu
-	   << " " << egFix
-	   << " " << fd.getFlags()
-	   << " " << success
-	   << " " << ee50obs
-	   << " " << ee50psf
-	   << " " << psfS.getE1()
-	   << " " << psfS.getE2()
-	   << " " << fwd
+      cout << id                    //  0
+	   << " " << x_pix          //  1
+	   << " " << y_pix          //  2
+	   << " " << hlr_SN         //  3
+	   << " " << eta1           //  4
+	   << " " << eta2           //  5
+	   << " " << sig1           //  6
+	   << " " << sig2           //  7
+	   << " " << mu             //  8
+	   << " " << egFix          //  9
+	   << " " << fd.getFlags()  // 10
+	   << " " << success        // 11
+	   << " " << ee50obs        // 12
+	   << " " << ee50psf        // 13
+	   << " " << psfS.getE1()   // 14
+	   << " " << psfS.getE2()   // 15
+	   << " " << fwd            // 16
 	   << endl;
 
       delete fep; //delete map;
