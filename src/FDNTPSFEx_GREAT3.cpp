@@ -444,9 +444,10 @@ main(int argc,
       psfBasis = gl.getBasis();
       psfBasis.setMu( psfBasis.getMu() + log(dx));
       Shear psfS = psfBasis.getS();
+      double psfSigma = exp(psfBasis.getMu());
 #ifdef DEBUGFDNTPSFEX
       cerr << "# PSF e and GL sigma: " << psfS
-	   << " " << exp(psfBasis.getMu())
+	   << " " << psfSigma
 	   << endl;
 #endif
 
@@ -500,17 +501,17 @@ main(int argc,
       Image<double> ywstamp(stamp);
       int segId=0;
       if (segIdCol>0)
-	  segId = atoi(readvals[segIdCol-1].c_str());
+	  segId = atoi(readvals[segIdCol-1].c_str());   // we don't use this in GREAT3
       else {
 	  bool badSegID=false;
 	  for (int dx=0; dx<=1; dx++) {
 	      for (int dy=0; dy<=1; dy++) {
 		  //cerr << int(x_pix)+dx << " " << int(y_pix)+dy << endl;
 		  int dsegId=seg(int(x_pix)+dx,int(y_pix)+dy);
-		  if (!segId && dsegId) {
+		  if (!segId && dsegId) {                // set the segmentation ID at centroid
 		      segId=dsegId;
 		  }
-		  else if (dsegId && segId!=dsegId)
+		  else if (dsegId && segId!=dsegId)      // 2x2 pixel around centroid is fractured
 		  {
 		      badSegID=true;
 		  }
@@ -531,7 +532,7 @@ main(int argc,
 	      segstamp.shift(1,1);
 	      FITSImage<>::writeToFITS("check_"+se_id+"_seg_badseg.fits",segstamp);
 #endif
-	      nfail++;
+	      nfail++;                                  // fail if segmented at centroid
 	      nfail_seg++;
 	      continue;
 	  }
@@ -540,7 +541,7 @@ main(int argc,
 #ifdef DEBUGFDNTPSFEX
       cerr << "got segid" << endl;
 #endif
-      {
+      {   // define the pixels to be used for the Fourier Transform
 	  try {
 	      for (int iy=stamp.getYMin(); iy<=stamp.getYMax(); iy++)
 	      {
@@ -549,7 +550,7 @@ main(int argc,
 		      fullmap->toWorld(ix,iy,dxw,dyw);
 		      xwstamp(ix,iy)=dxw;
 		      ywstamp(ix,iy)=dyw;
-		      if (maskSegmentation)
+		      if (maskSegmentation) // mask out the other object IF maskSegmentaiton==true
 			  if (segstamp(ix,iy) && segstamp(ix,iy)!=segId) //it's another object!
 			  {
 			      cerr << "WARNING: objid " << id << " (" << se_id << ") is fractured"
@@ -570,16 +571,16 @@ main(int argc,
 				      wtstamp,
 				      xwstamp,
 				      ywstamp, 0, sky+bg);
-	}
-	catch (...)
-	{
-	    cerr << "# fail: could not get postage stamp for " << id
-		 << " (" << se_id << ")" << endl;
-	    nfail++;
-	    nfail_post++;
-	    delete fep; //delete map;
-	    continue;
-	}
+	  }
+	  catch (...)
+	  {
+	      cerr << "# fail: could not get postage stamp for " << id
+		   << " (" << se_id << ")" << endl;
+	      nfail++;
+	      nfail_post++;
+	      delete fep; //delete map;
+	      continue;
+	  }
       }
 
       //
@@ -847,7 +848,8 @@ main(int argc,
 	   << " " << ee50psf        // 13
 	   << " " << psfS.getE1()   // 14
 	   << " " << psfS.getE2()   // 15
-	   << " " << fwd            // 16
+	   << " " << psfSigma       // 16
+	   << " " << fwd            // 17
 	   << endl;
 
       delete fep; //delete map;
