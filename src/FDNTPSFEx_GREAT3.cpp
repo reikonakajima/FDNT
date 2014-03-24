@@ -431,18 +431,39 @@ main(int argc,
 #ifdef DEBUGFDNTPSFEX
       cerr << "drawing psf postage stamp with dx=" << dx << endl;
 #endif
-      Image<> ipsf = psfWCS.draw(dx);
-      // Measure PSF GL size & significance
-      Image<> psfwt(ipsf.getBounds());
-      psfwt = pow(1e-5/dx, -2.);
-      psfBasis.setMu( psfBasis.getMu() - log(dx));
-      GLSimple<> gl(ipsf, psfwt, psfBasis, 4);
-      if (!gl.solve()) {
-	  cerr << "# Failed measuring psf, flags " << gl.getFlags() << "; ignoring object" << endl;
-	  continue;
+      Image<> ipsf0 = psfWCS.draw(dx);
+
+      bool solved = false;
+      int wmult = 1;
+      while (!solved && wmult<8) {
+	dx = ee50psf / 2.35 / wmult; // magic 4.7 factor from PSFEx
+	Image<> ipsf = psfWCS.draw(dx);
+	// Measure PSF GL size & significance
+	Image<> psfwt(ipsf0.getBounds());
+	psfwt = pow(1e-5/dx, -2.);
+	psfBasis.setMu( psfBasis.getMu() - log(dx));
+	GLSimple<> gl(ipsf, psfwt, psfBasis, 4);
+	solved = gl.solve();
+	if (solved) {
+	    psfBasis = gl.getBasis();
+	    psfBasis.setMu( psfBasis.getMu() + log(dx));
+	    // (re-)measure ee50psf for catalog output purposes
+	    ee50psf = EnclosedFluxRadius(ipsf, psfBasis.getX0().x, psfBasis.getX0().y, 0.5);
+	}
+	wmult++;
       }
-      psfBasis = gl.getBasis();
-      psfBasis.setMu( psfBasis.getMu() + log(dx));
+      if (!solved) {
+	  cerr << "pixel scale fix try failed, ignoring object" << endl;
+	  continue;
+	  /*
+	  cerr << '3';
+	  psfBasis.setMu(2.03325);  	             // EMERGENCY MEASURE FOR csc FIELD #03
+	  psfBasis.setS(Shear(-0.332308,-0.501026)); // EMERGENCY MEASURE FOR csc FIELD #03
+	  psfBasis.setMu(1.76246);  	             // EMERGENCY MEASURE FOR csc FIELD #94
+	  psfBasis.setS(Shear(-0.163679,0.281121));  // EMERGENCY MEASURE FOR csc FIELD #94
+	  */
+      }
+
       Shear psfS = psfBasis.getS();
       double psfSigma = exp(psfBasis.getMu());
 #ifdef DEBUGFDNTPSFEX
@@ -452,11 +473,6 @@ main(int argc,
 #endif
 
       PSFInformation psfinfo(psfWCS, psfBasis);
-
-      //
-      // (re-)measure ee50psf for catalog output purposes
-      //
-      ee50psf = EnclosedFluxRadius(ipsf, psfBasis.getX0().x, psfBasis.getX0().y, 0.5);
 
       //
       // initialize galaxy ellipse value
