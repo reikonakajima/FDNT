@@ -21,6 +21,12 @@ using namespace laguerre;
 using namespace sbp;
 using namespace astrometry;
 
+int 
+getTileIndex(int ix, int iy, int y_size)
+{
+    return ix * y_size + iy;
+}
+
 int
 main(int argc, 
      char *argv[])
@@ -29,8 +35,8 @@ main(int argc,
   // columns for necessary input:
   int idCol;   // GREAT3 unique ID column
   int segIdCol;
-  int raCol;
-  int decCol;
+  int raCol;   // for varPSF, use the modified ra/dec values
+  int decCol;  // (should be a new column in the input catalog)
   //int magCol;
   int bgCol;
   int rCol;
@@ -40,6 +46,7 @@ main(int argc,
   int fwdColStart;
   int fwdColEnd;
   int seIdCol;  // SExtractor ID column
+  int xTileCol, yTileCol;  // PSF tile columns
 
   // The fit:
   int order;
@@ -48,7 +55,8 @@ main(int argc,
   // Input files
   string fitsName;
   string catName;
-  string psfName;
+  string psfNameHeader;
+  int    psfNXTile, psfNYTile;
   int    psfOrder;
   string weightName;
   string wcsName;
@@ -85,13 +93,17 @@ main(int argc,
 			   "Image FITS file", "image-000-0.fits");
       parameters.addMember("catName",&catName, def,
 			   "Input SExtractor catalog", "sextractor-000-0.cat");
-      parameters.addMember("psfName",&psfName, def,
-			   "Input PSFEx file", "psfex-field_00-tile_0-0.psf");
+      parameters.addMember("psfNameHeader",&psfNameHeader, def,
+			   "Input PSFEx file header (requires additional suffix)", "psfex-000-0");
+      parameters.addMember("psfNXTile",&psfNXTile, def,
+			   "Number of PSF interpolation tiles in the x direction", 1);
+      parameters.addMember("psfNYTile",&psfNYTile, def,
+			   "Number of PSF interpolation tiles in the y direction", 1);
       parameters.addMember("psfOrder",&psfOrder, def | low,
 			   "Maximum order of polynomial psf variation used; -1 for order of PSFEx model", -1, -1);
       parameters.addMember("weightName",&weightName, def, "Input weight map proportional to inverse variance", "weight-000-0.fits");
       parameters.addMember("wcsName",&wcsName, def,
-			   "World coordinate header file", "wcs_is_pixel.txt");
+			   "World coordinate header file", "");
       parameters.addMember("weightScaleKey",&weightScaleKey, def,
 			   "Scaling factor for weight map (e.g. from Swarp) keyword in WCS header",
 			   "WTSCALE");
@@ -133,9 +145,9 @@ main(int argc,
       parameters.addMember("segIdCol",&segIdCol, def | low,
 			   "Object ID in segmentation map; determined automatically if 0", 0, 0);
       parameters.addMember("raCol",&raCol, def | low,
-			   "RA centroid", 2, 1);
+			   "RA centroid", 20, 1);
       parameters.addMember("decCol",&decCol, def | low,
-			   "DEC centroid", 3, 1);
+			   "DEC centroid", 21, 1);
       //parameters.addMember("magCol",&magCol, def | low,
 	//		   "Magnitude", 4, 1);
       parameters.addMember("bgCol",&bgCol, def | low,
@@ -147,13 +159,17 @@ main(int argc,
       parameters.addMember("g2Col",&g2Col, def | low,
 			   "g2 shape estimate (pixel coordinates)", 0, 0);
       parameters.addMember("aCol",&aCol, def | low,
-			   "Major axis (in WC)", 7, 1);
+			   "Major axis (in WC)", 12, 1);
       parameters.addMember("bCol",&bCol, def | low,
-			   "Minor axis (in WC)", 8, 1);
+			   "Minor axis (in WC)", 13, 1);
       parameters.addMember("paCol",&paCol, def | low,
-			   "Position angle (in WC)", 9, 1);
+			   "Position angle (in WC)", 14, 1);
       parameters.addMember("seIdCol",&seIdCol, def | low,
 			   "SExtractor ID number", 17, 1);
+      parameters.addMember("xTileCol",&xTileCol, def | low,
+			   "PSF interpolation tile, x coord", 18, 1);
+      parameters.addMember("yTileCol",&yTileCol, def | low,
+			   "PSF interpolation tile, y coord", 19, 1);
       parameters.addMember("fwdColStart",&fwdColStart, def | low,
 			   "first forwarded column from input catalog", 2, 0); // exclude ID
       parameters.addMember("fwdColEnd",&fwdColEnd, def | low,
@@ -195,10 +211,18 @@ main(int argc,
     parameters.dump(cerr);
 
     // (1) Read the PSF
-    PSFExModel *model;
+    int n_tiles = psfNXTile * psfNYTile;
+    PSFExModel* model[n_tiles];
     try
     {
-	model = new PSFExModel(psfName.c_str());
+	for (int ix = 0; ix < psfNXTile; ix++) {
+	    for (int iy = 0; iy < psfNYTile; iy++) {
+		ostringstream psfName;
+		psfName << psfNameHeader << "-tile_" << ix << '-' << iy << ".psf";
+		int i_tile = getTileIndex(ix, iy, psfNYTile);
+		model[i_tile] = new PSFExModel(psfName.str().c_str());
+	    }
+	}
     }
     catch (PSFExError &e)
     {
@@ -211,12 +235,17 @@ main(int argc,
       exit(1);
     }
     
-    if (!model->selfTest(1,3,psfOrder)) // this is a very lenient self-test
+    if (!model[0]->selfTest(1,3,psfOrder)) // this is a very lenient self-test
     {
       cerr << "PSFEx model did not pass self test; exiting." << endl;
       exit(1);
     }
     
+
+
+    exit(1);  // DEBUG
+
+
     cerr << "reading image" << flush;
     // (3) Open image
     Image<> sci;
@@ -413,13 +442,13 @@ main(int argc,
 #ifdef DEBUGFDNTPSFEX
       cerr << "// (c) get PSF model at the position" << endl;
 #endif
-      model->fieldPosition(x_pix,y_pix); // model now holds the psf model at this position
+      model[0]->fieldPosition(x_pix,y_pix); // model now holds the psf model at this position
       //cerr << "flux before normalization: " << model->sb()->getFlux() << endl;
-      model->setFlux(1.0);
+      model[0]->setFlux(1.0);
       // FWHM is twice the half-light radius for Gaussian psf, scaled to world coords
-      double ee50psf = model->getFWHM()/2.*rescale;
+      double ee50psf = model[0]->getFWHM()/2.*rescale;
       Ellipse psfBasis(0., 0., log(ee50psf/1.17));
-      SBDistort psfWCS(*(model->sb()),J(0,0),J(0,1),J(1,0),J(1,1));
+      SBDistort psfWCS(*(model[0]->sb()),J(0,0),J(0,1),J(1,0),J(1,1));
 #ifdef DEBUGFDNTPSFEX
       cerr << "dWorld/dPix " << J << endl; 
       cerr << ee50psf << endl;
@@ -873,7 +902,8 @@ main(int argc,
 
     cerr << endl;
     
-    delete model;
+    for (int i_tile=0; i_tile < n_tiles; i_tile++)
+	delete model[i_tile];
     delete fullmap;
 
     // Print out mean shear estimate
