@@ -50,8 +50,9 @@ typedef std::complex<double> DComplex;
 //********** Debugging classes:
 
 #ifdef DEBUGLOGGING
-extern ostream* dbgout;
-#define dbg if(dbgout) (*dbgout)
+//extern ostream* dbgout;
+//#define dbg if(dbgout) (*dbgout)
+#define dbg if(true) (cerr)
 #else
 #define dbg if(false) (cerr)
 #endif
