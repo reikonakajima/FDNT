@@ -30,9 +30,10 @@ getTileIndex(int ix, int iy, int y_size)
 astrometry::LinearMap
 ReadCD(const ImageHeader h) {
 
-    double lon, lat;
-    double crpix1, crpix2;
-    double cd11, cd12, cd21, cd22;
+    int lon, lat;       // should be double, but Image.h has problems with reading "0" as double
+    int crpix1, crpix2; // should be double, but Image.h has problems with reading "1" as double
+    double cd11, cd22;
+    int cd12, cd21;     // should be double, but Image.h has problems with reading "0" as double
     string ctype1,ctype2;
 
     if (!h.getValue("CTYPE1", ctype1))
@@ -45,7 +46,6 @@ ReadCD(const ImageHeader h) {
 	throw AstrometryError("ReadCD could not find CRVAL2");
     if (!h.getValue("CRPIX1", crpix1))
 	throw AstrometryError("ReadCD could not find CRPIX1");
-    cerr << crpix1 << endl;
     if (!h.getValue("CRPIX2", crpix2))
 	throw AstrometryError("ReadCD could not find CRPIX2");
     if (!h.getValue("CD1_1", cd11))
@@ -57,7 +57,7 @@ ReadCD(const ImageHeader h) {
     if (!h.getValue("CD2_2", cd22))
 	throw AstrometryError("ReadCD could not find CD2_2");
 
-    if ( ctype1!="LINEAR" || ctype2!="LINEAR" )
+    if ( ctype1!="LINEAR  " || ctype2!="LINEAR  " )
 	FormatAndThrow<AstrometryError>() << "ReadCD does not know CTYPEs "
 					  << ctype1 << " or " << ctype2;
     // Get parameters of the linear map
