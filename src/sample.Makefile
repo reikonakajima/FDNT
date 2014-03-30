@@ -37,7 +37,7 @@ PSF_KiDS: PSF_KiDS.o EnclosedFluxRadius.o SBParse.o $(OBJ)
 	$(CXX) $(CXXFLAGS) $^  $(LIBS) -o ../bin/$@
 PSFEx_KiDS: PSFEx_KiDS.o EnclosedFluxRadius.o SBParse.o $(OBJ)
 	$(CXX) $(CXXFLAGS) $^  $(LIBS) -o ../bin/$@
-FDNTPSFEx_GREAT3_v0.21: FDNTPSFEx_GREAT3_v0.21.o EnclosedFluxRadius.o SBParse.o images/HeaderFromStream.o $(OBJ)
+FDNTPSFEx_GREAT3_varPSF: FDNTPSFEx_GREAT3_varPSF.o EnclosedFluxRadius.o SBParse.o images/HeaderFromStream.o $(OBJ)
 	$(CXX) $(CXXFLAGS) $^  $(LIBS) -o ../bin/$@
 FDNTPSFEx_GREAT3_debug: FDNTPSFEx_GREAT3_debug.o EnclosedFluxRadius.o SBParse.o images/HeaderFromStream.o $(OBJ)
 	$(CXX) $(CXXFLAGS) $^  $(LIBS) -o ../bin/$@
