@@ -420,6 +420,9 @@ main(int argc,
       double dec0 = atof(readvals[decCol-1].c_str());
       double x_pix = atof(readvals[xpixCol-1].c_str());
       double y_pix = atof(readvals[ypixCol-1].c_str());
+      double x_tile = atof(readvals[xTileCol-1].c_str());
+      double y_tile = atof(readvals[yTileCol-1].c_str());
+      int i_tile = getTileIndex(x_tile, y_tile, psfNYTile); // for PSF model tile selection
       double a_wc = atof(readvals[aCol-1].c_str());
       double b_wc = atof(readvals[bCol-1].c_str());
       double pa_wc = atof(readvals[paCol-1].c_str());
@@ -485,13 +488,13 @@ main(int argc,
 #ifdef DEBUGFDNTPSFEX
       cerr << "// (c) get PSF model at the position" << endl;
 #endif
-      model[0]->fieldPosition(x_pix,y_pix); // model now holds the psf model at this position
+      model[i_tile]->fieldPosition(x_pix,y_pix); // model now holds the psf model at this position
       //cerr << "flux before normalization: " << model->sb()->getFlux() << endl;
-      model[0]->setFlux(1.0);
+      model[i_tile]->setFlux(1.0);
       // FWHM is twice the half-light radius for Gaussian psf, scaled to world coords
-      double ee50psf = model[0]->getFWHM()/2.*rescale;
+      double ee50psf = model[i_tile]->getFWHM()/2.*rescale;
       Ellipse psfBasis(0., 0., log(ee50psf/1.17));
-      SBDistort psfWCS(*(model[0]->sb()),J(0,0),J(0,1),J(1,0),J(1,1));
+      SBDistort psfWCS(*(model[i_tile]->sb()),J(0,0),J(0,1),J(1,0),J(1,1));
 #ifdef DEBUGFDNTPSFEX
       cerr << "dWorld/dPix " << J << endl; 
       cerr << ee50psf << endl;
