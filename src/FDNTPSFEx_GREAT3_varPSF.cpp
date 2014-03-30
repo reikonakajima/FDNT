@@ -27,6 +27,51 @@ getTileIndex(int ix, int iy, int y_size)
     return ix * y_size + iy;
 }
 
+astrometry::LinearMap
+ReadCD(const ImageHeader h) {
+
+    double lon, lat;
+    double crpix1, crpix2;
+    double cd11, cd12, cd21, cd22;
+    string ctype1,ctype2;
+
+    if (!h.getValue("CTYPE1", ctype1))
+	throw AstrometryError("ReadCD could not find CTYPE1");
+    if (!h.getValue("CTYPE2", ctype2))
+	throw AstrometryError("ReadCD could not find CTYPE2");
+    if (!h.getValue("CRVAL1", lon))
+	throw AstrometryError("ReadCD could not find CRVAL1");
+    if (!h.getValue("CRVAL2", lat))
+	throw AstrometryError("ReadCD could not find CRVAL2");
+    if (!h.getValue("CRPIX1", crpix1))
+	throw AstrometryError("ReadCD could not find CRPIX1");
+    cerr << crpix1 << endl;
+    if (!h.getValue("CRPIX2", crpix2))
+	throw AstrometryError("ReadCD could not find CRPIX2");
+    if (!h.getValue("CD1_1", cd11))
+	throw AstrometryError("ReadCD could not find CD1_1");
+    if (!h.getValue("CD1_2", cd12))
+	throw AstrometryError("ReadCD could not find CD1_2");
+    if (!h.getValue("CD2_1", cd21))
+	throw AstrometryError("ReadCD could not find CD2_1");
+    if (!h.getValue("CD2_2", cd22))
+	throw AstrometryError("ReadCD could not find CD2_2");
+
+    if ( ctype1!="LINEAR" || ctype2!="LINEAR" )
+	FormatAndThrow<AstrometryError>() << "ReadCD does not know CTYPEs "
+					  << ctype1 << " or " << ctype2;
+    // Get parameters of the linear map
+    DVector plin(6);
+    plin[0] = -cd11*crpix1 - cd12*crpix2;
+    plin[1] = cd11;
+    plin[2] = cd12;
+    plin[3] = -cd21*crpix1 - cd22*crpix2;
+    plin[4] = cd21;
+    plin[5] = cd22;
+
+    return LinearMap(plin);
+}
+
 int
 main(int argc, 
      char *argv[])
@@ -241,11 +286,6 @@ main(int argc,
       exit(1);
     }
     
-
-
-    exit(1);  // DEBUG
-
-
     cerr << "reading image" << flush;
     // (3) Open image
     Image<> sci;
@@ -264,18 +304,13 @@ main(int argc,
     else {
         h = img::HeaderFromStream(mapfs);
     }
-    // setup identity map
-    DVector v(6);
-    // should read from "h"!!!  *** TODO ***
-    v[0] = 0.; v[1] = 1.; v[2] = 0.; v[3] = 0; v[4] = 0; v[5] = 1.;
-    LinearMap *fullmap = new LinearMap(v);
-    /*
+    LinearMap fullmap = ReadCD(h);
+
+    // DEBUG
     double xw,yw;
-    fullmap->toWorld(0,0,xw,yw);
-#ifdef DEBUGFDNTPSFEX
+    fullmap.toWorld(0,0,xw,yw);
     cerr << "# WCS " << xw << " " << yw << " is the (0,0) pixel WC w.r.t. the TP" << endl;
-#endif
-    */
+
     cerr << ", weight" << flush;
 
     // (4) Open weight image and read weight scale
@@ -419,8 +454,18 @@ main(int argc,
       double y_wc = dec0;
       double x_pix, y_pix;
       
-      fullmap->toPix(x_wc,y_wc,x_pix,y_pix);
+      fullmap.toPix(x_wc,y_wc,x_pix,y_pix);
+
+      // DEBUG, check for conversion to pixel values
+      cerr << "DEBUG, check for conversion to pixel values" << endl;
+      cerr << x_wc << " " << y_wc << " " << x_pix << " " << y_pix << endl;
       
+
+
+      exit(1);  // DEBUG
+
+
+
 #ifdef DEBUGFDNTPSFEX
       cerr << "processing object at (RA,dec)=(" << ra0 << "," << dec0 << ")=(" << x_wc << "," << y_wc << ") " << "(x,y)=(" << x_pix << "," << y_pix << ")" << endl;
 #endif
@@ -428,7 +473,7 @@ main(int argc,
 #ifdef DEBUGFDNTPSFEX
       cerr << "// (b) get the Jacobian of coordinate transformation at that position" << endl;
 #endif
-      Matrix22 J = fullmap->dWorlddPix(x_pix,y_pix);
+      Matrix22 J = fullmap.dWorlddPix(x_pix,y_pix);
       double rescale = sqrt(fabs(J(0,0)*J(1,1)-J(0,1)*J(1,0)));
       // distorted approximate pixel scale: how much the scales are enlarged by
       // world coordinate transformation
@@ -592,7 +637,7 @@ main(int argc,
 	      {
 		  for (int ix=stamp.getXMin(); ix<=stamp.getXMax(); ix++) {
 		      double dxw,dyw;
-		      fullmap->toWorld(ix,iy,dxw,dyw);
+		      fullmap.toWorld(ix,iy,dxw,dyw);
 		      xwstamp(ix,iy)=dxw;
 		      ywstamp(ix,iy)=dyw;
 		      if (maskSegmentation) // mask out the other object IF maskSegmentaiton==true
@@ -904,7 +949,6 @@ main(int argc,
     
     for (int i_tile=0; i_tile < n_tiles; i_tile++)
 	delete model[i_tile];
-    delete fullmap;
 
     // Print out mean shear estimate
     Shear S(se);
