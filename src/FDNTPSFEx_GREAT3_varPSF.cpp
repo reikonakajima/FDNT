@@ -80,8 +80,10 @@ main(int argc,
   // columns for necessary input:
   int idCol;   // GREAT3 unique ID column
   int segIdCol;
-  int raCol;   // for varPSF, use the modified ra/dec values
+  int raCol;   // the "assigned" ra/dec values, for varPSF
   int decCol;  // (should be a new column in the input catalog)
+  int xpixCol; // the actual pixel location of the galaxy image centroid
+  int ypixCol;
   //int magCol;
   int bgCol;
   int rCol;
@@ -190,9 +192,13 @@ main(int argc,
       parameters.addMember("segIdCol",&segIdCol, def | low,
 			   "Object ID in segmentation map; determined automatically if 0", 0, 0);
       parameters.addMember("raCol",&raCol, def | low,
-			   "RA centroid", 20, 1);
+			   "RA centroid (assigned).  Not used in shape measurements", 20, 1);
       parameters.addMember("decCol",&decCol, def | low,
-			   "DEC centroid", 21, 1);
+			   "DEC centroid (assigned).  Not used in shape measurements", 21, 1);
+      parameters.addMember("xpixCol",&xpixCol, def | low,
+			   "xpix centroid in image", 2, 1);
+      parameters.addMember("ypixCol",&ypixCol, def | low,
+			   "ypix centroid in image", 3, 1);
       //parameters.addMember("magCol",&magCol, def | low,
 	//		   "Magnitude", 4, 1);
       parameters.addMember("bgCol",&bgCol, def | low,
@@ -306,10 +312,6 @@ main(int argc,
     }
     LinearMap fullmap = ReadCD(h);
 
-    // DEBUG
-    double xw,yw;
-    fullmap.toWorld(0,0,xw,yw);
-    cerr << "# WCS " << xw << " " << yw << " is the (0,0) pixel WC w.r.t. the TP" << endl;
 
     cerr << ", weight" << flush;
 
@@ -366,6 +368,8 @@ main(int argc,
     // (6) Loop through objects
     int nread=MAX(idCol, raCol);
     nread = MAX(nread, decCol);
+    nread = MAX(nread, xpixCol);
+    nread = MAX(nread, ypixCol);
     nread = MAX(nread, segIdCol);
     nread = MAX(nread, rCol);
     nread = MAX(nread, aCol);
@@ -414,6 +418,8 @@ main(int argc,
 	  cerr << '.';
       double ra0 = atof(readvals[raCol-1].c_str());
       double dec0 = atof(readvals[decCol-1].c_str());
+      double x_pix = atof(readvals[xpixCol-1].c_str());
+      double y_pix = atof(readvals[ypixCol-1].c_str());
       double a_wc = atof(readvals[aCol-1].c_str());
       double b_wc = atof(readvals[bCol-1].c_str());
       double pa_wc = atof(readvals[paCol-1].c_str());
@@ -450,20 +456,12 @@ main(int argc,
 	  }
       }
 
-      double x_wc = ra0;
-      double y_wc = dec0;
-      double x_pix, y_pix;
-      
-      fullmap.toPix(x_wc,y_wc,x_pix,y_pix);
-
-      // DEBUG, check for conversion to pixel values
+      double x_wc, y_wc;
+      /*/ DEBUG, check for conversion to pixel values
+      fullmap.toWorld(x_pix,y_pix,x_wc,y_wc);
       cerr << "DEBUG, check for conversion to pixel values" << endl;
-      cerr << x_wc << " " << y_wc << " " << x_pix << " " << y_pix << endl;
-      
-
-
-      exit(1);  // DEBUG
-
+      cerr << x_pix << "," << y_pix << " converted to " << x_wc << "," << y_wc << endl;
+      /*/
 
 
 #ifdef DEBUGFDNTPSFEX
@@ -556,7 +554,7 @@ main(int argc,
       cerr << "SExtractor ellipse r=" << r_pix*rescale << ", e="
 	   << e1start << "," << e2start << endl;
 #endif
-      Ellipse sexE(e1start, e2start, log(r_pix*rescale), x_wc, y_wc);  // in wcs
+      Ellipse sexE(e1start, e2start, log(r_pix*rescale), x_pix, y_pix);  // in pixel coords
       
       //
       // build FitExposure
@@ -923,8 +921,8 @@ main(int argc,
       }
       double mu = fd.getBasis().getMu();
       cout << id                    //  0
-	   << " " << x_pix          //  1
-	   << " " << y_pix          //  2
+	   << " " << ra0            //  1   the assigned position (in degrees)
+	   << " " << dec0           //  2
 	   << " " << hlr_SN         //  3
 	   << " " << eta1           //  4
 	   << " " << eta2           //  5
@@ -940,6 +938,8 @@ main(int argc,
 	   << " " << psfS.getE2()   // 15
 	   << " " << psfSigma       // 16
 	   << " " << fwd            // 17
+	   << " " << x_pix          // 18   the true position in the image (in pixels)
+	   << " " << y_pix          // 19
 	   << endl;
 
       delete fep; //delete map;
