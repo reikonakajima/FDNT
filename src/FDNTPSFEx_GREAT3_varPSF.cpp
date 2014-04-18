@@ -111,6 +111,7 @@ main(int argc,
   string segmentationName;
   int    segmentationPadding;
   string rmsName;
+  string debugPSFName;
   
   string weightScaleKey;
   string fluxScaleKey;
@@ -171,6 +172,8 @@ main(int argc,
 			   "Pixel size of img postage stamps", 48, 3);
       parameters.addMember("rmsName",&rmsName, def,
 			   "Input RMS value text file", "bgrms_value-000-0.txt");
+      parameters.addMember("debugPSFName",&debugPSFName, def,
+			   "PSF fail debug text file", "psf_fail-000.txt");
       parameters.addMemberNoValue("DATA PROPERTIES:",0,
 				  "Input data");
       parameters.addMember("sky",&sky, def,
@@ -390,8 +393,10 @@ main(int argc,
     string buffer;
     tmv::SymMatrix<double> covE(2);
 
-    cout << "# id x_pix y_pix hlr_SN eta1 eta2 sig1 sig2 mu egFix fdFlags considered_success "
-	 << "ee50obs ee50psf e1psf e2psf psfSigma [forwarded_column]" << endl;
+    cout << "# id ra0 dec0 hlr_SN eta1 eta2 sig1 sig2 mu egFix fdFlags considered_success "
+	 << "ee50obs ee50psf e1psf e2psf psfSigma x_pix y_pix [forwarded_column]" << endl;
+
+    ofstream psfdebugout(debugPSFName.c_str());
 
     while (stringstuff::getlineNoComment(ccat, buffer)) { // all objects
 
@@ -528,7 +533,9 @@ main(int argc,
 	wmult++;
       }
       if (!solved) {
-	  cerr << "pixel scale fix try failed, ignoring object" << endl;
+	  //cerr << "pixel scale fix try failed, ignoring object" << endl;
+	  cerr << 'x';
+	  psfdebugout << id << " " << ra0 << " " << dec0 << endl;
 	  continue;
 	  /*
 	  cerr << '3';
