@@ -35,11 +35,11 @@ namespace sbp {
     }
 
     // return size of model pixels    
-    double getDx() const {if (dx <= 0.) throw PSFExError("dx not set"); else return dx;}
+    double getDx() const {if (dx <= 0.) throw PSFExError("PSF_SAMP not set"); else return dx;}
     // Get order of interpolating polynomial
     int getOrder() const {return order;}
     // A number provided by PSFEx:
-    double getFWHM() const {if (fwhm <= 0.) throw PSFExError("PSF FWHM not set"); else return fwhm;}
+    double getFWHM() const {if (fwhm <= 0.) throw PSFExError("PSF_FWHM not set"); else return fwhm;}
     
     bool selfTest(double tolerance=0.01, int grid=3, int order=-1);
     // Checks on a grid of gridxgrid positions covering the field
