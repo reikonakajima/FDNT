@@ -456,11 +456,13 @@ main(int argc,
 	  cerr << "pixel scale fix try failed, ignoring object" << endl;
 	  continue;
 	  /*
-	  cerr << '3';
 	  psfBasis.setMu(2.03325);  	             // EMERGENCY MEASURE FOR csc FIELD #03
 	  psfBasis.setS(Shear(-0.332308,-0.501026)); // EMERGENCY MEASURE FOR csc FIELD #03
 	  psfBasis.setMu(1.76246);  	             // EMERGENCY MEASURE FOR csc FIELD #94
 	  psfBasis.setS(Shear(-0.163679,0.281121));  // EMERGENCY MEASURE FOR csc FIELD #94
+	  cerr << '8';
+	  psfBasis.setMu(1.99947);  	             // EMERGENCY MEASURE FOR rsc FIELD #82
+	  psfBasis.setS(Shear(-0.413289,0.53122));   // EMERGENCY MEASURE FOR rsc FIELD #82
 	  */
       }
 
