@@ -496,22 +496,31 @@ main(int argc,
       model[i_tile]->fieldPosition(x_pix,y_pix); // model now holds the psf model at this position
       //cerr << "flux before normalization: " << model->sb()->getFlux() << endl;
       model[i_tile]->setFlux(1.0);
-      // FWHM is twice the half-light radius for Gaussian psf, scaled to world coords
-      double ee50psf = model[i_tile]->getFWHM()/2.*rescale;
-      Ellipse psfBasis(0., 0., log(ee50psf/1.17));
+
+      // start temporary psf image
+      double dx = 1.0;
       SBDistort psfWCS(*(model[i_tile]->sb()),J(0,0),J(0,1),J(1,0),J(1,1));
+      // set flux of basis correctly to have flux normalization after distortion
+      psfWCS.setFlux(1.);
+      Image<> ipsf0 = psfWCS.draw(dx);
+
+      // FWHM is twice the half-light radius for Gaussian psf, scaled to world coords
+      double ee50psf;
+      try {
+	  ee50psf = model[i_tile]->getFWHM()/2.*rescale;  // original
+      } catch (PSFExError) {
+	  ee50psf = EnclosedFluxRadius(ipsf0, x_pix, y_pix, 0.5);  // if model->getFWHM() invalid
+      }
+      Ellipse psfBasis(0., 0., log(ee50psf/1.17));
 #ifdef DEBUGFDNTPSFEX
       cerr << "dWorld/dPix " << J << endl; 
       cerr << ee50psf << endl;
 #endif
-      // set flux of basis correctly to have flux normalization after distortion
-      psfWCS.setFlux(1.);
       
-      double dx = ee50psf / 2.35; // magic 4.7 factor from PSFEx
+      dx = ee50psf / 2.35; // magic 4.7 factor from PSFEx
 #ifdef DEBUGFDNTPSFEX
       cerr << "drawing psf postage stamp with dx=" << dx << endl;
 #endif
-      Image<> ipsf0 = psfWCS.draw(dx);
 
       bool solved = false;
       int wmult = 1;
