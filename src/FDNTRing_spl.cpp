@@ -410,9 +410,9 @@ main(int argc,
 
 	  // ...and save to output if necessary
 	  if (outputFlags == 1) {
-	    double ee30obs = EnclosedFluxRadius(obs, 0.3);
-	    double ee50obs = EnclosedFluxRadius(obs, 0.5);
-	    double ee70obs = EnclosedFluxRadius(obs, 0.7);
+	    double ee30obs = EnclosedFluxRadius(sci, 0.3);
+	    double ee50obs = EnclosedFluxRadius(sci, 0.5);
+	    double ee70obs = EnclosedFluxRadius(sci, 0.7);
 	    double g1, g2;
 	    targetS.getG1G2(g1, g2);
 	    ofs << g1 << " " << g2 << " " << eta1 << " " << eta2 << " "
