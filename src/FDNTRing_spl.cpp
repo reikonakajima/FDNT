@@ -302,6 +302,7 @@ main(int argc,
       UniformDeviate u;
       GaussianDeviate g(u);
       ostringstream oss;
+      ostringstream oss2;
 
       int nFailTheta = 0;	// Number of failures at this angle
 
@@ -309,6 +310,8 @@ main(int argc,
       
       oss << "# iTheta / nTheta = " << iTheta << " / " << nTheta << endl;
       oss << "# theta = " << theta / DEGREE << endl;
+      oss2 << "# iTheta / nTheta = " << iTheta << " / " << nTheta << endl;
+      oss2 << "# theta = " << theta / DEGREE << endl;
 
       SBProfile* gspin = unlensed->rotate(theta);
       SBProfile* gshear= gspin;
@@ -429,24 +432,36 @@ main(int argc,
 
       // print out summary for this iTheta
       oss << "## trial counts info ##" << endl;
+      oss2 << "## trial counts info ##" << endl;
       int N = dithersPerTheta * realizationsPerDither;
       oss << "# iTheta, theta(deg), N, nFailTheta, avg(S/N)" << endl;
       oss << iTheta << " " << theta/DEGREE << " " << N << " " << nFailTheta << " " << sum_sn/N
 	  << endl;
+      oss2 << "# iTheta, theta(deg), N, nFailTheta, avg(S/N)" << endl;
+      oss2 << "# " << iTheta << " " << theta/DEGREE << " " << N << " " << nFailTheta << " "
+	   << sum_sn/N << endl;
 
       oss << "## seMeans info ##" << endl;
       oss << "# sumeta1, sumeta2, sumetasq1, sumetasq2, N, sumFixEst, theta(deg)" << endl;
       oss << sum1 << " " << sum2 << " " << sumsq1 << " " << sumsq2 << " " 
 	  << N << " " << sumFixEst << " " << theta/DEGREE << endl;
+      oss2 << "## seMeans info ##" << endl;
+      oss2 << "# sumeta1, sumeta2, sumetasq1, sumetasq2, N, sumFixEst, theta(deg)" << endl;
+      oss2 << "# " << sum1 << " " << sum2 << " " << sumsq1 << " " << sumsq2 << " "
+	   << N << " " << sumFixEst << " " << theta/DEGREE << endl;
 
       oss << "## seRaw info ##" << endl;
       oss << seRawTheta.getLine();
+      oss2 << "## seRaw info ##" << endl;
+      oss2 << "# " << seRawTheta.getLine();
 
       oss << "## seNoFix info ##" << endl;
       oss << seNoFixTheta.getLine();
+      oss2 << "## seNoFix info ##" << endl;
+      oss2 << "# " << seNoFixTheta.getLine();
 
       cout << oss.str();
-      if (outputFlags==1)  ofs << oss.str();
+      if (outputFlags==1)  ofs << oss2.str();
     } // end iTheta "loop"
 
   } catch (tmv::Error& m) {
