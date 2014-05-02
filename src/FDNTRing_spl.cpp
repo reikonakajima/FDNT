@@ -45,6 +45,12 @@ main(int argc,
   double dist1;
   double dist2;
 
+  // more measurement outputs?
+  // 0: no extra outputs
+  // 1: individual shapes (relevant for noisy measurements)
+  int    outputFlags;
+  string outputFilename;
+
   Pset parameters;
   {
       const int def=PsetMember::hasDefault;
@@ -81,8 +87,18 @@ main(int argc,
 				  "Fitting parameters:");
       parameters.addMember("order",&order, def,
 			   "FDNT GL-fit order (0 for FFT)", 0);
+      parameters.addMember("outputFlags", &outputFlags, def | low,
+			   "Do we want outputs for individual measurements? (0=no=def, 1=yes)",
+			   0, 0);
+      stringstream ss;
+      ss << "shapes-" << iTheta << "-" << nTheta << ".dat";
+      parameters.addMember("outputFilename", &outputFilename, def,
+			   "name of the outputFilename, if outputFlags > 0", ss.str().c_str());
   }
 
+  //
+  // set parameters
+  //
   parameters.setDefault();
   
   try {
@@ -114,16 +130,32 @@ main(int argc,
       exit(1);
     }
 
+    //
+    // Open output file, if specified
+    //
+    std::ofstream ofs;
+    if (outputFlags == 1) {
+      ofs.open(outputFilename.c_str());
+    }
+    else if (outputFlags != 0) {
+      cerr << "Invalid value for outputFlags:" << outputFlags << endl;
+      exit(1);
+    }
+
     cout << "# " << stringstuff::taggedCommandLine(argc, argv) << endl;
     parameters.dump(cout);
+    if (outputFlags==1)  parameters.dump(ofs);
 
+    //
     // First create the galaxy
+    //
     SBProfile* unlensed=SBParse(sbGalaxy);
     // Measure half-light radius
     double ee50g = EnclosedFluxRadius(*unlensed);
     // Dilate if desired:
     if (rhalf > 0.) {
       cout << "# Raw galaxy half-light radius " << ee50g << endl;
+      if (outputFlags==1)  ofs << "# Raw galaxy half-light radius " << ee50g << endl;
       double factor = rhalf / ee50g;
       Ellipse e(0.,0.,log(factor));
       SBProfile* sb2 = unlensed->distort(e);
@@ -132,13 +164,17 @@ main(int argc,
       ee50g = rhalf;
     }
     cout << "# Galaxy EE50: " << ee50g << endl;
+    if (outputFlags==1)  ofs << "# Galaxy EE50: " << ee50g << endl;
 
+    //
     // Create PSF
+    //
     SBProfile* psfraw=SBParse(sbPSF);
     double ee50psf = EnclosedFluxRadius(*psfraw);
     // Dilate if desired:
     if (rhalfPSF > 0.) {
       cout << "# Raw PSF half-light radius " << ee50psf << endl;
+      if (outputFlags==1)  ofs << "# Raw PSF half-light radius " << ee50psf << endl;
       double factor = rhalfPSF / ee50psf;
       Ellipse e(0.,0.,log(factor));
       SBProfile* sb2 = psfraw->distort(e);
@@ -148,9 +184,12 @@ main(int argc,
     }
     psfraw->setFlux(1.);	// Always unit normalized
     cout << "# PSF EE50: " << ee50psf << endl;
+    if (outputFlags==1)  ofs << "# PSF EE50: " << ee50psf << endl;
 
+    //
     // Draw a version of the object at zero rotation to decide noise
     // level that makes desired significance
+    //
     double gflux=-1.;
     double imgRMS = -1.;
     double estSize = hypot( ee50g, ee50psf);
@@ -159,11 +198,14 @@ main(int argc,
       SBConvolve obs(*unlensed, *psfraw);
       double ee50obs = EnclosedFluxRadius(obs);
       cout << "# Observed EE50: " << ee50obs << endl;
+      if (outputFlags==1)  ofs << "# Observed EE50: " << ee50obs << endl;
       gflux = obs.getFlux();
       cout << "# Galaxy flux: " << gflux << endl;
+      if (outputFlags==1)  ofs << "# Galaxy flux: " << gflux << endl;
       // Set noise level from circular-aperture formula:
       imgRMS = 0.5*gflux / (sqrt(PI)*ee50obs*significance);
       cout << "# Pixel RMS: " << imgRMS << endl;
+      if (outputFlags==1)  ofs << "# Pixel RMS: " << imgRMS << endl;
       
       // Measure GL size & significance
       // Do we need to oversample it?
@@ -188,9 +230,12 @@ main(int argc,
       cleanBasis = gl.getBasis();
       cleanBasis.setMu( cleanBasis.getMu() + log(dx));
       cout << "# Observed GL sigma: " << exp(cleanBasis.getMu()) << endl;
+    if (outputFlags==1)  ofs << "# Observed GL sigma: " << exp(cleanBasis.getMu()) << endl;
       double f, varf;
       gl.b00(f, varf);
-      cout << "# Observed GL S/N: " << (f / sqrt(varf)) * (significance / trialSN) << endl;
+      double snr = (f / sqrt(varf)) * (significance / trialSN);
+      cout << "# Observed GL S/N: " << snr << endl;
+    if (outputFlags==1)  ofs << "# Observed GL S/N: " << snr << endl;
 
       // Calculate optimal detection significance
       double sigsum=0.;
@@ -201,13 +246,16 @@ main(int argc,
 	  fluxsum += clean(ix,iy);
 	}
       cout << "# Observed ideal S/N: " << sqrt(sigsum)*dx/imgRMS << endl;
+    if (outputFlags==1)  ofs << "# Observed ideal S/N: " << sqrt(sigsum)*dx/imgRMS << endl;
 
       // save the object as a FITS file
       //clean.shift(1,1);
       //FITSImage<>::writeToFITS("clean.fits", clean);
     }
 
+    //
     // Make a PSFInfo structure - do a GL fit to get its basis
+    //
     Ellipse psfBasis(0., 0., log(ee50psf/1.17));
     {
       double dx = MAX(ee50psf, 1.) / 4.;
@@ -230,9 +278,14 @@ main(int argc,
       cout << "# PSF e and GL sigma: " << psfBasis.getS()
 	   << " " << exp(psfBasis.getMu())
 	   << endl;
+      if (outputFlags==1)  ofs << "# PSF e and GL sigma: " << psfBasis.getS()
+			       << " " << exp(psfBasis.getMu())
+			       << endl;
     }
 
+    //
     // begin: the iTheta "broken" loop
+    //
     { 
       // things that we need local copies of, for parallel prossessing
       SBProfile* psfraw=SBParse(sbPSF);
@@ -375,6 +428,7 @@ main(int argc,
       oss << seNoFixTheta.getLine();
 
       cout << oss.str();
+      if (outputFlags==1)  ofs << oss.str();
     } // end iTheta "loop"
 
   } catch (tmv::Error& m) {
