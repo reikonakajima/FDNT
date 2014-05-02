@@ -196,9 +196,13 @@ main(int argc,
     Ellipse cleanBasis(0., 0., log(estSize));
     {
       SBConvolve obs(*unlensed, *psfraw);
-      double ee50obs = EnclosedFluxRadius(obs);
-      cout << "# Observed EE50: " << ee50obs << endl;
-      if (outputFlags==1)  ofs << "# Observed EE50: " << ee50obs << endl;
+      double ee30obs = EnclosedFluxRadius(obs, 0.3);
+      double ee50obs = EnclosedFluxRadius(obs, 0.5);
+      double ee70obs = EnclosedFluxRadius(obs, 0.7);
+      cout << "# Observed EE30, 50, 70: "
+	   << ee30obs << " " << ee50obs << " " << ee70obs << " " << endl;
+      if (outputFlags==1)  ofs << "# Observed EE30, 50, 70: "
+			       << ee30obs << " " << ee50obs << " " << ee70obs << " " << endl;
       gflux = obs.getFlux();
       cout << "# Galaxy flux: " << gflux << endl;
       if (outputFlags==1)  ofs << "# Galaxy flux: " << gflux << endl;
@@ -403,6 +407,20 @@ main(int argc,
 	  sum2 += eta2;
 	  sumsq1 += eta1*eta1;
 	  sumsq2 += eta2*eta2;
+
+	  // ...and save to output if necessary
+	  if (outputFlags == 1) {
+	    double ee30obs = EnclosedFluxRadius(obs, 0.3);
+	    double ee50obs = EnclosedFluxRadius(obs, 0.5);
+	    double ee70obs = EnclosedFluxRadius(obs, 0.7);
+	    double g1, g2;
+	    targetS.getG1G2(g1, g2);
+	    ofs << g1 << " " << g2 << " " << eta1 << " " << eta2 << " "
+		<< covE(0,0) << " " << covE(1,1) << " " << covE(0,1) << " "
+		<< ee30obs << " " << ee50obs << " " << ee70obs << " "
+		<< f << " " << sqrt(varf) << " " << exp(fd.getBasis().getMu()) << endl;
+	  }
+
 	} // end realization loop
       } // end dither loop
 
