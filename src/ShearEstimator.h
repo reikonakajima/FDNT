@@ -122,10 +122,13 @@ namespace laguerre {
     void setDelta(double Delta_) {Delta=Delta_;}
     double getDelta() const {return Delta;}
     int getN() const {return n;}
-    string getLine() const {
+    string getLine(bool allComment=false) const {
       ostringstream oss;
       oss << "# sume1 sume2 sumw sumr1 sumr3 sumvar1 sumvar2 sumwesq n (ShearEstimator.h)"
 	  << endl;
+      if (allComment) {
+	oss << "# ";
+      }
       oss << sume1 << " "
 	  << sume2 << " "
 	  << sumw << " "

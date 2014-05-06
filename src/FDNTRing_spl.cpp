@@ -450,15 +450,17 @@ main(int argc,
       oss2 << "# " << sum1 << " " << sum2 << " " << sumsq1 << " " << sumsq2 << " "
 	   << N << " " << sumFixEst << " " << theta/DEGREE << endl;
 
+      bool allComment = true;
+
       oss << "## seRaw info ##" << endl;
       oss << seRawTheta.getLine();
       oss2 << "## seRaw info ##" << endl;
-      oss2 << "# " << seRawTheta.getLine();
+      oss2 << seRawTheta.getLine(allComment);
 
       oss << "## seNoFix info ##" << endl;
       oss << seNoFixTheta.getLine();
       oss2 << "## seNoFix info ##" << endl;
-      oss2 << "# " << seNoFixTheta.getLine();
+      oss2 << seNoFixTheta.getLine(allComment);
 
       cout << oss.str();
       if (outputFlags==1)  ofs << oss2.str();
