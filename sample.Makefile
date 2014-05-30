@@ -1,7 +1,7 @@
 # A sample Makefile.  Edit to suit your platform.
 
 # CXX can specify any paths to includes that are absolute and will be passed to subdirs
-CXX = g++ -fopenmp
+CXX = g++
 # OPTFLAGS will be exported for subdir makes
 OPTFLAGS = -O3 -DASSERT
 
@@ -37,7 +37,7 @@ LIBS = -lm \
 	-L/opt/local/lib -lfftw3 \
 	-L/Users/reiko/2code/cfitsio/lib -lcfitsio \
 	-ltmv_symband $(TMV_LINK) \
-	-lCCfits \
+	-L/Users/reiko/2code/ -lCCfits \
 	-ltmv_symband \
 	-ltmv \
 	-lpthread
