@@ -835,8 +835,7 @@ FITSImage<T>::writeRows(const int ymin, const int ymax) const {
 // be. Desired bounds are a region of suggested size centered on
 // those required.
 template <class T>
-Bounds<int> FITSImage<T>::desiredBounds(const Bounds<int> b
-					=Bounds<int>(0,-1,0,-1)) const {
+Bounds<int> FITSImage<T>::desiredBounds(const Bounds<int> b) const {
   // See what the total buffered area must be
   Bounds<int> required=b;
   if (!purgeImages() && !b) {

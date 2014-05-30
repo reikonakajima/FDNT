@@ -196,7 +196,7 @@ namespace img {
       void allocateBuffer(const Bounds<int> b) const;
       void flushData() const;
       void touch() const;
-      Bounds<int> desiredBounds(const Bounds<int> b) const;
+      Bounds<int> desiredBounds(const Bounds<int> b=Bounds<int>(0,-1,0,-1)) const;
       void bufferMustSpan(const Bounds<int> b) const;
       void readRows(const int ymin, const int ymax, bool useExisting) const;
       // Note that WriteRows is const even though it changes disk data.
