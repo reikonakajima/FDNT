@@ -1,6 +1,6 @@
 #   $Id: Makefile,v 1.7 2011/02/14 15:22:13 garyb Exp $ 
 SUBDIRS = 
-INCLUDES = -I ../utilities -I ../utilities2 -I /usr/local/include
+INCLUDES = -I ../utilities -I ../utilities2 -I /usr/local/include -I /opt/local/include
 SRC = $(shell ls *.cpp)
 #OPTFLAGS = -O3
 CXXFLAGS = $(OPTFLAGS) $(INCLUDES)

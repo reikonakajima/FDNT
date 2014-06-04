@@ -1,9 +1,9 @@
 # A sample Makefile.  Edit to suit your platform.
 
 # CXX can specify any paths to includes that are absolute and will be passed to subdirs
-CXX = g++
+CXX = clang++
 # OPTFLAGS will be exported for subdir makes
-OPTFLAGS = -O3 -DASSERT
+OPTFLAGS = -O3 -DASSERT -fPIC
 
 # Note for compiling Boost.Python:
 #
@@ -27,7 +27,7 @@ INCLUDES = -I src -I src/utilities2 -I src/images -I src/astrometry2 -I pysrc \
 CXXFLAGS = $(OPTFLAGS) $(INCLUDES)
 SRC = $(shell ls *.cpp)
 
-SUBDIRS = src/utilities2 src/images src/astrometry2
+SUBDIRS = src src/utilities2 src/images src/astrometry2
 
 TMV_LINK := $(shell cat /usr/local/share/tmv/tmv-link)
 
@@ -37,9 +37,8 @@ LIBS = -lm \
 	-L/opt/local/lib -lfftw3 \
 	-L/Users/reiko/2code/cfitsio/lib -lcfitsio \
 	-ltmv_symband $(TMV_LINK) \
-	-L/Users/reiko/2code/ -lCCfits \
-	-ltmv_symband \
-	-ltmv \
+	-L/Users/reiko/2code/CCfits/.libs -lCCfits \
+	-L/usr/local/lib -ltmv_symband -ltmv \
 	-lpthread
 
 SUBOBJ = src/utilities2/BinomFact.o \
@@ -121,7 +120,8 @@ subs:
 
 depend:
 	for dir in $(SUBDIRS); do (cd $$dir && $(MAKE) depend); done
-	$(CXX) $(CXXFLAGS) -MM $(SRC) > .$@
+# there is no .cpp file in the head node
+        #$(CXX) $(CXXFLAGS) -MM $(SRC) > .$@
 
 clean:
 	for dir in $(SUBDIRS); do (cd $$dir && $(MAKE) clean); done
