@@ -1,0 +1,9 @@
+BinomFact.cpp
+fft.cpp
+GTable.cpp
+Interpolant.cpp
+odeint.cpp
+Poisson.cpp
+Poly2d.cpp
+Pset.cpp
+StringStuff.cpp

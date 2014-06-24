@@ -1,3 +1,8 @@
+gs_scons.conf
+.sconf_temp
+lib
+.sconsign.dblite
+*.os
 *~
 *.o
 Makefile*
