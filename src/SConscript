@@ -21,7 +21,8 @@ header_install_dir = os.path.join(env1['INSTALL_PREFIX'], header_dir)
 
 subdirs = ['.','utilities2', 'astrometry2', 'images']
 include_path = subdirs
-env1.Append(CPPPATH=include_path)
+env1.Append(CPPPATH=include_path) # include *.h files
+env1.Append(LIBS='CCfits')        ## TODO: I'll probably need to set paths for CCfits
 
 lib_files = []
 for d in subdirs:
