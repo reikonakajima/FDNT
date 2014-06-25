@@ -26,7 +26,7 @@ subdirs=['src', 'pysrc',]
 
 # Configurations will be saved here so command line options don't
 # have to be sent more than once
-config_file = 'gs_scons.conf'
+config_file = 'fdnt_scons.conf'
 
 # Default directory for installation.
 # This is the only UNIX specific things I am aware
