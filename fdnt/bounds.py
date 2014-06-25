@@ -32,17 +32,17 @@ for Class in (_fdnt.BoundsD, _fdnt.BoundsI):
     A BoundsI or BoundsD instance can be initialized in a variety of ways.  The most direct is via
     four scalars:
 
-        >>> bounds = galsim.BoundsD(xmin, xmax, ymin, ymax)
-        >>> bounds = galsim.BoundsI(imin, imax, jmin, jmax)
+        >>> bounds = fdnt.BoundsD(xmin, xmax, ymin, ymax)
+        >>> bounds = fdnt.BoundsI(imin, imax, jmin, jmax)
 
     In the BoundsI example above, `imin`, `imax`, `jmin` & `jmax` must all be integers to avoid an
     ArgumentError exception.
 
-    Another way to initialize a Bounds instance is using two galsim.PositionI/D instances, the first
+    Another way to initialize a Bounds instance is using two fdnt.PositionI/D instances, the first
     for xmin/ymin and the second for `xmax`/`ymax`:
 
-        >>> bounds = galsim.BoundsD(galsim.PositionD(xmin, ymin), galsim.PositionD(xmax, ymax))
-        >>> bounds = galsim.BoundsI(galsim.PositionI(imin, jmin), galsim.PositionI(imax, jmax))
+        >>> bounds = fdnt.BoundsD(fdnt.PositionD(xmin, ymin), fdnt.PositionD(xmax, ymax))
+        >>> bounds = fdnt.BoundsI(fdnt.PositionI(imin, jmin), fdnt.PositionI(imax, jmax))
 
     In both the examples above, the I/D type of PositionI/D must match that of BoundsI/D.
 
@@ -50,13 +50,13 @@ for Class in (_fdnt.BoundsD, _fdnt.BoundsI):
     `ymin`=`ymax`, which will have an undefined rectangle and the instance method .isDefined()
     will return false.  The first sets `xmin`=`xmax`=`ymin`=`ymax`=0:
 
-        >>> bounds = galsim.BoundsD()
-        >>> bounds = galsim.BoundsI()
+        >>> bounds = fdnt.BoundsD()
+        >>> bounds = fdnt.BoundsI()
 
     The second method sets both upper and lower rectangle bounds to be equal to some position:
 
-        >>> bounds = galsim.BoundsD(galsim.PositionD(xmin, ymin))
-        >>> bounds = galsim.BoundsI(galsim.PositionI(imin, jmin))
+        >>> bounds = fdnt.BoundsD(fdnt.PositionD(xmin, ymin))
+        >>> bounds = fdnt.BoundsI(fdnt.PositionI(imin, jmin))
 
     Once again, the I/D type of PositionI/D must match that of BoundsI/D.
 
@@ -105,12 +105,12 @@ for Class in (_fdnt.BoundsD, _fdnt.BoundsI):
     Calling Examples
     ----------------
 
-        >>> bounds = galsim.BoundsD(0., 100., 0., 100.)
+        >>> bounds = fdnt.BoundsD(0., 100., 0., 100.)
         >>> bounds.includes(50., 50.)
         True
-        >>> bounds.includes(galsim.PositionD(50., 50.))
+        >>> bounds.includes(fdnt.PositionD(50., 50.))
         True
-        >>> bounds.includes(galsim.BoundsD(-50., -50., 150., 150.))
+        >>> bounds.includes(fdnt.BoundsD(-50., -50., 150., 150.))
         False
 
     The type of the PositionI/D and BoundsI/D instances (i.e. integer or float type) should match
@@ -137,7 +137,7 @@ for Class in (_fdnt.BoundsD, _fdnt.BoundsI):
 
     or equivalently by a single Position argument:
 
-        >>> bounds.shift(galsim.PositionD(dx, dy))
+        >>> bounds.shift(fdnt.PositionD(dx, dy))
 
     The type of PositionI/D should match that of the bounds instance.
     """ 
