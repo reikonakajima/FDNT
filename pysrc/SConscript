@@ -51,7 +51,7 @@ mod_files.extend(ReadFileList('files.txt'))
 # Generate object files
 obj_mod = env1.SharedObject(mod_files)
 
-mod = env.LoadableModule(os.path.join('#fdnt','_fdnt'), obj_mod,
+mod = env1.LoadableModule(os.path.join('#fdnt','_fdnt'), obj_mod,
     		         LDMODULEPREFIX='', LDMODULESUFFIX='.so')
 
 mod_targets = [mod]
