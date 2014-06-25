@@ -90,12 +90,6 @@ struct PyFDNTImageData {
       .add_property("bounds", &ImageData<T>::getBounds)
       ;
 
-    // These lines allows for copy constructors between different types.  None allowed for now.
-    //wrapFDNTImageDataTemplates<int16_t>(pyFDNTImageData);
-    //wrapFDNTImageDataTemplates<int32_t>(pyFDNTImageData);
-    //wrapFDNTImageDataTemplates<float>(pyFDNTImageData);
-    //wrapFDNTImageDataTemplates<double>(pyFDNTImageData);
-
     // copy constructor from its own type
     //wrapFDNTImageDataTemplates<T>(pyFDNTImageData);
 
@@ -169,7 +163,7 @@ struct PyFDNTImage {
 
     typedef Image<T>* (*constructFromArray_func_type)(bp::object&, int, int);
 
-    bp::class_< Image<T> >   // in Gary's code, it's an "Image<>" class
+    bp::class_< Image<T> >   // in Gary's code, it's an "Image<>" class, not "FDNTImage"
       pyFDNTImage(("FDNTImage" + suffix).c_str(), "", bp::no_init);
     pyFDNTImage
       .def(bp::init<int, int>(bp::args("ncol", "nrow")))
@@ -185,12 +179,6 @@ struct PyFDNTImage {
       .add_property("bounds", &Image<T>::getBounds)
       ;
 
-    // These lines allows for copy constructors between different types.  None allowed for now.
-    //wrapFDNTImageTemplates<int16_t>(pyFDNTImage);
-    //wrapFDNTImageTemplates<int32_t>(pyFDNTImage);
-    //wrapFDNTImageTemplates<float>(pyFDNTImage);
-    //wrapFDNTImageTemplates<double>(pyFDNTImage);
-
     // copy constructor from its own type
     wrapFDNTImageTemplates<T>(pyFDNTImage);
 
@@ -204,15 +192,23 @@ struct PyFDNTImage {
 
 void pyExportFDNTImage() {
 
-  PyFDNTImageData<int16_t>::wrapFDNTImageData("S");  // returns "FDNTImageDataS" class
-  PyFDNTImageData<int32_t>::wrapFDNTImageData("I");  // returns "FDNTImageDataI" class ... etc
-  PyFDNTImageData<float>::wrapFDNTImageData("F");
-  PyFDNTImageData<double>::wrapFDNTImageData("D");
+  bp::dict pyFDNTImageDataDict;
 
-  PyFDNTImage<int16_t>::wrapFDNTImage("S");  // returns "FDNTImageS" class
-  PyFDNTImage<int32_t>::wrapFDNTImage("I");  // returns "FDNTImageI" class ... etc
-  PyFDNTImage<float>::wrapFDNTImage("F");
-  PyFDNTImage<double>::wrapFDNTImage("D");
+  pyFDNTImageDataDict[GetNumPyType<int16_t>()] = PyFDNTImageData<int16_t>::wrapFDNTImageData("S");
+  pyFDNTImageDataDict[GetNumPyType<int32_t>()] = PyFDNTImageData<int32_t>::wrapFDNTImageData("I");
+  pyFDNTImageDataDict[GetNumPyType<float>()] = PyFDNTImageData<float>::wrapFDNTImageData("F");
+  pyFDNTImageDataDict[GetNumPyType<double>()] = PyFDNTImageData<double>::wrapFDNTImageData("D");
+
+  bp::dict pyFDNTImageDict;
+
+  pyFDNTImageDict[GetNumPyType<int16_t>()] = PyFDNTImage<int16_t>::wrapFDNTImage("S");
+  pyFDNTImageDict[GetNumPyType<int32_t>()] = PyFDNTImage<int32_t>::wrapFDNTImage("I");
+  pyFDNTImageDict[GetNumPyType<float>()] = PyFDNTImage<float>::wrapFDNTImage("F");
+  pyFDNTImageDict[GetNumPyType<double>()] = PyFDNTImage<double>::wrapFDNTImage("D");
+
+  bp::scope scope;  // a default constructed scope represents the module we're creating
+  scope.attr("ImageData") = pyFDNTImageDataDict;
+  scope.attr("Image") = pyFDNTImageDict;
 
 }
 
