@@ -31,7 +31,7 @@ To see all the SCons options, type `scons --help`.
 
 The most relevant options to set are:
 PREFIX               Your final installation directory
-PYFPREFIX            Your final python module installation directory
+PYPREFIX             Your final python module installation directory
 TMV_DIR              Your tmv installation directory
 BOOST_DIR            Your Boost installation directory
 EXTRA_INCLUDE_PATH   Where you can find other headers (such as cfitsio.h)
