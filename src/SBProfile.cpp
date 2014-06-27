@@ -1133,7 +1133,7 @@ SBSersic::SersicInfo::SersicInfo(double n): inv2n(1./(2.*n)) {
 	   << " b= " << b
 	   << " norm= " << norm
 	   << endl;
-	   cerr << "Deriv terms: " << kderiv2 << " " << kderiv4 << endl; /**/
+	   cerr << "Deriv terms: " << kderiv2 << " " << kderiv4 << endl; **/
 
   // When is it safe to use low-k approximation?  See when
   // quartic term is at threshold

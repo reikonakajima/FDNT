@@ -757,7 +757,7 @@ ExposureGroupFT<T>::prepare(Ellipse startBasis) {
 	 << " " << (*deconvIm)[i]
 	 << " " << (*varRe)(i)
 	 << endl;
-  /**/
+  **/
   
   return f/sqrt(varf);
 }
