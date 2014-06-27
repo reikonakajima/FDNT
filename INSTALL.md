@@ -34,8 +34,9 @@ PREFIX               Your final installation directory
 PYPREFIX             Your final python module installation directory
 TMV_DIR              Your tmv installation directory
 BOOST_DIR            Your Boost installation directory
+CCFITS_DIR           Your CCfits installation directory
 EXTRA_INCLUDE_PATH   Where you can find other headers (such as cfitsio.h)
-EXTRA_LIB_PATH       Where you can find other libs (such as libCCfits.h)
+EXTRA_LIB_PATH       Where you can find other libs
 
 
 
