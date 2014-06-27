@@ -5,6 +5,9 @@ A few documentations/adjustments to the FDNTImage class at the Python layer.
 from . import _fdnt
 import numpy
 
+import galsim
+import fdnt
+
 # Sometimes (on 32-bit systems) there are two numpy.int32 types.  This can lead to some confusion
 # when doing arithmetic with images.  So just make sure both of them point to ImageAllocI in the
 # ImageAlloc dict.  One of them is what you get when you just write numpy.int32.  The other is
@@ -46,10 +49,10 @@ class Image(object):
 
     *** RN (26.Jun.2014): Pixel scale / WCS info is to be implemented later. ***
     ***                   The description here is that of the GalSim::Image class, ***
-    ***                   but should mostly be applicable to the FDNT::FDNTImage class. ***
-    ***                   The FDNT::FDNTImage class has arrays and bounds. ***
+    ***                   but should mostly be applicable to the fdnt::Image class. ***
+    ***                   The fdnt::Image class has arrays and bounds. ***
 
-    The FDNTImage class encapsulates all the relevant information about an image including a NumPy
+    The Image class encapsulates all the relevant information about an image including a NumPy
     array for the pixel values, a bounding box (and some kind of WCS that converts between pixel
     coordinates and world coordinates).  The NumPy array may be constructed by the Image class
     itself, or an existing array can be provided by the user.
@@ -63,14 +66,14 @@ class Image(object):
 
     There are several ways to construct an Image:
 
-        FDNTImage(ncol, nrow, dtype=numpy.float32, init_value=0, ...)
+        Image(ncol, nrow, dtype=numpy.float32, init_value=0, ...)
 
                 This constructs a new image, allocating memory for the pixel values according to
                 the number of columns and rows.  You can specify the data type as `dtype` if you
                 want.  The default is `numpy.float32` if you don't specify it.  You can also
                 optionally provide an initial value for the pixels, which defaults to 0.
 
-        FDNTImage(bounds, dtype=numpy.float32, init_value=0, ...)
+        Image(bounds, dtype=numpy.float32, init_value=0, ...)
 
                 This constructs a new image, allocating memory for the pixel values according to a
                 given bounds object.  The bounds should be a BoundsI instance.  You can specify the
@@ -78,7 +81,7 @@ class Image(object):
                 specify it.  You can also optionally provide an initial value for the pixels, which
                 defaults to 0.
 
-        FDNTImage(array, xmin=1, ymin=1, make_const=False, ...)
+        Image(array, xmin=1, ymin=1, make_const=False, ...)
 
                 This views an existing NumPy array as an Image.  The dtype is taken from
                 `array.dtype`, which must be one of the allowed types listed above.  You can also
@@ -86,7 +89,7 @@ class Image(object):
                 than (1,1).  You can also optionally force the image to be read-only with
                 `make_const=True`.
 
-        FDNTImage(image, dtype=dtype)  [RN: maybe implement?]
+        Image(image, dtype=dtype)  [RN: maybe implement?]
 
                 This creates a copy of an Image, possibly changing the type.  e.g.
 
@@ -187,7 +190,7 @@ class Image(object):
                 xmin = kwargs.pop('xmin',1)
                 ymin = kwargs.pop('ymin',1)
                 make_const = kwargs.pop('make_const',False)
-            elif isinstance(args[0], fdnt.BoundsI):
+            elif isinstance(args[0], _fdnt.BoundsI):
                 bounds = args[0]
             else:
                 image = args[0]
@@ -250,20 +253,18 @@ class Image(object):
                 raise TypeError("Cannot parse ncol, nrow as integers")
             self.image = _fdnt.FDNTImage[self.dtype](ncol, nrow)
             if init_value != None:
-                raise NotImplementedError("please code up 'fill'")  # TODO
                 self.image.fill(init_value)
         elif bounds != None:
             if array != None:
                 raise TypeError("Cannot specify both bounds and array")
             if image != None:
                 raise TypeError("Cannot specify both bounds and image")
-            if not isinstance(bounds, fdnt.BoundsI):
+            if not isinstance(bounds, _fdnt.BoundsI):
                 raise TypeError("bounds must be a fdnt.BoundsI instance")
-            raise NotImplementedError("please code up initialization from bounds")  # TODO
-            self.image = _fdnt.FDNTImage[self.dtype](bounds)
             if init_value != None:
-                raise NotImplementedError("please code up 'fill'")  # TODO
-                self.image.fill(init_value)
+                self.image = _fdnt.FDNTImage[self.dtype](bounds, init_value)
+            else:
+                self.image = _fdnt.FDNTImage[self.dtype](bounds, 0)
         elif array != None:
             if image != None:
                 raise TypeError("Cannot specify both array and image")

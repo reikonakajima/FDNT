@@ -27,8 +27,8 @@ int RunFDNT(const Image<T>& gal_image, const Image<T>& psf_image, const Image<T>
 	    double a_wc, double b_wc, double pa_wc,
 	    double r_pix, // FLUX_RADIUS in pixels, not wcs
 	    double ee50psf,
-	    double bg = 0.,
-	    int order = 0, double sky = 0.0);
+	    double bg,
+	    int order, double sky);
 
 
 }
