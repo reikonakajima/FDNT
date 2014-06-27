@@ -21,3 +21,4 @@ bin/*
 .obj
 .depend
 *.bkp.cpp
+output

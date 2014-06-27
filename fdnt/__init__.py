@@ -5,5 +5,7 @@ from _fdnt import *
 from . import bounds
 from . import position
 from . import fdntimage
+from . import fdnt
 
 from fdntimage import Image, FDNTImageS, FDNTImageI, FDNTImageF, FDNTImageD
+from fdnt import RunFDNT

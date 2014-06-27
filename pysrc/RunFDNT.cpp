@@ -21,7 +21,7 @@ struct PyRunFDNT {
     typedef int (*RunFDNT_func) (const Image<T>&, const Image<T>&, const Image<T>&,
 				 double, double, double, double, double, double, double,
 				 double, int, double);
-    bp::def("RunFDNT", RunFDNT_func(&RunFDNT<T>),
+    bp::def("_RunFDNT", RunFDNT_func(&RunFDNT<T>),
 	    (bp::arg("gal_image"), bp::arg("psf_image"), bp::arg("weight_image"),
 	     bp::arg("x_pix"), bp::arg("y_pix"), bp::arg("a_wc"), bp::arg("b_wc"), bp::arg("pa_wc"),
 	     bp::arg("r_pix"), bp::arg("ee50psf"), bp::arg("bg"), bp::arg("order"), bp::arg("sky")),
