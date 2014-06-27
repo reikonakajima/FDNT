@@ -68,6 +68,7 @@ opts.Add('TMV_DIR','Explicitly give the tmv prefix','')
 opts.Add('TMV_LINK','File that contains the linking instructions for TMV','')
 opts.Add('FFTW_DIR','Explicitly give the fftw3 prefix','')
 opts.Add('BOOST_DIR','Explicitly give the boost prefix','')
+opts.Add('CCFITS_DIR','Explicitly give the CCfits prefix','')
 
 opts.Add(PathVariable('EXTRA_INCLUDE_PATH',
          'Extra paths for header files (separated by : if more than 1)',
@@ -555,7 +556,7 @@ def AddDepPaths(bin_paths,cpp_paths,lib_paths):
 
     """
 
-    types = ['BOOST', 'TMV', 'FFTW']
+    types = ['BOOST', 'TMV', 'FFTW', 'CCFITS']
 
     for t in types:
         dirtag = t+'_DIR'
@@ -895,6 +896,40 @@ int main()
         ErrorExit(
             'Error: TMV file failed to link correctly',
             'Check that the correct location is specified for TMV_DIR')
+
+    config.Result(1)
+    return 1
+
+def CheckCCfits(config):
+    ccfits_source_file = """
+#include "CCfits/CCfits"
+#include <iostream>
+int main()
+{
+  CCfits::FITS* f=0;
+  try {
+    f = new CCfits::FITS("not_a_real_file.fits", CCfits::Read);
+  } catch (CCfits::FITS::CantOpen& e) {
+    // This is what should happen.
+    std::cout<<"23"<<std::endl;
+  }
+  delete f;
+  return 0;
+}
+"""
+    config.Message('Checking for correct CCfits linkage... ')
+    if not config.TryCompile(ccfits_source_file,'.cpp'):
+        ErrorExit(
+            'Error: CCfits file failed to compile.',
+            'Check that the correct location is specified for CCFITS_DIR')
+
+    result = (
+        CheckLibsFull(config,[''],ccfits_source_file) or
+        CheckLibsFull(config,['CCfits'],ccfits_source_file) )
+    if not result:
+        ErrorExit(
+            'Error: CCfits file failed to link correctly',
+            'Check that the correct location is specified for CCFITS_DIR')
 
     config.Result(1)
     return 1
@@ -1556,6 +1591,8 @@ int main()
     # Finally, do the tests for the TMV library linkage:
     config.CheckTMV()
 
+    config.CheckCCfits()
+
 
 def DoPyChecks(config):
     # These checks are only relevant for the pysrc compilation:
@@ -1641,6 +1678,7 @@ def DoConfig(env):
             'CheckTMV' : CheckTMV ,
             'CheckFFTW' : CheckFFTW ,
             'CheckBoost' : CheckBoost ,
+            'CheckCCfits' : CheckCCfits ,
             })
         DoCppChecks(config)
         env = config.Finish()
