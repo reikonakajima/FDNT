@@ -162,6 +162,13 @@ struct PyFDNTImage {
   static bp::object wrapFDNTImage(const std::string& suffix) {
 
     typedef Image<T>* (*constructFromArray_func_type)(bp::object&, int, int);
+    typedef const T& (Image<T>::*at_func_type)(int, int) const;
+
+    bp::object at = bp::make_function(
+	at_func_type(&Image<T>::at),
+	bp::return_value_policy<bp::copy_const_reference>(),
+	bp::args("x", "y")
+    );
 
     bp::class_< Image<T> >   // in Gary's code, it's an "Image<>" class, not "FDNTImage"
       pyFDNTImage(("FDNTImage" + suffix).c_str(), "", bp::no_init);
@@ -178,6 +185,7 @@ struct PyFDNTImage {
 	   )
       .def("getBounds", &Image<T>::getBounds)
       .add_property("bounds", &Image<T>::getBounds)
+      .def("__call__", at) // always used checked accessors in Python
       ;
 
     // copy constructor from its own type

@@ -432,22 +432,13 @@ class FDNTImage(object):
         " ""
         return self.bounds.origin()
 
-    def __call__(self, *args, **kwargs):
-        " ""Get the pixel value at given position
-
-        The arguments here may be either (x, y) or a PositionI instance.
-        Or you can provide x, y as named kwargs.
-        " ""
-        pos = galsim.utilities.parse_pos_args(args, kwargs, 'x', 'y', integer=True)
-        return self.image(pos.x, pos.y)
-
-    def at(self, x, y):
-        " ""This method is a synonym for im(x,y).  It is a bit faster than im(x,y), since GalSim
-        does not have to parse the different options available for __call__.  (i.e. im(x,y) or
-        im(pos) or im(x=x,y=y))
-        " ""
+    """
+    def __call__(self, x, y):
+        """Get the pixel value at given position(x, y).
+        """
         return self.image(x,y)
 
+    """
     def setValue(self, *args, **kwargs):
         " ""Set the pixel value at given position
 
