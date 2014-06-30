@@ -14,16 +14,16 @@ import fdnt
 # what numpy decides an int16 + int32 is.  The first one is usually the one that's already in the
 # ImageAlloc dict, but we assign both versions just to be sure.
 
-_fdnt.FDNTImage[numpy.int32] = _fdnt.FDNTImageI
+_fdnt.FDNTImageDict[numpy.int32] = _fdnt.FDNTImageI
 
 alt_int32 = ( numpy.array([0]).astype(numpy.int32) + 1).dtype.type
-_fdnt.FDNTImage[alt_int32] = _fdnt.FDNTImageI
+_fdnt.FDNTImageDict[alt_int32] = _fdnt.FDNTImageI
 
 # On some systems, the above doesn't work, but this next one does.  I'll leave both active,
 # just in case there are systems where this doesn't work but the above does.
 alt_int32 = ( numpy.array([0]).astype(numpy.int16) +
               numpy.array([0]).astype(numpy.int32) ).dtype.type
-_fdnt.FDNTImage[alt_int32] = _fdnt.FDNTImageI
+_fdnt.FDNTImageDict[alt_int32] = _fdnt.FDNTImageI
 
 # For more information regarding this rather unexpected behaviour for numpy.int32 types, see
 # the following (closed, marked "wontfix") ticket on the numpy issue tracker:
@@ -43,37 +43,37 @@ class MetaImage(type):
         }
         return Image_dict[t]
 
-class Image(object):
+class FDNTImage(object):
     __metaclass__ = MetaImage
     """A class for storing image data along with the pixel scale or wcs information
 
     *** RN (26.Jun.2014): Pixel scale / WCS info is to be implemented later. ***
     ***                   The description here is that of the GalSim::Image class, ***
-    ***                   but should mostly be applicable to the fdnt::Image class. ***
-    ***                   The fdnt::Image class has arrays and bounds. ***
+    ***                   but should mostly be applicable to the fdnt::FDNTImage class. ***
+    ***                   The fdnt::FDNTImage class has arrays and bounds. ***
 
-    The Image class encapsulates all the relevant information about an image including a NumPy
+    The FDNTImage class encapsulates all the relevant information about an image including a NumPy
     array for the pixel values, a bounding box (and some kind of WCS that converts between pixel
-    coordinates and world coordinates).  The NumPy array may be constructed by the Image class
+    coordinates and world coordinates).  The NumPy array may be constructed by the FDNTImage class
     itself, or an existing array can be provided by the user.
 
-    There are 4 data types that the Image can use for the data values.  These are `numpy.int16`,
-    `numpy.int32`, `numpy.float32`, and `numpy.float64`.  If you are constructing a new Image from
-    scratch, the default is `numpy.float32`, but you can specify one of the other data types.
+    There are 4 data types that the FDNTImage can use for the data values.  These are `numpy.int16`,
+    `numpy.int32`, `numpy.float32`, and `numpy.float64`.  If you are constructing a new FDNTImage
+    from scratch, the default is `numpy.float32`, but you can specify one of the other data types.
 
     Initialization
     --------------
 
-    There are several ways to construct an Image:
+    There are several ways to construct an FDNTImage:
 
-        Image(ncol, nrow, dtype=numpy.float32, init_value=0, ...)
+        FDNTImage(ncol, nrow, dtype=numpy.float32, init_value=0, ...)
 
                 This constructs a new image, allocating memory for the pixel values according to
                 the number of columns and rows.  You can specify the data type as `dtype` if you
                 want.  The default is `numpy.float32` if you don't specify it.  You can also
                 optionally provide an initial value for the pixels, which defaults to 0.
 
-        Image(bounds, dtype=numpy.float32, init_value=0, ...)
+        FDNTImage(bounds, dtype=numpy.float32, init_value=0, ...)
 
                 This constructs a new image, allocating memory for the pixel values according to a
                 given bounds object.  The bounds should be a BoundsI instance.  You can specify the
@@ -81,20 +81,20 @@ class Image(object):
                 specify it.  You can also optionally provide an initial value for the pixels, which
                 defaults to 0.
 
-        Image(array, xmin=1, ymin=1, make_const=False, ...)
+        FDNTImage(array, xmin=1, ymin=1, make_const=False, ...)
 
-                This views an existing NumPy array as an Image.  The dtype is taken from
+                This views an existing NumPy array as an FDNTImage.  The dtype is taken from
                 `array.dtype`, which must be one of the allowed types listed above.  You can also
                 optionally set the origin `(xmin, ymin)` if you want it to be something other
                 than (1,1).  You can also optionally force the image to be read-only with
                 `make_const=True`.
 
-        Image(image, dtype=dtype)  [RN: maybe implement?]
+        FDNTImage(image, dtype=dtype)  [RN: maybe implement?]
 
-                This creates a copy of an Image, possibly changing the type.  e.g.
+                This creates a copy of an FDNTImage, possibly changing the type.  e.g.
 
-                    >>> image_float = fdnt.Image(64, 64) # default dtype=numpy.float32
-                    >>> image_double = fdnt.Image(image_float, dtype=numpy.float64)
+                    >>> image_float = fdnt.FDNTImage(64, 64) # default dtype=numpy.float32
+                    >>> image_double = fdnt.FDNTImage(image_float, dtype=numpy.float64)
 
     You can specify the `ncol`, `nrow`, `bounds`, `array`, or `image`  parameters by keyword
     argument if you want, or you can pass them as simple arg as shown above, and the constructor
@@ -138,9 +138,9 @@ class Image(object):
         >>> image.bounds
         >>> image.array
 
-    The `array` attribute is a NumPy array of the Image's pixels.  The individual elements in the
-    array attribute are accessed as `image.array[y,x]`, matching the standard NumPy convention,
-    while the Image class's own accessor uses `(x,y)`.
+    The `array` attribute is a NumPy array of the FDNTImage's pixels.  The individual elements
+    in the array attribute are accessed as `image.array[y,x]`, matching the standard NumPy
+    convention, while the FDNTImage class's own accessor uses `(x,y)`.
 
 
     [RN: to implement?]
@@ -163,7 +163,7 @@ class Image(object):
     See their doc strings for more details.
 
     """
-    cpp_valid_dtypes = _fdnt.FDNTImage.keys()
+    cpp_valid_dtypes = _fdnt.FDNTImageDict.keys()
     alias_dtypes = {
         int : cpp_valid_dtypes[1],    # int32
         float : cpp_valid_dtypes[3],  # float64
@@ -180,7 +180,7 @@ class Image(object):
         array = None
         image = None
         if len(args) > 2:
-            raise TypeError("Error, too many unnamed arguments to Image constructor")
+            raise TypeError("Error, too many unnamed arguments to FDNTImage constructor")
         elif len(args) == 2:
             ncol = args[0]
             nrow = args[1]
@@ -216,16 +216,16 @@ class Image(object):
 
         # Check that we got them all
         if kwargs:
-            raise TypeError("Image constructor got unexpected keyword arguments: %s",kwargs)
+            raise TypeError("FDNTImage constructor got unexpected keyword arguments: %s",kwargs)
 
         # Figure out what dtype we want:
-        if dtype in Image.alias_dtypes: dtype = Image.alias_dtypes[dtype]
-        if dtype != None and dtype not in Image.valid_dtypes:
-            raise ValueError("dtype must be one of "+str(Image.valid_dtypes)+
+        if dtype in FDNTImage.alias_dtypes: dtype = FDNTImage.alias_dtypes[dtype]
+        if dtype != None and dtype not in FDNTImage.valid_dtypes:
+            raise ValueError("dtype must be one of "+str(FDNTImage.valid_dtypes)+
                              ".  Instead got "+str(dtype))
         if array != None:
-            if array.dtype.type not in Image.cpp_valid_dtypes and dtype == None:
-                raise ValueError("array's dtype.type must be one of "+str(Image.cpp_valid_dtypes)+
+            if array.dtype.type not in FDNTImage.cpp_valid_dtypes and dtype == None:
+                raise ValueError("array's dtype.type must be one of "+str(FDNTImage.cpp_valid_dtypes)+
                                  ".  Instead got "+str(array.dtype.type)+".  Or can set "+
                                  "dtype explicitly.")
             if dtype != None and dtype != array.dtype.type:
@@ -251,7 +251,7 @@ class Image(object):
                 nrow = int(nrow)
             except:
                 raise TypeError("Cannot parse ncol, nrow as integers")
-            self.image = _fdnt.FDNTImage[self.dtype](ncol, nrow)
+            self.image = _fdnt.FDNTImageDict[self.dtype](ncol, nrow)
             if init_value != None:
                 self.image.fill(init_value)
         elif bounds != None:
@@ -262,9 +262,9 @@ class Image(object):
             if not isinstance(bounds, _fdnt.BoundsI):
                 raise TypeError("bounds must be a fdnt.BoundsI instance")
             if init_value != None:
-                self.image = _fdnt.FDNTImage[self.dtype](bounds, init_value)
+                self.image = _fdnt.FDNTImageDict[self.dtype](bounds, init_value)
             else:
-                self.image = _fdnt.FDNTImage[self.dtype](bounds, 0)
+                self.image = _fdnt.FDNTImageDict[self.dtype](bounds, 0)
         elif array != None:
             if image != None:
                 raise TypeError("Cannot specify both array and image")
@@ -273,7 +273,7 @@ class Image(object):
             if make_const:
                 raise NotImplementedError("do I need to code const image?")  # TODO?
             else:
-                self.image = _fdnt.FDNTImage[self.dtype](array, xmin, ymin)
+                self.image = _fdnt.FDNTImageDict[self.dtype](array, xmin, ymin)
             if init_value != None:
                 raise TypeError("Cannot specify init_value with array")
         elif image != None:
@@ -281,23 +281,23 @@ class Image(object):
             if isinstance(image, FDNTImage):
                 image = image.image
             self.image = None
-            for im_dtype in Image.cpp_valid_dtypes:
-                if ( isinstance(image,_fdnt.FDNTImage[im_dtype]) ):
+            for im_dtype in FDNTImage.cpp_valid_dtypes:
+                if ( isinstance(image,_fdnt.FDNTImageDict[im_dtype]) ):
                     if dtype != None and im_dtype != dtype:
                         # Allow dtype to force a retyping of the provided image
-                        # e.g. im = ImageF(...)
-                        #      im2 = ImageD(im)
-                        self.image = _fdnt.FDNTImage[dtype](image)
+                        # e.g. im = FDNTImageF(...)
+                        #      im2 = FDNTImageD(im)
+                        self.image = _fdnt.FDNTImageDict[dtype](image)
                     else:
                         self.image = image
                     break
             if self.image == None:
                 # Then never found the dtype above:
-                raise TypeError("image must be an Image or BaseImage type")
+                raise TypeError("image must be an FDNTImage type")
             if init_value != None:
                 raise TypeError("Cannot specify init_value with image")
         else:
-            self.image = _fdnt.FDNTImage[self.dtype]()
+            self.image = _fdnt.FDNTImageDict[self.dtype]()
             if init_value != None:
                 raise TypeError("Cannot specify init_value without setting an initial size")
 
@@ -306,7 +306,7 @@ class Image(object):
         if scale is not None:
             raise NotImplementedError("please code up scale/wcs in the image")  # TODO
             if wcs is not None:
-                raise TypeError("Cannot provide both scale and wcs to Image constructor")
+                raise TypeError("Cannot provide both scale and wcs to FDNTImage constructor")
             self.wcs = fdnt.PixelScale(scale)
         else:
             raise NotImplementedError("please code up scale/wcs in the image")  # TODO
@@ -358,7 +358,7 @@ class Image(object):
 
     """
     def copy(self):
-        return Image(image=self.image.copy(), wcs=self.wcs)
+        return FDNTImage(image=self.image.copy(), wcs=self.wcs)
 
     def resize(self, bounds):
         " ""Resize the image to have a new bounds (must be a BoundsI instance)
@@ -500,12 +500,6 @@ def FDNTImageD(*args, **kwargs):
     kwargs['dtype'] = numpy.float64
     return Image(*args, **kwargs)
 
-FDNTImage = {
-    numpy.int16 : FDNTImageS,
-    numpy.int32 : FDNTImageI,
-    numpy.float32 : FDNTImageF,
-    numpy.float64 : FDNTImageD
-}
 
 ################################################################################################
 #

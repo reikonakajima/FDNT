@@ -208,8 +208,8 @@ void pyExportFDNTImage() {
   pyFDNTImageDict[GetNumPyType<double>()] = PyFDNTImage<double>::wrapFDNTImage("D");
 
   bp::scope scope;  // a default constructed scope represents the module we're creating
-  scope.attr("FDNTImageData") = pyFDNTImageDataDict;
-  scope.attr("FDNTImage") = pyFDNTImageDict;
+  scope.attr("FDNTImageDataDict") = pyFDNTImageDataDict;
+  scope.attr("FDNTImageDict") = pyFDNTImageDict;
 
 }
 
