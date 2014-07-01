@@ -22,3 +22,6 @@ bin/*
 .depend
 *.bkp.cpp
 output
+test.cpp
+test
+test.py
