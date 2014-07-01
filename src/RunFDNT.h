@@ -18,9 +18,13 @@
 namespace galsim {
 namespace fdnt{
 
+// a simple test function for the module.  returns the string 'hello, world'
 char const* greet();
 
 
+/*
+ * RunFDNT: the c++ function that interfaces the Python layer.
+ */
 template <typename T>
 int RunFDNT(const Image<T>& gal_image, const Image<T>& psf_image, const Image<T>& weight_image,
 	    double x_pix, double y_pix,

@@ -2,7 +2,6 @@ ColorGrad.cpp
 EnclosedFluxRadius.cpp
 ExposureGroup.cpp
 FDNT.cpp
-GLInterpolate.cpp
 GLSimple.cpp
 Laguerre.cpp
 Lance.cpp
