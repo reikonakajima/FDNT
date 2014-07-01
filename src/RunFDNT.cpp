@@ -122,7 +122,10 @@ int RunFDNT(const Image<T>& gal_image, const Image<T>& psf_image, const Image<T>
 
     Ellipse psfBasis(0., 0., log(ee50psf/1.17));
 
-    SBPixel psfWCS(psf_image, InterpolantXY(Quintic()));
+    const Quintic quintic(1e-4);
+    InterpolantXY quintic_2d(quintic);
+
+    SBPixel psfWCS(psf_image, quintic_2d);
     /* // generate PSF image in WC  /// future project
         SBDistort psfWCS(*(model->sb()),J(0,0),J(0,1),J(1,0),J(1,1));
 	cerr << "dWorld/dPix " << J;  // J comes with its own endl
@@ -130,7 +133,6 @@ int RunFDNT(const Image<T>& gal_image, const Image<T>& psf_image, const Image<T>
     */
     // sets flux of basis correctly to have flux normalization after distortion
     psfWCS.setFlux(1.);
-
     double dx = ee50psf / 2.35;  // for proper sampling
     Image<T> ipsf = psfWCS.draw(dx);  // future project: generate from model
 
@@ -138,6 +140,7 @@ int RunFDNT(const Image<T>& gal_image, const Image<T>& psf_image, const Image<T>
     Image<T> psfwt(ipsf.getBounds());
     psfwt = pow(1e-5/dx, -2.);
     psfBasis.setMu( psfBasis.getMu() - log(dx));
+
     GLSimple<> gl(ipsf, psfwt, psfBasis, 4);
     if (!gl.solve()) {
       std::ostringstream oss;
