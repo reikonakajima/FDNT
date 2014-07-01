@@ -235,8 +235,8 @@ def RunFDNT(gal_image, PSF_image, guess_x_centroid, guess_y_centroid,
     try:
         result = _fdnt._RunFDNT(gal_fdnt_image, PSF_fdnt_image, weight_fdnt_image,
                                 x_pix=guess_x_centroid, y_pix=guess_y_centroid,
-                                r_pix=guess_sig_gal_pix, ee50psf=guess_sig_PSF_pix,
                                 a_wc=guess_a_wc, b_wc=guess_b_wc, pa_wc=guess_pa_wc,
+                                r_pix=guess_sig_gal_pix, ee50psf=guess_sig_PSF_pix,
                                 bg=bg, order=order, sky=sky)
                                
     except RuntimeError as err:

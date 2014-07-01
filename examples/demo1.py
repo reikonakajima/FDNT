@@ -94,12 +94,14 @@ def main(argv):
                            guess_a_wc=gal_sigma / pixel_scale, guess_b_wc=gal_sigma / pixel_scale,
                            guess_pa_wc=0.,)
 
+    print 'results', results
+    """
     logger.info('FDNT reports that the image has observed shape and size:')
     logger.info('    e1 = %.3f, e2 = %.3f, sigma = %.3f (pixels)', results.observed_shape.e1,
                 results.observed_shape.e2, results.moments_sigma)
     logger.info('Expected values in the limit that pixel response and noise are negligible:')
     logger.info('    e1 = %.3f, e2 = %.3f, sigma = %.3f', 0.0, 0.0, 
                 math.sqrt(gal_sigma**2 + psf_sigma**2)/pixel_scale) 
-
+    """
 if __name__ == "__main__":
     main(sys.argv)
