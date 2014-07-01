@@ -48,19 +48,7 @@ int RunFDNT(const Image<T>& gal_image, const Image<T>& psf_image, const Image<T>
   try {
     //PSFExModel *model;
     Image<T> sci = gal_image.duplicate();
-    /*
-    float cd11, cd12;  // DEBUG
-    bool b11 = sci.getHdrValue("CD1_1", cd11);  // DEBUG
-    cerr << "CD1_1: " << cd11 << endl;  // DEBUG
-    if (!b11) {
-	cerr << "CD1_1 does not exist in the header!" << endl;
-    }
-    bool b12 = sci.getHdrValue("CD1_2", cd12);  // DEBUG
-    cerr << "CD1_2: " << cd12 << endl;  // DEBUG
-    if (!b12) {
-	cerr << "CD1_2 does not exist in the header!" << endl;
-    } */
-    /*  /// something to include in the (far) future
+    /*  /// something to include in the future
 	img::ImageHeader h;
 	ifstream mapfs(wcsName.c_str());
 	if (!mapfs) {
@@ -76,33 +64,6 @@ int RunFDNT(const Image<T>& gal_image, const Image<T>& psf_image, const Image<T>
 	fullmap->toWorld(0,0,xw,yw);
         cerr << "# WCS " << xw << " " << yw << " is the (0,0) pixel WC w.r.t. the TP" << endl;
     */
-
-    /*/ TRIAL WCS with PIXEL_SCALE ONLY:  *** THIS ISN'T WORKING!!! ***
-    double scale = 0.2;
-    string str = "LINEAR";
-    sci.header()->append("CTYPE1", str, "name of the world coordinate axis");
-    sci.header()->append("CTYPE2", str, "name of the world coordinate axis");
-    sci.header()->append("CRVAL1", 0.,  "world coordinate at reference pixel = u0");
-    sci.header()->append("CRVAL2", 0.,  "world coordinate at reference pixel = v0");
-    sci.header()->append("CRPIX1", 0.,  "image coordinate at reference pixel = x0");
-    sci.header()->append("CRPIX2", 0.,  "image coordinate at reference pixel = y0");
-    sci.header()->append("CD1_1", scale, "CD1_1 = dudx");
-    sci.header()->append("CD1_2", 0.,    "CD1_2 = dudy");
-    sci.header()->append("CD2_1", 0.,    "CD2_1 = dvdx");
-    sci.header()->append("CD2_2", scale, "CD2_2 = dvdy");
-    
-    cerr << "after setting the sci header" << endl;
-    b11 = sci.header()->getValue("CD1_1", cd11);  // DEBUG
-    cerr << "CD1_1: " << cd11 << endl;  // DEBUG
-    if (!b11) {
-	cerr << "CD1_1 does not exist in the header!" << endl;
-    }
-    b12 = sci.header()->getValue("CD1_2", cd12);  // DEBUG
-    cerr << "CD1_2: " << cd12 << endl;  // DEBUG
-    if (!b12) {
-	cerr << "CD1_2 does not exist in the header!" << endl;
-    }
-    // TRIAL WCS with PIXEL_SCALE ONLY:  *** THIS ISN'T WORKING!!! *** /*/
 
     Image<T> wt = weight_image.duplicate();
     double weightScale = 1.0;  // SCAMP weight scale
@@ -196,8 +157,6 @@ int RunFDNT(const Image<T>& gal_image, const Image<T>& psf_image, const Image<T>
     double e1start = (a_wc*a_wc-b_wc*b_wc)/(a_wc*a_wc+b_wc*b_wc);
     double e2start = e1start * sin(2*pa_wc*PI/180.);
     e1start *= cos(2*pa_wc*PI/180.);
-    //cerr << "SExtractor ellipse r = " << r_pix*rescale << ", e = " << e1start << ","
-    //     << e2start << endl;   // DEBUG
     // all in wcs pixel coordinates
     Ellipse sexE(e1start, e2start, log(r_pix*rescale), x_wc, y_wc);
 
@@ -239,11 +198,8 @@ int RunFDNT(const Image<T>& gal_image, const Image<T>& psf_image, const Image<T>
       yi0 = chip_bounds.getYMax() - stampSize - 1;
 
     Bounds<int> stamp(xi0,xi0+stampSize-1, yi0, yi0+stampSize-1);
-    //cerr << "set bounds" << endl; // DEBUG
-    Image<float> scistamp = sci.subimage(stamp);  //.duplicate();
-    //cerr << "sci bounds" << endl; // DEBUG
-    Image<float> wtstamp  = wt.subimage(stamp);  //.duplicate();
-    //cerr << "wt  bounds" << endl; // DEBUG
+    Image<float> scistamp = sci.subimage(stamp);
+    Image<float> wtstamp  = wt.subimage(stamp);
     Image<double> xwstamp(stamp);
     Image<double> ywstamp(stamp);
 
@@ -277,7 +233,6 @@ int RunFDNT(const Image<T>& gal_image, const Image<T>& psf_image, const Image<T>
 
     double meanweight=0.;
     vector< Position<int> > bp = fep->badPixels(meanweight);
-    //cerr << "mean weight: " << meanweight << endl; // DEBUG
     if (bp.size()>maxBadPixels*stampSize*stampSize)
       throw MyException ("too many bad pixels");
 
@@ -317,25 +272,17 @@ int RunFDNT(const Image<T>& gal_image, const Image<T>& psf_image, const Image<T>
     fd.setMaskSigma(maskSigma);
     fd.GLAll();
     bool success = fd.prepare();
-    if (success) {
-      //cerr << " success!" << endl;
-    } else {
-      cerr << " failed with error code: " << fd.getFlags() << endl;
-    }
 
     Shear targetS = fd.getBasis().getS();
-    //cerr << targetS << endl;  // DEBUG
     double prob;
     tmv::SymMatrix<double> covE(2,2);
     if (success) {
-      //cerr << "making the actual measurement" << endl;  // DEBUG
       try {
 	targetS = fd.shape2(prob, covE);  // THIS IS THE ACTUAL MEASUREMENT!!
       }
       catch (...) {
-	cerr << "an error occurred" << endl;  // DEBUG
+	  ;  // do nothing
       }
-      //cerr << "made the actual measurement" << endl;  // DEBUG
       // ??? Make flag mask an input parameter ???
       success = !(fd.getFlags() & (DidNotConverge + Singularity + OutOfBounds + TooLarge
 				   + UnderSampled + TooElliptical + GLFailure));
@@ -352,12 +299,10 @@ int RunFDNT(const Image<T>& gal_image, const Image<T>& psf_image, const Image<T>
     if (success) {
       try {
 	egFix = fd.shrinkResponse(targetS);
-	//cerr << "got shrink response" << endl;  // DEBUG
 	sig1 = sqrt(covE(0,0));
 	sig2 = sqrt(covE(1,1));
 	cov12 = covE(0,1);
 	se.add(targetS, egFix, sig1, sig2);
-	//cerr << "good " << targetS << " " << egFix << " " << sig1 << " " << sig2 << endl;
       }
       catch (...)
       {
@@ -382,8 +327,6 @@ int RunFDNT(const Image<T>& gal_image, const Image<T>& psf_image, const Image<T>
 	 << endl;
 
     delete fep;
-
-    // shape measurement ends here (this would conclude a while loop if there were multiple objects)
 
     //delete model;   /// future project, to include psfmodel and astrometry
     //delete fullmap;
