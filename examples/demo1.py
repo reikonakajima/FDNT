@@ -37,7 +37,7 @@ def main(argv):
     gal_sigma = 2.     # arcsec
     psf_sigma = 1.     # arcsec
     pixel_scale = 0.2  # arcsec / pixel
-    noise = 30.        # standard deviation of the counts in each pixel
+    noise = 3.        # standard deviation of the counts in each pixel
 
     logger.info('Starting demo script 1 using:')
     logger.info('    - circular Gaussian galaxy (flux = %.1e, sigma = %.1f),',gal_flux,gal_sigma)
@@ -74,18 +74,27 @@ def main(argv):
     # Write the image to a file
     if not os.path.isdir('output'):
         os.mkdir('output')
-    file_name = os.path.join('output','demo1.fits')
+    file_name = os.path.join('output','demo1_gal.fits')
     # Note: if the file already exists, this will overwrite it.
     image.write(file_name)
     logger.info('Wrote image to %r' % file_name)  # using %r adds quotes around filename for us
 
-    results = fdnt.RunFDNT(image, image_epsf, guess_x_centroid=66, guess_y_centroid=66,
-                           guess_sig_gal_pix=gal_sigma*pixel_scale,
-                           guess_sig_PSF_pix=psf_sigma*pixel_scale,
-                           guess_a_wc=gal_sigma*pixel_scale, guess_b_wc=gal_sigma*pixel_scale,
+    file_name = os.path.join('output','demo1_PSF.fits')
+    # Note: if the file already exists, this will overwrite it.
+    image_epsf.write(file_name)
+    logger.info('Wrote image to %r' % file_name)  # using %r adds quotes around filename for us
+
+    # currently, everything is in units of pixels.  Upgrade required....
+    x0 = image.bounds.center().x
+    y0 = image.bounds.center().y
+    magic_number = 1.2;
+    results = fdnt.RunFDNT(image, image_epsf, guess_x_centroid=x0, guess_y_centroid=y0,
+                           guess_sig_gal_pix=gal_sigma / pixel_scale * magic_number,
+                           guess_sig_PSF_pix=psf_sigma / pixel_scale,
+                           guess_a_wc=gal_sigma / pixel_scale, guess_b_wc=gal_sigma / pixel_scale,
                            guess_pa_wc=0.,)
 
-    logger.info('HSM reports that the image has observed shape and size:')
+    logger.info('FDNT reports that the image has observed shape and size:')
     logger.info('    e1 = %.3f, e2 = %.3f, sigma = %.3f (pixels)', results.observed_shape.e1,
                 results.observed_shape.e2, results.moments_sigma)
     logger.info('Expected values in the limit that pixel response and noise are negligible:')
