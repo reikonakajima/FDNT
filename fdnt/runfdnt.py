@@ -1,11 +1,8 @@
-#
-#
-#
-"""@file fdnt.py 
+""" @file runfdnt.py
 Routines for shape measurements with the FDNT method.
 
 This file contains the python interface to C++ routines for shape measurement, given the galaxy,
-PSF and mask images (reference: Bernstein 2010).
+PSF and mask images (reference: Bernstein 2010, Bernstein & Jarvis 2002).
 
 """
 
@@ -14,113 +11,169 @@ from . import _fdnt
 import fdntimage
 import bounds
 
-#from _fdnt import _FDNTParams as _FDNTParams
+class FDNTShapeData(object):
+    """A class to contain the outputs of using the FDNT shape and moments measurement routines.
 
-"""
-class ShapeData(object):
-    " ""A class to contain the outputs of using the FDNT shape and moments measurement routines.
-
-    At the C++ level, we have a container for the outputs of the HSM shape measurement routines.
-    The ShapeData class is the analogous object at the python level.  It contains the following
-    information about moment measurement (from either EstimateShear() or FindAdaptiveMom()):
+    At the C++ level, there is a container for the outputs of the FDNT shape measurement routines.
+    The FDNTShapeData class is the analogous object at the python level.  It contains the following
+    information about moment measurement (from either FDNTEstimateShear() or GLMoments()):
 
     - image_bounds: a BoundsI object describing the image.
 
-    - moments_status: the status flag resulting from moments measurement; -1 indicates no attempt to
-      measure, 0 indicates success.
+    - observed_flags: the status flag resulting from GLMoments measurement; -1 indicates no
+      attempt to measure.
 
-    - observed_shape: a Shear object representing the observed shape based on adaptive
-      moments.
+    - observed_e1: distortion component e1 of the observed shape based on Gauss-Laguerre fits.
 
-    - moments_sigma: size sigma = (det M)^(1/4) from the adaptive moments, in units of pixels; -1 if
+    - observed_e2: distortion component e2 of the observed shape based on Gauss-Laguerre fits.
+
+    - observed_sigma: size sigma of the best-fit Gaussian, in units of pixels; -1 if
       not measured.
 
-    - moments_amp: total image intensity for best-fit elliptical Gaussian from adaptive moments.
-      Normally, this field is simply equal to the image flux (for objects that follow a Gaussian
-      light distribution, otherwise it is something approximating the flux).  However, if the image
-      was drawn using `drawImage(method='sb')` then moments_amp relates to the flux via
-      flux = (moments_amp)*(pixel scale)^2.
+    - observed_b00: total image intensity for best-fit elliptical Gaussian from the best GLMoment
+      fit.  Normally, this field is simply equal to the image flux (for objects that follow a
+      Gaussian light distribution, otherwise it is something approximating the flux).  However,
+      if the image was drawn using `drawImage(method='sb')` then observed_amp relates to the flux
+      via flux = (observed_amp)*(pixel scale)^2.
 
-    - moments_centroid: a PositionD object representing the centroid based on adaptive
-      moments.  The convention for centroids is such that the center of the lower-left pixel is
+    - observed_b00_var: variance in the observed_amp value.
+
+    - observed_b22: the weighted radial fourth moment of the image.
+
+    - observed_centroid: a PositionD object representing the centroid based on GLMoment fit.
+      The convention for centroids is such that the center of the lower-left pixel is
       (0,0).
 
-    - moments_rho4: the weighted radial fourth moment of the image.
+    If FDNTEstimateShear() was used, then the following fields related to PSF-corrected shape will
+    also be populated:
 
-    - moments_n_iter: number of iterations needed to get adaptive moments, or 0 if not measured.
+    - psf_flags: Status after measuring PSF via GLMoments().  -1 if not set.
 
-    If EstimateShear() was used, then the following fields related to PSF-corrected shape will also
-    be populated:
+    - psf_e1, psf_e2: Distortion components e1/e2 of the PSF shape via GLMoments().
+      -10. if not measured.
 
-    - correction_status: the status flag resulting from PSF correction; -1 indicates no attempt to
+    - psf_sigma: Size sigma=exp(mu) of the PSF, currently in units of pixels.
+
+    - psf_order: The GL polynomial order to which the PSF was fit to.  -1 if not measured.
+
+    - psf_b00: Total image intensity of the best-fit elliptical Gaussian from GLMoments().
+      Units [currently] in the pixel scale.  -1. if not measured.
+
+    - psf_b00_var: Variance in psf_b00.  -1. if not measured.
+
+    - psf_b22: The weighted radial fourth moment of the image.  -1. if not measured.
+
+    - psf_chisq: Chi squared value of the GLMoment fit of the PSF.  0 if not measured.
+
+    - psf_DOF: Degree of freedom in the GLMoment fit of the PSF.  0 if not measured.
+
+    - intrinsic_flags: the status flag resulting from FDNT measurements; -1 indicates no attempt to
       measure, 0 indicates success.
 
-    - corrected_e1, corrected_e2, corrected_g1, corrected_g2: floats representing the estimated
-      shear after removing the effects of the PSF.  Either e1/e2 or g1/g2 will differ from the
-      default values of -10, with the choice of shape to use determined by the quantity meas_type (a
-      string that equals either 'e' or 'g') or, equivalently, by the correction method (since the
-      correction method determines what quantity is estimated, either the shear or the distortion).
+    - instrinsic_e1, instrinsic_e2: doubles representing the estimated shear after removing
+      the effects of the PSF.  e1/e2 will differ from the default values of -10 if a meaurement
+      is made.  e1/e2 corresponds to distortion defined by e = (a^2-b^2)/(a^2+b^2), not shear
+      g = (a-b)/(a+b), where a and b are the major and minor axis, respectively.
 
-    - corrected_shape_err: shape measurement uncertainty sigma_gamma per component.
+    - instrinsic_e1_var, instrinsic_e2_var, intrinsic_e1e2_covar: doubles representing the
+      estimated covariance elements of the shear after removing the effects of the PSF.
+      -10. if a meaurement was not made.
 
-    - correction_method: a string indicating the method of PSF correction (will be "None" if
-      PSF-correction was not carried out).
+    - intrinsic_sigma: Size sigma=exp(mu) of the intrinsic galaxy, currently in units of pixels.
 
-    - resolution_factor: Resolution factor R_2;  0 indicates object is consistent with a PSF, 1
-      indicates perfect resolution.
+    - shrink_response: Bias in the responsivity due to ellipticity gradient.  -10. if not set.
 
-    - error_message: a string containing any error messages from the attempt to carry out
-      PSF-correction.
+    - evaluation_count: Evaluation count for the FDNT measurement.
 
-    The ShapeData object can be initialized completely empty, or can be returned from the
+    - e_trial_count: Trial ellipticity count for the FDNT measurement.
+
+    - resolution_factor: Resolution factor R_2; 0 indicates object is consistent with a PSF,
+      1 indicates perfect resolution; default -1
+
+    - error_message: A string containing any error messages from the attempted measurements, to
+      facilitate proper error handling in both C++ and python
+
+
+    The FDNTShapeData object can be initialized completely empty, or can be returned from the
     routines that measure object moments (FindAdaptiveMom()) and carry out PSF correction
     (EstimateShear()).
-    " ""
+    """
     def __init__(self, *args):
-        # arg checking: require either a CppShapeData, or nothing
+        # arg checking: require either a _FDNTShapeData, or nothing
         if len(args) > 1:
-            raise TypeError("Too many arguments to initialize ShapeData!")
+            raise TypeError("Too many arguments to initialize FDNTShapeData!")
         elif len(args) == 1:
-            if not isinstance(args[0], _galsim._CppShapeData):
-                raise TypeError("Argument to initialize ShapeData must be a _CppShapeData!")
+            if not isinstance(args[0], _fdnt._FDNTShapeData):
+                raise TypeError("Argument to initialize FDNTShapeData must be a _FDNTShapeData!")
             self.image_bounds = args[0].image_bounds
-            self.moments_status = args[0].moments_status
-            self.observed_shape = galsim.Shear(args[0].observed_shape)
-            self.moments_sigma = args[0].moments_sigma
-            self.moments_amp = args[0].moments_amp
-            self.moments_centroid = args[0].moments_centroid
-            self.moments_rho4 = args[0].moments_rho4
-            self.moments_n_iter = args[0].moments_n_iter
-            self.correction_status = args[0].correction_status
-            self.corrected_e1 = args[0].corrected_e1
-            self.corrected_e2 = args[0].corrected_e2
-            self.corrected_g1 = args[0].corrected_g1
-            self.corrected_g2 = args[0].corrected_g2
-            self.meas_type = args[0].meas_type
-            self.corrected_shape_err = args[0].corrected_shape_err
-            self.correction_method = args[0].correction_method
+            self.observed_flags = args[0].observed_flags
+            self.observed_e1 = args[0].observed_e1
+            self.observed_e2 = args[0].observed_e2
+            self.observed_sigma = args[0].observed_sigma
+            self.observed_b00 = args[0].observed_b00
+            self.observed_b00_var = args[0].observed_b00_var
+            self.observed_b22 = args[0].observed_b22
+            self.observed_centroid = args[0].observed_centroid
+
+            self.psf_flags = args[0].psf_flags
+            self.psf_e1 = args[0].psf_e1
+            self.psf_e2 = args[0].psf_e2
+            self.psf_sigma = args[0].psf_sigma
+            self.psf_order = args[0].psf_order
+            self.psf_b00 = args[0].psf_b00
+            self.psf_b00_var = args[0].psf_b00_var
+            self.psf_b22 = args[0].psf_b22
+            self.psf_chisq = args[0].psf_chisq
+            self.psf_DOF = args[0].psf_DOF
+
+            self.intrinsic_flags = args[0].intrinsic_flags
+            self.instrinsic_e1 = args[0].instrinsic_e1
+            self.instrinsic_e2 = args[0].instrinsic_e2
+            self.instrinsic_e1_var = args[0].instrinsic_e1_var
+            self.instrinsic_e2_var = args[0].instrinsic_e2_var
+            self.instrinsic_e1e2_covar = args[0].instrinsic_e1e2_covar
+            self.instrinsic_sigma = args[0].instrinsic_sigma
+            self.shrink_response = args[0].shrink_response
+            self.evaluation_count = args[0].evaluation_count
+            self.e_trial_count = args[0].e_trial_count
             self.resolution_factor = args[0].resolution_factor
             self.error_message = args[0].error_message
+
         else:
-            self.image_bounds = _galsim.BoundsI()
-            self.moments_status = -1
-            self.observed_shape = galsim.Shear()
-            self.moments_sigma = -1.0
-            self.moments_amp = -1.0
-            self.moments_centroid = _galsim.PositionD()
-            self.moments_rho4 = -1.0
-            self.moments_n_iter = 0
-            self.correction_status = -1
-            self.corrected_e1 = -10.
-            self.corrected_e2 = -10.
-            self.corrected_g1 = -10.
-            self.corrected_g2 = -10.
-            self.meas_type = "None"
-            self.corrected_shape_err = -1.0
-            self.correction_method = "None"
+            self.image_bounds = _fdnt.BoundsI()
+            self.observed_flags = -1
+            self.observed_e1 = -10.
+            self.observed_e2 = -10.
+            self.observed_sigma = -1.0
+            self.observed_b00 = -1.0
+            self.observed_b00_var = -1.0
+            self.observed_rho4 = -1.0
+            self.observed_centroid = _fdnt.PositionD()
+
+            self.psf_flags = -1
+            self.psf_e1 = -10.
+            self.psf_e2 = -10.
+            self.psf_sigma = -1.
+            self.psf_order = -1
+            self.psf_b00 = args[0].psf_b00
+            self.psf_b00_var = args[0].psf_b00_var
+            self.psf_b22 = args[0].psf_b22
+            self.psf_chisq = args[0].psf_chisq
+            self.psf_DOF = args[0].psf_DOF
+
+            self.intrinsic_flags = -1
+            self.instrinsic_e1 = -10.
+            self.instrinsic_e2 = -10.
+            self.instrinsic_e1_var = 0.
+            self.instrinsic_e2_var = 0.
+            self.instrinsic_e1e2_covar = 0.
+            self.instrinsic_sigma = -1.
+            self.shrink_response = -10.
+            self.evaluation_count = 0
+            self.e_trial_count = 0
             self.resolution_factor = -1.0
             self.error_message = ""
-"""
+
 
 # A helper function for taking input weight and badpix Images, and returning a weight Image in the
 # format that the C++ functions want
@@ -129,10 +182,12 @@ def _convertMask(image, weight = None, badpix = None):
 
     This is used by RunFDNT().
     """
-    # if no weight image was supplied, make an int array (same size as gal image) filled with 1's
+    # if no weight image was supplied, make a float array (same size as gal image) filled with 1's
     if weight == None:
-        b = _fdnt.BoundsI(image.bounds.xmin, image.bounds.xmax,  # convert types from
-                          image.bounds.ymin, image.bounds.ymax)  # galsim.BoundsI to fdnt.BoundsI
+
+        # convert types from galsim.BoundsI to fdnt.BoundsI
+        b = _fdnt.BoundsI(image.bounds.xmin, image.bounds.xmax, image.bounds.ymin, image.bounds.ymax)
+        # create mask image
         mask = _fdnt.FDNTImageF(b, 1.)
 
     else:
@@ -239,10 +294,12 @@ def RunFDNT(gal_image, PSF_image, guess_x_centroid, guess_y_centroid,
                                 r_pix=guess_sig_gal_pix, ee50psf=guess_sig_PSF_pix,
                                 bg=bg, order=order, sky=sky)
                                
+        print 'after _RunFDNT' # DEBUG
+
     except RuntimeError as err:
         raise RuntimeError
 
-    return result  # should be 0 if successful
+    return ShapeData(result)
 
 
 

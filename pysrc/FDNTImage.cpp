@@ -173,7 +173,8 @@ struct PyFDNTImage {
       pyFDNTImage(("FDNTImage" + suffix).c_str(), "", bp::no_init);
     pyFDNTImage
       .def(bp::init<int, int>(bp::args("ncol", "nrow")))
-      .def(bp::init< Bounds<int>, T >(bp::args("bounds", "init_val")))
+      .def(bp::init< Bounds<int>&, T >
+	   ((bp::arg("bounds"), bp::arg("init_value")=T(0))))
       .add_property("array", &GetArray)  // getter only; set through ImageData constructor
       .def(
 	   "__init__",

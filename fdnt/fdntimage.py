@@ -225,8 +225,9 @@ class FDNTImage(object):
                              ".  Instead got "+str(dtype))
         if array != None:
             if array.dtype.type not in FDNTImage.cpp_valid_dtypes and dtype == None:
-                raise ValueError("array's dtype.type must be one of "+str(FDNTImage.cpp_valid_dtypes)+
-                                 ".  Instead got "+str(array.dtype.type)+".  Or can set "+
+                raise ValueError("array's dtype.type must be one of " +
+                                 str(FDNTImage.cpp_valid_dtypes) +
+                                 ".  Instead got "+str(array.dtype.type)+".  Or can set " +
                                  "dtype explicitly.")
             if dtype != None and dtype != array.dtype.type:
                 array = array.astype(dtype)

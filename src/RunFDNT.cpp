@@ -17,12 +17,13 @@ char const* greet()
 }
 
 template <typename T>
-int RunFDNT(const Image<T>& gal_image, const Image<T>& psf_image, const Image<T>& weight_image,
-	    double x_pix, double y_pix,
-	    double a_wc, double b_wc, double pa_wc,
-	    double r_pix,    // FLUX_RADIUS in pixels, not wcs
-	    double ee50psf,  // PSF half-light radius
-	    double bg, int order, double sky) {
+FDNTShapeData RunFDNT(const Image<T>& gal_image, const Image<T>& psf_image,
+		      const Image<T>& weight_image,
+		      double x_pix, double y_pix,
+		      double a_wc, double b_wc, double pa_wc,
+		      double r_pix,    // FLUX_RADIUS in pixels, not wcs
+		      double ee50psf,  // PSF half-light radius
+		      double bg, int order, double sky) {
 
   // necessary input:
   // sky: sky_level, order: FDNT GL-fit order (0 for FFT)
@@ -44,7 +45,11 @@ int RunFDNT(const Image<T>& gal_image, const Image<T>& psf_image, const Image<T>
   // g1Col: g1 shape estimate (use native shape if 0)
   // g2Col: g2 shape estimate (use native shape if 0)
 
+  // output:
+  FDNTShapeData results;
+
   try {
+
     //PSFExModel *model;
     Image<T> sci = gal_image.duplicate();
     /*  /// something to include in the future
@@ -84,7 +89,8 @@ int RunFDNT(const Image<T>& gal_image, const Image<T>& psf_image, const Image<T>
     UnweightedShearEstimator se;
     //tmv::SymMatrix<double> covE(2);
 
-    cout << "# x_pix y_pix eta1 eta2 sig1 sig2 cov12 mu egFix fdFlags considered_success"
+    // DEBUG: REMOVE
+    cerr << "# x_pix y_pix eta1 eta2 sig1 sig2 cov12 mu egFix fdFlags considered_success"
 	 << endl;
 
     double x_wc = x_pix, y_wc = y_pix;
@@ -139,7 +145,8 @@ int RunFDNT(const Image<T>& gal_image, const Image<T>& psf_image, const Image<T>
     psfBasis.setMu( psfBasis.getMu() - log(dx));
 
     GLSimple<> gl(ipsf, psfwt, psfBasis, 4);
-    if (!gl.solve()) {
+    bool psf_success = gl.solve();
+    if (psf_success) {
       std::ostringstream oss;
       oss << "# Failed measuring psf, flags " << gl.getFlags()
 	  << "; ignoring object" << endl;
@@ -147,10 +154,23 @@ int RunFDNT(const Image<T>& gal_image, const Image<T>& psf_image, const Image<T>
     }
     psfBasis = gl.getBasis();
     psfBasis.setMu( psfBasis.getMu() + log(dx));
-    cout << "# PSF e and GL sigma: " << psfBasis.getS()
-	 << " " << exp(psfBasis.getMu())
-	 << endl;
 
+    // save measurement results on observed galaxy properties
+    results.psf_flags = gl.getFlags();
+    if (psf_success) {
+      results.psf_e1 = psfBasis.getS().getE1();
+      results.psf_e2 = psfBasis.getS().getE2();
+      results.psf_sigma = exp(psfBasis.getMu());
+      gl.b00(results.psf_b00, results.psf_b00_var);
+      results.psf_order = gl.getOrder();
+      if (results.psf_order >= 4) {
+	results.psf_b22 = gl.getB()(2,2).real();
+      }
+      results.psf_chisq = gl.getChisq();
+      results.psf_DOF = gl.getDOF();
+    }
+
+    // setup PSF information for deconvolution
     PSFInformation psfinfo(psfWCS, psfBasis);
 
     double e1start = (a_wc*a_wc-b_wc*b_wc)/(a_wc*a_wc+b_wc*b_wc);
@@ -197,6 +217,7 @@ int RunFDNT(const Image<T>& gal_image, const Image<T>& psf_image, const Image<T>
       yi0 = chip_bounds.getYMax() - stampSize - 1;
 
     Bounds<int> stamp(xi0,xi0+stampSize-1, yi0, yi0+stampSize-1);
+    results.image_bounds = stamp;
     Image<float> scistamp = sci.subimage(stamp);
     Image<float> wtstamp  = wt.subimage(stamp);
     Image<double> xwstamp(stamp);
@@ -308,11 +329,27 @@ int RunFDNT(const Image<T>& gal_image, const Image<T>& psf_image, const Image<T>
 	throw MyException("an error occured on previously successful measurement");
       }
     } else {
-      cout << "# fail: some obscure thing in FDNT::prepare() happens: "<< fd.getFlags() << endl;
+      cerr << "# fail: some obscure thing in FDNT::prepare() happens: "<< fd.getFlags() << endl;
     }
 
     double mu = fd.getBasis().getMu();
-    cout << x_pix
+
+    // save measurement results on intrinsic galaxy properties
+    results.intrinsic_flags = fd.getFlags();
+    if (success) {
+      results.intrinsic_e1 = fd.getBasis().getS().getE1();
+      results.intrinsic_e2 = fd.getBasis().getS().getE2();
+      results.intrinsic_e1_var = covE(0,0);
+      results.intrinsic_e2_var = covE(1,1);
+      results.intrinsic_e1e2_covar = covE(0,1);
+      results.intrinsic_sigma = exp(mu);
+      results.shrink_response = egFix;
+      results.evaluation_count = fd.getEvaluationCount();
+      results.e_trial_count = fd.getETrialCount();
+    }
+
+    // DEBUG: REMOVE
+    cerr << x_pix
 	 << " " << y_pix
 	 << " " << eta1
 	 << " " << eta2
@@ -335,34 +372,29 @@ int RunFDNT(const Image<T>& gal_image, const Image<T>& psf_image, const Image<T>
     S.getG1G2(g1,g2);
     se.sigmaE(sig1,sig2, false);
 
-    cout << fixed << setprecision(6);
+    // DEBUG: REMOVE
+    cerr << fixed << setprecision(6);
     // Approximate the reduced-shear error as 1/2 of the distortion error
-    cout << "# Means: " << g1 << " +- " << sig1/2
+    cerr << "# Means: " << g1 << " +- " << sig1/2
 	 << " " << g2 << " +- " << sig2/2
 	 << endl;
   } catch (std::runtime_error &m) {
     cerr << m.what() << endl;
     quit(m,1);
   }
-  return 0;
+  return results;
 }
 
 // instantiate for expected types
-/*template int RunFDNT<double>(Image<double>&, Image<double>&, Image<double>&,
-				  double, double, double, double, double, double, double,
-				  double, int, double);
-*/
-template int RunFDNT<float>(const Image<float>&, const Image<float>&, const Image<float>&,
-			    double, double, double, double, double, double, double,
-			    double, int, double);
 
-  /*
-template int RunFDNT<int>(const Image<int>&, const Image<int>&, const Image<int>&,
-				  double, double, double, double, double, double, double,
-				  double, int, double);
-template int RunFDNT<short>(const Image<short>&, const Image<short>&, const Image<short>&,
-				  double, double, double, double, double, double, double,
-				  double, int, double);
-  */
+template FDNTShapeData RunFDNT<float>(const Image<float>&, const Image<float>&, const Image<float>&,
+				      double, double, double, double, double, double, double,
+				      double, int, double);
+/*
+template FDNTShapeData RunFDNT<double>(const Image<double>&, const Image<double>&,
+				       const Image<double>&,
+				       double, double, double, double, double, double, double,
+				       double, int, double);
+*/
 
 } // namespace fdnt
