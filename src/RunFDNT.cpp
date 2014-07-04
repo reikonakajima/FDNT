@@ -146,7 +146,7 @@ FDNTShapeData RunFDNT(const Image<T>& gal_image, const Image<T>& psf_image,
 
     GLSimple<> gl(ipsf, psfwt, psfBasis, 4);
     bool psf_success = gl.solve();
-    if (psf_success) {
+    if (!psf_success) {
       std::ostringstream oss;
       oss << "# Failed measuring psf, flags " << gl.getFlags()
 	  << "; ignoring object" << endl;

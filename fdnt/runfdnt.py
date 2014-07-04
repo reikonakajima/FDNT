@@ -127,12 +127,12 @@ class FDNTShapeData(object):
             self.psf_DOF = args[0].psf_DOF
 
             self.intrinsic_flags = args[0].intrinsic_flags
-            self.instrinsic_e1 = args[0].instrinsic_e1
-            self.instrinsic_e2 = args[0].instrinsic_e2
-            self.instrinsic_e1_var = args[0].instrinsic_e1_var
-            self.instrinsic_e2_var = args[0].instrinsic_e2_var
-            self.instrinsic_e1e2_covar = args[0].instrinsic_e1e2_covar
-            self.instrinsic_sigma = args[0].instrinsic_sigma
+            self.intrinsic_e1 = args[0].intrinsic_e1
+            self.intrinsic_e2 = args[0].intrinsic_e2
+            self.intrinsic_e1_var = args[0].intrinsic_e1_var
+            self.intrinsic_e2_var = args[0].intrinsic_e2_var
+            self.intrinsic_e1e2_covar = args[0].intrinsic_e1e2_covar
+            self.intrinsic_sigma = args[0].intrinsic_sigma
             self.shrink_response = args[0].shrink_response
             self.evaluation_count = args[0].evaluation_count
             self.e_trial_count = args[0].e_trial_count
@@ -162,12 +162,12 @@ class FDNTShapeData(object):
             self.psf_DOF = args[0].psf_DOF
 
             self.intrinsic_flags = -1
-            self.instrinsic_e1 = -10.
-            self.instrinsic_e2 = -10.
-            self.instrinsic_e1_var = 0.
-            self.instrinsic_e2_var = 0.
-            self.instrinsic_e1e2_covar = 0.
-            self.instrinsic_sigma = -1.
+            self.intrinsic_e1 = -10.
+            self.intrinsic_e2 = -10.
+            self.intrinsic_e1_var = 0.
+            self.intrinsic_e2_var = 0.
+            self.intrinsic_e1e2_covar = 0.
+            self.intrinsic_sigma = -1.
             self.shrink_response = -10.
             self.evaluation_count = 0
             self.e_trial_count = 0
@@ -299,7 +299,7 @@ def RunFDNT(gal_image, PSF_image, guess_x_centroid, guess_y_centroid,
     except RuntimeError as err:
         raise RuntimeError
 
-    return ShapeData(result)
+    return FDNTShapeData(result)
 
 
 
