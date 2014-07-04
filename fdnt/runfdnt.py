@@ -294,8 +294,6 @@ def RunFDNT(gal_image, PSF_image, guess_x_centroid, guess_y_centroid,
                                 r_pix=guess_sig_gal_pix, ee50psf=guess_sig_PSF_pix,
                                 bg=bg, order=order, sky=sky)
                                
-        print 'after _RunFDNT' # DEBUG
-
     except RuntimeError as err:
         raise RuntimeError
 

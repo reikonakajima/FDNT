@@ -84,8 +84,6 @@ def main(argv):
     image_epsf.write(file_name)
     logger.info('Wrote image to %r' % file_name)  # using %r adds quotes around filename for us
 
-    print 'before' # DEBUG
-
     # currently, everything is in units of pixels.  Upgrade required....
     x0 = image.bounds.center().x
     y0 = image.bounds.center().y
@@ -95,8 +93,6 @@ def main(argv):
                            guess_sig_PSF_pix=psf_sigma / pixel_scale,
                            guess_a_wc=gal_sigma / pixel_scale, guess_b_wc=gal_sigma / pixel_scale,
                            guess_pa_wc=0.,)
-
-    print 'after' # DEBUG
 
     logger.info('FDNT reports that the image has observed shape and size:')
     logger.info('    e1 = %.3f, e2 = %.3f, sigma = %.3f (pixels)', results.intrinsic_e1,
