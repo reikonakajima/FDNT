@@ -9,7 +9,6 @@ using namespace sbp;
 using namespace astrometry;
 
 
-namespace galsim {
 namespace fdnt {
 
 char const* greet()
@@ -367,4 +366,3 @@ template int RunFDNT<short>(const Image<short>&, const Image<short>&, const Imag
   */
 
 } // namespace fdnt
-} // namespace galsim

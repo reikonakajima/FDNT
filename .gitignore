@@ -25,3 +25,6 @@ output
 test.cpp
 test
 test.py
+*.backup.py
+*.backup.cpp
+*.backup.h

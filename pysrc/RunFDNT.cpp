@@ -10,7 +10,6 @@ namespace bp = boost::python;
 using namespace laguerre;
 using namespace img;
 
-namespace galsim {
 namespace fdnt {
 
 
@@ -46,4 +45,3 @@ void pyExportRunFDNT() {
 
 
 }  // namespace fdnt
-}  // namespace galsim

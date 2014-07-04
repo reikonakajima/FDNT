@@ -7,7 +7,6 @@
 namespace bp = boost::python;
 using img::ImageData;
 
-namespace galsim {
 namespace fdnt {
 
 
@@ -223,4 +222,3 @@ void pyExportFDNTImage() {
 
 
 }  // namespace fdnt
-}  // namespace galsim

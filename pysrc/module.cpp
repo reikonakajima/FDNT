@@ -7,26 +7,23 @@
 
 // declare the export functions
 
-namespace galsim {
+namespace fdnt {
 
   void pyExportBounds();
+  void pyExportFDNTImage();
+  void pyExportRunFDNT();
 
-  namespace fdnt {
-    
-    void pyExportRunFDNT();
-    void pyExportFDNTImage();
-
-  } 
 
 }
 
 
-// generate the galsim FDNT module
+// generate the FDNT module
 
 BOOST_PYTHON_MODULE(_fdnt) {
+
   import_array(); // for numpy
-  galsim::pyExportBounds();
-  galsim::fdnt::pyExportRunFDNT();
-  galsim::fdnt::pyExportFDNTImage();
+  fdnt::pyExportBounds();
+  fdnt::pyExportRunFDNT();
+  fdnt::pyExportFDNTImage();
 
 }

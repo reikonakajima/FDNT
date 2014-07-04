@@ -15,7 +15,6 @@
 //#include "SCAMPMap.h"
 
 
-namespace galsim {
 namespace fdnt{
 
 // a simple test function for the module.  returns the string 'hello, world'
@@ -35,7 +34,6 @@ int RunFDNT(const Image<T>& gal_image, const Image<T>& psf_image, const Image<T>
 	    int order, double sky);
 
 
-}
 }
 
 

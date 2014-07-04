@@ -1,22 +1,6 @@
 // -*- c++ -*-
 /*
- * Copyright 2012, 2013 The GalSim developers:
- * https://github.com/GalSim-developers
- *
- * This file is part of GalSim: The modular galaxy image simulation toolkit.
- *
- * GalSim is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * GalSim is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with GalSim.  If not, see <http://www.gnu.org/licenses/>
+ * This file is pretty much a straight copy from GalSim.
  */
 #ifndef NumpyHelper_H
 #define NumpyHelper_H
@@ -47,7 +31,7 @@
 
 namespace bp = boost::python;
 
-namespace galsim {
+namespace fdnt {
 
 template <typename T> struct NumPyTraits;
 template <> struct NumPyTraits<int16_t> { static int getCode() { return NPY_INT16; } };
@@ -279,6 +263,6 @@ static void CheckNumpyArray(const bp::object& array, int ndim, bool isConst,
     }
 }
 
-} // namespace galsim
+} // namespace fdnt
 
 #endif
