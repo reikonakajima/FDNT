@@ -8,6 +8,7 @@ using namespace laguerre;
 using namespace sbp;
 using namespace astrometry;
 
+double minimumStampSigma = 7.0;  // should be >2*minimumMaskSigma (a param from GLSimple.cpp)
 
 namespace fdnt {
 
@@ -19,9 +20,9 @@ char const* greet()
 template <typename T>
 FDNTShapeData RunFDNT(const Image<T>& gal_image, const Image<T>& psf_image,
 		      const Image<T>& weight_image,
-		      double x_pix, double y_pix,
+		      double x_wc, double y_wc,
 		      double a_wc, double b_wc, double pa_wc,
-		      double r_pix,    // FLUX_RADIUS in pixels, not wcs
+		      double sigma_pix,    // FLUX_RADIUS in pixels, not wcs;
 		      double ee50psf,  // PSF half-light radius
 		      double bg, int order, double sky) {
 
@@ -35,7 +36,24 @@ FDNTShapeData RunFDNT(const Image<T>& gal_image, const Image<T>& psf_image,
   // weight frames
   string fluxScaleKey = "FLXSCALE";
   int psfOrder;  // maximum order of polynomial psf variation used; -1 for order of PSFEx model
-  int stampSize = 64;  // Pixel size of img postage stamps
+
+  // make sure stamp size is large enough to be able to measure the shape
+  int refSize = minimumStampSigma * sigma_pix;
+  int stampSize = refSize;
+  int pow_2=0;
+  while (stampSize > 1) {
+    stampSize /= 2;
+    ++pow_2;
+  }
+  stampSize = pow(2., pow_2-1);
+  if (stampSize * 3 > refSize)
+    stampSize *= 3;
+  else
+    stampSize *= 4;
+  // check stamp size
+  if (stampSize > gal_image.XMax() - gal_image.XMin() + 1)
+    throw MyException((string("image size smaller than recommended for measurement") +
+		       string(" (adjust stamp_size or MINIMUM_FFT_SIGMA?)")).c_str());
 
   // GL interpolation of missing values
   double maxBadPixels = 0.1;  // Maximum fraction of bad pixels in postage stamp
@@ -93,7 +111,7 @@ FDNTShapeData RunFDNT(const Image<T>& gal_image, const Image<T>& psf_image,
     cerr << "# x_pix y_pix eta1 eta2 sig1 sig2 cov12 mu egFix fdFlags considered_success"
 	 << endl;
 
-    double x_wc = x_pix, y_wc = y_pix;
+    double x_pix = x_wc, y_pix = y_wc;
 
     /*  /// future project
 	double x_wc, y_wc; // tangent plane coordinates
@@ -177,7 +195,7 @@ FDNTShapeData RunFDNT(const Image<T>& gal_image, const Image<T>& psf_image,
     double e2start = e1start * sin(2*pa_wc*PI/180.);
     e1start *= cos(2*pa_wc*PI/180.);
     // all in wcs pixel coordinates
-    Ellipse sexE(e1start, e2start, log(r_pix*rescale), x_wc, y_wc);
+    Ellipse sexE(e1start, e2start, log(sigma_pix*rescale), x_wc, y_wc);
 
     Shear initShear;
     Ellipse initE;
@@ -301,7 +319,7 @@ FDNTShapeData RunFDNT(const Image<T>& gal_image, const Image<T>& psf_image,
 	targetS = fd.shape2(prob, covE);  // THIS IS THE ACTUAL MEASUREMENT!!
       }
       catch (...) {
-	  ;  // do nothing
+	cerr << "fd.shape2() threw with flag: " << fd.getFlags() << endl;
       }
       // ??? Make flag mask an input parameter ???
       success = !(fd.getFlags() & (DidNotConverge + Singularity + OutOfBounds + TooLarge

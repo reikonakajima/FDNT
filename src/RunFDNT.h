@@ -164,9 +164,9 @@ namespace fdnt{
    * The input parameter takes an initial guess values from, e.g., SExtractor.
    *
    * Note that currently the WCS information from thie Image<> class is not used, which means
-   * that all initial guess information provided (x_pix, y_pix, a_wc, b_wc, pa_wc) must be
-   * in pixel units.  When the WCS is implemented, the x_pix and y_pix should change to
-   * x_wcs and y_wcs.  r_pix will remain in pixel units, regardless of whether the WCS is
+   * that all initial guess information provided (x_wc, y_wc, a_wc, b_wc, pa_wc) must be
+   * in pixel units.  When the WCS is implemented, the x_wc and y_wc should change to
+   * x_wcs and y_wcs.  sigma_pix will remain in pixel units, regardless of whether the WCS is
    * implemented or not.
    */
   template <typename T>
@@ -174,7 +174,7 @@ namespace fdnt{
 			   const Image<T>& weight_image,
 			   double x_pix, double y_pix,
 			   double a_wc, double b_wc, double pa_wc,
-			   double r_pix, // FLUX_RADIUS in pixels, not wcs
+			   double sigma_pix, // FLUX_RADIUS in pixels, not wcs
 			   double ee50psf,
 			   double bg,
 			   int order, double sky);

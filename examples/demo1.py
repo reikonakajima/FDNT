@@ -39,6 +39,11 @@ def main(argv):
     pixel_scale = 0.2  # arcsec / pixel
     noise = 3.        # standard deviation of the counts in each pixel
 
+    # make the noise deterministic (for use in image.addNoise() later on)
+    random_seed = 1314662
+    # Initialize the (pseudo-)random number generator that we will be using below.
+    rng = galsim.BaseDeviate(random_seed)
+
     logger.info('Starting demo script 1 using:')
     logger.info('    - circular Gaussian galaxy (flux = %.1e, sigma = %.1f),',gal_flux,gal_sigma)
     logger.info('    - circular Gaussian PSF (sigma = %.1f),',psf_sigma)
@@ -68,7 +73,7 @@ def main(argv):
     logger.debug('Made image of the profile: flux = %f, added_flux = %f',gal_flux,image.added_flux)
 
     # Add Gaussian noise to the image with specified sigma
-    image.addNoise(galsim.GaussianNoise(sigma=noise))
+    image.addNoise(galsim.GaussianNoise(rng, sigma=noise))
     logger.debug('Added Gaussian noise')
 
     # Write the image to a file
@@ -87,9 +92,8 @@ def main(argv):
     # currently, everything is in units of pixels.  Upgrade required....
     x0 = image.bounds.center().x
     y0 = image.bounds.center().y
-    magic_number = 1.2;
     results = fdnt.RunFDNT(image, image_epsf, guess_x_centroid=x0, guess_y_centroid=y0,
-                           guess_sig_gal_pix=gal_sigma / pixel_scale * magic_number,
+                           guess_sig_gal_pix=gal_sigma / pixel_scale,
                            guess_sig_PSF_pix=psf_sigma / pixel_scale,
                            guess_a_wc=gal_sigma / pixel_scale, guess_b_wc=gal_sigma / pixel_scale,
                            guess_pa_wc=0.,)
