@@ -168,11 +168,14 @@ namespace fdnt{
    * in pixel units.  When the WCS is implemented, the x_wc and y_wc should change to
    * x_wcs and y_wcs.  sigma_pix will remain in pixel units, regardless of whether the WCS is
    * implemented or not.
+   *
+   * The FDNT will run on a postage stamp that must be (minimumStampSigma * sigma_pix) in
+   * dimention or larger.  FDNT will throw if the image size is smaller than this.
    */
   template <typename T>
     FDNTShapeData RunFDNT(const Image<T>& gal_image, const Image<T>& psf_image,
 			   const Image<T>& weight_image,
-			   double x_pix, double y_pix,
+			   double x_wc, double y_wc,
 			   double a_wc, double b_wc, double pa_wc,
 			   double sigma_pix, // FLUX_RADIUS in pixels, not wcs
 			   double ee50psf,
