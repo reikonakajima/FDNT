@@ -157,7 +157,7 @@ Default(lib_targets)
 tools = [ 'sizeof_SIFD' ]
 tool_targets = [ env1.Program(os.path.join('#bin/',tool), tool + '.cpp') for tool in tools ]
 
-progs = [ 'FDNTPSFEx' ]
+progs = [ 'FDNTPSFEx', 'RunPSFEx' ]
 prog_targets = [ env1.Program(os.path.join('#bin/',prog), [prog + '.cpp'] + obj_lib) for prog in progs ]
 
 # These don't need to be installed.  Leave them in the FDNT/bin directory.
