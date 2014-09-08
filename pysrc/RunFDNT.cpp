@@ -46,6 +46,7 @@ struct PyFDNTShapeData {
       .def_readwrite("observed_b00_var", &FDNTShapeData::observed_b00_var)
       .def_readwrite("observed_b22", &FDNTShapeData::observed_b22)
       .def_readwrite("observed_centroid", &FDNTShapeData::observed_centroid)
+      .def("observedSignificance", &FDNTShapeData::observedSignificance)
 
       .def_readwrite("psf_flags", &FDNTShapeData::psf_flags)
       .def_readwrite("psf_e1", &FDNTShapeData::psf_e1)

@@ -114,6 +114,7 @@ class FDNTShapeData(object):
             self.observed_b00_var = args[0].observed_b00_var
             self.observed_b22 = args[0].observed_b22
             self.observed_centroid = args[0].observed_centroid
+            self.observed_significance = args[0].observedSignificance()
 
             self.psf_flags = args[0].psf_flags
             self.psf_e1 = args[0].psf_e1
@@ -149,6 +150,7 @@ class FDNTShapeData(object):
             self.observed_b00_var = -1.0
             self.observed_rho4 = -1.0
             self.observed_centroid = _fdnt.PositionD()
+            self.observed_significance = 0.
 
             self.psf_flags = -1
             self.psf_e1 = -10.

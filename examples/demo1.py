@@ -98,9 +98,11 @@ def main(argv):
                            guess_a_wc=gal_sigma / pixel_scale, guess_b_wc=gal_sigma / pixel_scale,
                            guess_pa_wc=0.,)
 
-    logger.info('FDNT reports that the image has observed shape and size:')
-    logger.info('    e1 = %.3f, e2 = %.3f, sigma = %.3f (pixels)', results.intrinsic_e1,
-                results.intrinsic_e2, results.intrinsic_sigma)
+    logger.info('FDNT reports that the image has observed shape, size, and significance:')
+    logger.info('    e1 = %.3f, e2 = %.3f, sigma = %.3f (pixels), sig = %.1f',
+                results.intrinsic_e1, results.intrinsic_e2, results.intrinsic_sigma,
+                results.observed_significance)
+
     logger.info('Expected values in the limit that pixel response and noise are negligible:')
     logger.info('    e1 = %.3f, e2 = %.3f, sigma = %.3f', 0.0, 0.0, 
                 math.sqrt(gal_sigma**2 + psf_sigma**2)/pixel_scale) 
