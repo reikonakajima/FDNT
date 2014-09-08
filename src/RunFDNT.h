@@ -173,7 +173,7 @@ namespace fdnt{
    * implemented or not.
    *
    * The FDNT will run on a postage stamp that must be (minimumStampSigma * sigma_pix) in
-   * dimention or larger.  FDNT will throw if the image size is smaller than this.
+   * dimension or larger.  FDNT will throw if the image size is smaller than this.
    * Ideally, sigma_pix should be close to the Gaussian size sigma of the observed galaxy,
    * although FLUX_RADIUS from SExtractor (approximately EE50) would also work.
    */
