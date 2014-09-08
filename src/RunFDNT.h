@@ -155,6 +155,9 @@ namespace fdnt{
       resolution_factor(-1.), error_message("")
       {}
 
+    /// @brief Signal-to-noise calculator
+    double observedSignificance()  { return observed_b00/sqrt(observed_b00_var); }
+
   };
 
 
