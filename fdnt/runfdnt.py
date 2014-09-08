@@ -201,8 +201,7 @@ def _convertMask(image, weight = None, badpix = None):
             raise ValueError("Weight image cannot contain negative values!")
 
         # if weight is an ImageI, then we can use it as the mask image:
-        import numpy
-        if weight.dtype == numpy.int32:
+        if weight.dtype == np.int32:
             if not badpix:
                 mask = weight
             else:
