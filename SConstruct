@@ -39,7 +39,7 @@ config_file = 'fdnt_scons.conf'
 default_prefix = '/usr/local'
 
 default_python = '/usr/bin/env python'
-default_cxx = 'g++'
+default_cxx = 'c++'
 
 # first check for a saved conf file
 opts = Variables(config_file)
