@@ -39,18 +39,23 @@ EXTRA_INCLUDE_PATH   Where you can find other headers (such as cfitsio.h)
 EXTRA_LIB_PATH       Where you can find other libs
 
 
+The compile and install commands are:
 
+   >>> scons --PREFIX=/your/chosen/directory
+   >>> scons install
 
-Edit the main Makefile (soon to be obsolete)
---------------------------------------------
+or
 
-There is a Makefile template file named `src/sample.Makefile`.  Make a copy of 
-this file and name it `src/Makefile`.  Ensure that the includes and lib files 
-are properly reached in the Makefile options.
+   >>> scons
+   >>> sudo scons install
 
-The `src` contains subdirectories `astrometry2`, `images`, and `utilities2`, 
-each of which contain its own Makefile.  These need not be edited.
+To remove installation:
 
-Note that the file `.gitignore` contains the line `Makefile*`.  This means git 
-will ignore any files starting with letters `Makefile`---i.e., it will leave
-your system-specific `Makefile` alone.
+   >>> scons -c
+   >>> scons -c install  (or sudo scons -c install)
+
+Sometimes, the a new compilation will fail.  Try
+
+   >>> /bin/rm -r .scon*
+
+before re-running scons compilation.
