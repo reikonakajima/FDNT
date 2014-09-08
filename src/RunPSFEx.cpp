@@ -1,4 +1,4 @@
-// RUnPSFEx.cpp
+// RunPSFEx.cpp
 // Generate PSFEx psf models and measure shape; generate catalog
 
 #include "StringStuff.h"
