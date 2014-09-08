@@ -39,13 +39,13 @@ config_file = 'fdnt_scons.conf'
 default_prefix = '/usr/local'
 
 default_python = '/usr/bin/env python'
-default_cxx = 'c++'  ### RN: remove?
+default_cxx = 'c++'
 
 # first check for a saved conf file
 opts = Variables(config_file)
 
 # Now set up options for the command line
-opts.Add('CXX','Name of c++ compiler','g++')
+opts.Add('CXX','Name of c++ compiler', default_cxx)
 opts.Add('FLAGS','Compiler flags to send to use instead of the automatic ones','')
 opts.Add('EXTRA_FLAGS','Extra compiler flags to use in addition to automatic ones','')
 opts.Add('LINKFLAGS','Additional flags to use when linking','')
