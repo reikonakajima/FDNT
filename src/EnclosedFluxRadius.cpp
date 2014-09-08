@@ -20,19 +20,9 @@ public:
   bool operator<(const Pair& rhs) const {return x<rhs.x;}
 };
 
-double EnclosedFluxRadius(Image<> img, double enclosedFraction=0.5) {
+double EnclosedFluxRadius(Image<> img, double xc, double yc, double enclosedFractionFlux) {
+
   Bounds<int> b=img.getBounds();
-
-  double xsum=0., ysum=0., flux=0.;
-  for (int j=b.getYMin(); j<=b.getYMax(); j++)
-    for (int i=b.getXMin(); i<=b.getXMax(); i++) {
-      xsum += i*img(i,j);
-      ysum += j*img(i,j);
-      flux += img(i,j);
-    }
-
-  double xc = xsum/flux;
-  double yc = ysum/flux;
 
   list<Pair> lp;
   // Sometimes crashes here if the bounds is too large, due to memory issues.
@@ -58,11 +48,11 @@ double EnclosedFluxRadius(Image<> img, double enclosedFraction=0.5) {
        ++i) {
     double val = i->y;
     fsum += val;
-    if (fsum >= enclosedFraction*flux & eer==0.) {
+    if (fsum >= enclosedFractionFlux & eer==0.) {
 	// Fit included flux to a line in this vicinity
 	double sxx, sxy, syy, sx, sy;
 	double ff=fsum;
-	double y=ff-enclosedFraction*flux;
+	double y=ff-enclosedFractionFlux;
 	double x0 = i->x;
 	double x=0.;
 	sxx = x*x; sxy = x*y; syy = y*y; 
@@ -73,7 +63,7 @@ double EnclosedFluxRadius(Image<> img, double enclosedFraction=0.5) {
 	while ((n<=3 || j->x > 0.9*i->x) && j!=lp.begin()) {
 	  ff -= j->y;
 	  j--;
-	  y=ff-enclosedFraction*flux;
+	  y=ff-enclosedFractionFlux;
 	  x=j->x-x0;
 	  sxx += x*x; sxy += x*y; syy += y*y; 
 	  sx += x; sy+=y;
@@ -85,7 +75,7 @@ double EnclosedFluxRadius(Image<> img, double enclosedFraction=0.5) {
 	ff = fsum;
 	for (j++; j!=lp.end() && (nup<=2 || j->x<1.1*i->x); j++, nup++) {
 	  ff += j->y;
-	  y=ff-enclosedFraction*flux;
+	  y=ff-enclosedFractionFlux;
 	  x = j->x-x0;
 	  sxx += x*x; sxy += x*y; syy += y*y; 
 	  sx += x; sy+=y;
@@ -99,6 +89,24 @@ double EnclosedFluxRadius(Image<> img, double enclosedFraction=0.5) {
     }
   // Should not get here
   throw ImageError("EnclosedFluxRadius not reached");
+}
+
+double EnclosedFluxRadius(Image<> img, double enclosedFraction=0.5) {
+  Bounds<int> b=img.getBounds();
+
+  double xsum=0., ysum=0., flux=0.;
+  for (int j=b.getYMin(); j<=b.getYMax(); j++)
+    for (int i=b.getXMin(); i<=b.getXMax(); i++) {
+      xsum += i*img(i,j);
+      ysum += j*img(i,j);
+      flux += img(i,j);
+    }
+
+  double xc = xsum/flux;
+  double yc = ysum/flux;
+
+  return EnclosedFluxRadius(img, xc, yc, enclosedFraction*flux);
+
 }
 
 // Find EEradius for an SBProfile

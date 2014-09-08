@@ -108,8 +108,11 @@ sbp(0), fwhm(0.), dx(0.), Nx(0), polnaxis(0)
 	// dimension some arrays
 	// mark that keyword as read
 	readTableLKeyword <int> (table, string("POLNAXIS"), polnaxis);
-	if(polnaxis!=2) {
-		FormatAndThrow<PSFExError> () << "WARNING: this psf file uses not exactly two parameters for polynomial interpolation. Interpolation will not work!";
+	if (polnaxis != 2 and polnaxis != 0) {
+	    FormatAndThrow<PSFExError> () << "WARNING: this psf file does not use exactly "
+					  << "two parameters for polynomial interpolation. "
+					  << "Interpolation will not work!"
+					  << "If POLNAXIS==0, then the PSF is assumed to be const.";
 	}
 	polgrp.resize(polnaxis, 0);
 	polname.resize(polnaxis, "UNKNOWN");

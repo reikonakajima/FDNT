@@ -19,7 +19,7 @@ TMV_LINK := $(shell cat /euclid/data02/euclid01/local/share/tmv/tmv-link)
 LIBS = -lm -L/opt/local/lib -lfftw3 -lcfitsio -ltmv_symband $(TMV_LINK) -L/usr/lib/x86_64-linux-gnu/ -lCCfits -L/euclid/data02/euclid01/local/lib
 
 SUBOBJ = utilities2/BinomFact.o images/FITS.o utilities2/Interpolant.o utilities2/BinomFact.o \
-	utilities2/StringStuff.o images/Image.o images/FITSImage.o \
+	utilities2/StringStuff.o images/Image.o images/FITSImage.o images/HeaderFromStream.o \
 	utilities2/fft.o utilities2/GTable.o utilities2/Pset.o utilities2/Poly2d.o \
 	astrometry2/PixelMap.o astrometry2/Astrometry.o astrometry2/PolyMap.o \
 	astrometry2/PixelMapCollection.o
@@ -29,6 +29,22 @@ OBJ = Laguerre.o Shear.o LTransforms.o GLSimple.o SBProfile.o SBPixel.o SCAMPMap
 
 all: depend subs
 
+PSFEx_KiDS_astrom_radec_only: PSFEx_KiDS_astrom_radec_only.o EnclosedFluxRadius.o SBParse.o $(OBJ)
+	$(CXX) $(CXXFLAGS) $^  $(LIBS) -o ../bin/$@
+PSFEx_KiDS_astrom: PSFEx_KiDS_astrom.o EnclosedFluxRadius.o SBParse.o $(OBJ)
+	$(CXX) $(CXXFLAGS) $^  $(LIBS) -o ../bin/$@
+PSF_KiDS: PSF_KiDS.o EnclosedFluxRadius.o SBParse.o $(OBJ)
+	$(CXX) $(CXXFLAGS) $^  $(LIBS) -o ../bin/$@
+PSFEx_KiDS: PSFEx_KiDS.o EnclosedFluxRadius.o SBParse.o $(OBJ)
+	$(CXX) $(CXXFLAGS) $^  $(LIBS) -o ../bin/$@
+FDNTPSFEx_GREAT3_varPSF: FDNTPSFEx_GREAT3_varPSF.o EnclosedFluxRadius.o SBParse.o images/HeaderFromStream.o $(OBJ)
+	$(CXX) $(CXXFLAGS) $^  $(LIBS) -o ../bin/$@
+FDNTPSFEx_GREAT3_debug: FDNTPSFEx_GREAT3_debug.o EnclosedFluxRadius.o SBParse.o images/HeaderFromStream.o $(OBJ)
+	$(CXX) $(CXXFLAGS) $^  $(LIBS) -o ../bin/$@
+spacePSF_debug: spacePSF_debug.o EnclosedFluxRadius.o SBParse.o images/HeaderFromStream.o $(OBJ)
+	$(CXX) $(CXXFLAGS) $^  $(LIBS) -o ../bin/$@
+FDNTPSFEx_GREAT3: FDNTPSFEx_GREAT3.o EnclosedFluxRadius.o SBParse.o images/HeaderFromStream.o $(OBJ)
+	$(CXX) $(CXXFLAGS) $^  $(LIBS) -o ../bin/$@
 FDNTRing_spl_true_ic: FDNTRing_spl_true_ic.o EnclosedFluxRadius.o SBParse.o $(OBJ)
 	$(CXX) $(CXXFLAGS) $^  $(LIBS) -o ../bin/$@
 FDNTColorGrad: FDNTColorGrad.o ColorGrad.o EnclosedFluxRadius.o SBParse.o $(OBJ)
