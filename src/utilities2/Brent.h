@@ -155,13 +155,13 @@ namespace brent {
     x=w=v=bx;
     fw=fv=fx=fb;
     /*cerr << "a b c " << ax << " " << bx << " " << cx
-      << " fa fb fc " << fa << " " << fb << " " << fc << endl; /**/
+      << " fa fb fc " << fa << " " << fb << " " << fc << endl; */
 
     for (iter=0;iter<maxSteps;iter++) {
       /*cerr << "  iter " << iter 
 	       << " u v w x " << u << " " << v << " " << w << " " << x
 	       << " fx " << fx
-	       << endl; /**/
+	       << endl; */
       xm=0.5*(a+b);
       tol2=2.0*xTolerance;
       if (abs(x-xm) <= (tol2-0.5*(b-a))) {

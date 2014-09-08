@@ -6,6 +6,7 @@
 
 #include "Std.h"
 #include <vector>
+#include <limits>
 //---------------------------------------------------------------------------
 
 template <class T = float>
@@ -35,6 +36,9 @@ public:
   }
   Position operator*(const T rhs) const {
     return Position(x*rhs, y*rhs); 
+  }
+  friend Position<T> operator*(const T lhs, const Position<T>& rhs) {
+    return rhs*lhs;
   }
   Position operator/(const T rhs) const {
     return Position(x/rhs, y/rhs); 
@@ -134,7 +138,12 @@ public:
   }
 
   T area() const
-  {return defined ? (xmax-xmin)*(ymax-ymin) : 0.;}
+  { return defined ?
+                ( std::numeric_limits<T>::is_integer ?
+                  (xmax-xmin+1)*(ymax-ymin+1) :
+                  (xmax-xmin)*(ymax-ymin) ) :
+                T(0);
+  }
   typename std::vector<Bounds<T> > divide(uint nx, uint ny) const;
   void write(ostream& fout) const
   {if (defined) 

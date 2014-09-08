@@ -305,32 +305,31 @@ FITSImage<T>::FITSImage(const string fname,
     throw FITSError("Cannot open FITSImage with Overwrite flag");
   if (HDUnumber < 1 || HDUnumber > parent.HDUCount()) 
     // ??? add HDU numbers to these messages ???
-    if ( (f & CreateImage)
-	 && (f & ReadWrite)) {
-      // create needed null-image extension(s)
-      int n=parent.HDUCount();
-      int naxis=0;	//note zero-dimenisional images now.
-      long naxes[MAX_IMAGE_DIMENSIONS];
-      int status(0);
-      while (n<HDUnumber) {
+      if ( (f & CreateImage) && (f & ReadWrite)) {
+	  // create needed null-image extension(s)
+	  int n=parent.HDUCount();
+	  int naxis=0;	//note zero-dimenisional images now.
+	  long naxes[MAX_IMAGE_DIMENSIONS];
+	  int status(0);
+	  while (n<HDUnumber) {
 #ifdef FITSDEBUG
-	cerr << "creating image extension " << n << endl;
+	      cerr << "creating image extension " << n << endl;
 #endif
-	fits_create_img(parent.getFitsptr(), 
-			DataType_to_Bitpix(Tfloat),
-			naxis, naxes,
-			&status);
-	if (status) throw_CFITSIO("Constructor creating image for " +
-				  parent.getFilename());
-	n++;
+	      fits_create_img(parent.getFitsptr(),
+			      DataType_to_Bitpix(Tfloat),
+			      naxis, naxes,
+			      &status);
+	      if (status) throw_CFITSIO("Constructor creating image for " +
+					parent.getFilename());
+	      n++;
+	  }
+	  parent.flush();
+	  Assert(parent.HDUCount()==HDUnumber);
+      } else {
+	  throw FITSError("Requested non-existent HDU for " + fname);
       }
-      parent.flush();
-      Assert(parent.HDUCount()==HDUnumber);
-    } else {
-      throw FITSError("Requested non-existent HDU for " + fname);
-    }
   if (parent.getHDUType(HDUnumber) != HDUImage)
-    throw FITSError("FITSImage requested extension that is not an image");
+      throw FITSError("FITSImage requested extension that is not an image");
 
   int naxis, bitpix;
   long naxes[MAX_IMAGE_DIMENSIONS];
@@ -835,8 +834,7 @@ FITSImage<T>::writeRows(const int ymin, const int ymax) const {
 // be. Desired bounds are a region of suggested size centered on
 // those required.
 template <class T>
-Bounds<int> FITSImage<T>::desiredBounds(const Bounds<int> b
-					=Bounds<int>(0,-1,0,-1)) const {
+Bounds<int> FITSImage<T>::desiredBounds(const Bounds<int> b) const {
   // See what the total buffered area must be
   Bounds<int> required=b;
   if (!purgeImages() && !b) {

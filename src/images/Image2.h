@@ -14,7 +14,7 @@ namespace img {
   // The pixel data structure - never used by outside programs
   ////////////////////////////////////////////////////////////////
   template <class T=float>
-  class ImageData {
+    class ImageData {
     //    template <class U>
     //friend class FITSImage;
   public:
@@ -27,6 +27,9 @@ namespace img {
     ImageData(const Bounds<int> inBounds, 
 	      T** rptrs,
 	      bool _contig=false);
+    ImageData(const ImageData &) {
+      throw ImageError("Attempt to use ImageData copy constructor");
+    }	//No inadvertent copying allowed! Use copyFrom() to be explicit.
   
     ~ImageData();
 
@@ -92,9 +95,6 @@ namespace img {
     // image which will be a subimage of a parent:
     ImageData(const Bounds<int> inBounds, 
 	      const ImageData<T>* _parent);
-    ImageData(const ImageData &) {
-      throw ImageError("Attempt to use ImageData copy constructor");
-    }	//No inadvertent copying allowed! Use copyFrom() to be explicit.
     ImageData& operator=(const ImageData&) {
       throw ImageError("Attempt to use ImageData operator=");
     }
@@ -143,7 +143,7 @@ namespace img {
       return *ptr;
     }
     ImageChk_iter operator++() {++ptr; ++col; return *this;}
-    ImageChk_iter operator--() {++ptr; ++col; return *this;}
+    ImageChk_iter operator--() {--ptr; --col; return *this;}
     ImageChk_iter operator+=(int i) {ptr+=i; col+=i; return *this;}
     ImageChk_iter operator-=(int i) {ptr-=i; col-=i; return *this;}
     bool operator<(const ImageChk_iter rhs) const {return ptr<rhs.ptr;}
@@ -177,7 +177,7 @@ namespace img {
       return *ptr;
     }
     ImageChk_citer operator++() {++ptr; ++col; return *this;}
-    ImageChk_citer operator--() {++ptr; ++col; return *this;}
+    ImageChk_citer operator--() {--ptr; --col; return *this;}
     ImageChk_citer operator+=(int i) {ptr+=i; col+=i; return *this;}
     ImageChk_citer operator-=(int i) {ptr-=i; col-=i; return *this;}
     bool operator<(const ImageChk_citer rhs) const {return ptr<rhs.ptr;}

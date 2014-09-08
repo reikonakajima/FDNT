@@ -85,7 +85,7 @@ ode::rkqs(DVector& y,
     for (int i=0; i<n; i++) errmax=MAX(errmax,fabs(yerr[i]/yscal[i]));
     /*cerr << "yerr/scal 0: " << yerr[0] << " " << yscal[0]
 	     << " 1 " << yerr[1] << " " << yscal[1] << endl;
-	     /*cerr << "errmax " << errmax << endl;*/
+      cerr << "errmax " << errmax << endl;*/
     errmax /= eps;
     if (errmax > 1.0) {
       htemp=SAFETY*h*pow(errmax,PSHRNK);

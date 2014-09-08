@@ -102,7 +102,7 @@
  *
  * A copy or assignment of an ImageHeader is a deep copy (as long as
  * all the header types T are).  ImageHeader owns all the HdrRecords
- * and will delete them upon deletion of hte ImageHeader.
+ * and will delete them upon deletion of the ImageHeader.
  *
  * Each ImageHeader keeps an "isAltered"
  * flag so one can note whether it is unchanged since its creation or
@@ -251,11 +251,11 @@ namespace img {
     bool setValueString(const string _v) {
       istringstream iss(_v.c_str());
       string leftover;
-      return !(iss >> val) || (iss >> leftover);
+      return !(iss >> val) || (iss >> leftover);  // shouldn't this be iss >> valString???
     };
     string getValueString() const {
       ostringstream os;
-      os  << val; // ??? compiler bug here ???
+      os  << val; // ??? compiler bug here ???    // shouldn't this be os << valString???
       return os.str();
     }
     FITS::DataType dataType() const {return FITS::MatchType<T>();}

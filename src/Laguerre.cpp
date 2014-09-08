@@ -466,6 +466,7 @@ LVector::mBasis(const tmv::ConstVectorView<double>& x,
 
   //**/s.stop(); cerr << "For q=0: " << s << " sec" << endl;   s.reset(); s.start();
 
+#if 0
   // Now climb q's at each m
   /**
 #ifdef PTRLOOPS
@@ -548,6 +549,8 @@ LVector::mBasis(const tmv::ConstVectorView<double>& x,
   }
   //**s.stop(); cerr << "For q>0: " << s << " sec" << endl;   s.reset(); s.start();
 **/
+#endif
+
 #ifdef PTRLOOPS
   // Compile these to do arithmetic with pointer loops (TMV DiagMatrix method below)
   DVector* Lmq = new DVector(npts);

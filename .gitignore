@@ -1,3 +1,8 @@
+fdnt_scons.conf
+.sconf_temp
+lib
+.sconsign.dblite
+*.os
 *~
 *.o
 Makefile*
@@ -12,3 +17,14 @@ CVS
 *.out
 *.par
 bin/*
+*.so
+.obj
+.depend
+*.bkp.cpp
+output
+test.cpp
+test
+test.py
+*.backup.py
+*.backup.cpp
+*.backup.h

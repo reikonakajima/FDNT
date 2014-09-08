@@ -280,7 +280,7 @@ FDNT<T>::prepare() {
     // ??? turn off sigma iteration for small sigmas ???
     //**/cerr << "galaxy sigma " << galaxySigma << endl;
     wg = new GaussKsq(galaxySigma);
-    //** ???wg = new ExpDiskKsq(galaxySigma);
+    //**/ ???wg = new ExpDiskKsq(galaxySigma);
     galaxyBasis = nativeBasis;
     galaxyBasis.setMu(log(galaxySigma));
   }
@@ -490,9 +490,9 @@ FDNT<T>::shape2(double& logLikelihood,
   //const int START_LEVEL=5;	// initial grid 2^5 * MINSTEP = 0.32
   const double MINSTEP=8e-5;
   const int START_LEVEL=12;	// initial grid 2^12 * MINSTEP = 0.32768
-  //**const int MINPOINTS=30;
+  //**/const int MINPOINTS=30;
   const int MINPOINTS=50;
-  //**  const double PROB_THRESHOLD=-log(0.01);
+  //**/  const double PROB_THRESHOLD=-log(0.01);
   const double PROB_THRESHOLD=-log(0.002);
 
   const double lnSigmaFloor = log(leastPSFSigma)-TOO_SMALL;
@@ -567,7 +567,7 @@ FDNT<T>::shape2(double& logLikelihood,
 	   << " prob " << current.front().lnProb
 	   << endl;
     }
-    /**/
+    */
 
     // Done if we already have enough points
     if (current.size() >= MINPOINTS) break;
@@ -728,7 +728,7 @@ FDNT<T>::shape2(double& logLikelihood,
   cerr << "#Skew " << skewx << " " << skewy << " kurt " << kurtx << " " << kurty  
        << " debias " << sx/sp << " " << sy/sp
        << endl;
-  /**
+
   for (int isamp=0; isamp<10; isamp++) {
     double p=u * sump;
     for (list<Sample>::iterator i=current.begin(); i!=current.end(); ++i) {
@@ -741,7 +741,7 @@ FDNT<T>::shape2(double& logLikelihood,
       }
     }
   }
-  /**/
+  */
 #endif
     
   return meanS;
@@ -911,7 +911,7 @@ FDNT<T>::logProbability2(Shear targetS,
   /** tmv::SymMatrix<double> gcov=covE23; gcov.saveDiv();
    DVector gde = dE23;
    double glnsig = galaxyBasis.getMu() - dE23[iSize];
-   /**/
+   **/
   double minlnprob = lnprob;
   double minlnprobsig = galaxyBasis.getMu();
 
@@ -1013,7 +1013,7 @@ FDNT<T>::logProbability2(Shear targetS,
     ofs << *i << " " << *j << endl;
   }
   ofs.close();
-  /**/
+  **/
 
   // Now take the array of probabilities and integrate, fitting
   // quadratic to vicinity of each point
@@ -1092,7 +1092,7 @@ FDNT<T>::logProbability2(Shear targetS,
 	       << " real " << lnprob2
 	       << endl;
     }
-    /**/
+    **/
 
     double prob = exp( minlnprob - lnprob);
     sumProb += prob;
@@ -1119,7 +1119,7 @@ FDNT<T>::logProbability2(Shear targetS,
   cerr << " ... minlnprob " << minlnprob
        << " integral " << sumProb * lnsigIntegrationStep
        << " a " << a[0] << " " << a[1] << " " << a[2] << endl;
-	   /**/
+	   **/
   // ???? set covE here ???
   return minlnprob - log(sumProb * lnsigIntegrationStep) + 0.5*log(2*PI);
 }
@@ -1144,6 +1144,7 @@ FDNT<T>::wtFlux(double& f, double& varf) {
 /// Iteration methods
 ////////////////////////////////////////////////////
 
+#if 0
 /***** ???? revive later
 
 // Here's the routine to iterate toward zero null tests:
@@ -1578,10 +1579,7 @@ FDNT<T>::logProbability(Shear targetS,
 
 
 *****/
-
-
-
-
+#endif
 
     
 

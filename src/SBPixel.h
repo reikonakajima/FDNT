@@ -18,13 +18,13 @@ namespace sbp {
     SBProfile* duplicate() const {return new SBPixel(*this);}
 
     // These are all the base class members that must be implemented:
-    double xValue(Position<double> p) const;
-    DComplex kValue(Position<double> p) const;
+    virtual double xValue(Position<double> p) const;
+    virtual DComplex kValue(Position<double> p) const;
     // Notice that interpolant other than sinc may make max frequency higher than
     // the Nyquist frequency of the initial image
-    double maxK() const {return xInterp->urange() * 2.*PI / dx;}
+    virtual double maxK() const {return xInterp->urange() * 2.*PI / dx;}
     // Require output FTs to be period on scale > original image extent + kernel footprint:
-    double stepK() const {return 2.*PI / ( (Ninitial+2*xInterp->xrange())*dx);}
+    virtual double stepK() const { return 2.*PI / ( (Ninitial+2*xInterp->xrange())*dx);}
     bool isAxisymmetric() const {return false;}
     // This class will be set up so that both x and k domain values
     // are found by interpolation of a table:

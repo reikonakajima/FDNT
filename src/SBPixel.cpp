@@ -278,6 +278,7 @@ SBPixel::fillXImage(Image<> I, double dx) const {
 	I(ix,iy) = (ix,iy,val);
       }
     }
+    return sum * (dx*dx);
   } else {
     // Otherwise just use the normal routine to fill the grid:
     return SBProfile::fillXImage(I,dx);
