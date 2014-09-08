@@ -118,7 +118,8 @@ main(int argc,
     parameters.dump(cout);
 
     // First create the galaxy
-    SBProfile* unlensed=SBParse(sbGalaxy);
+    Shear s_gal;
+    SBProfile* unlensed=SBParse(sbGalaxy, s_gal);
     // Measure half-light radius
     double ee50g = EnclosedFluxRadius(*unlensed);
     // Dilate if desired:
@@ -261,6 +262,7 @@ main(int argc,
 	gshear = gspin->shear(dist1, dist2);
 
       Ellipse startBasis = cleanBasis;
+      startBasis.setS(s_gal);  // set the shear to the true galaxy ellipticity value
       // Rotate the shear
       {
 	double e1, e2;
@@ -271,6 +273,8 @@ main(int argc,
 	Shear srot(e1r, e2r);
 	startBasis.setS(srot);
       }
+      Shear true_shape = Shear(dist1, dist2) + startBasis.getS();
+      startBasis.setS(true_shape);
 
       // Collect stats on this rotation:
       double sum1=0., sum2=0., sumsq1=0., sumsq2=0.;

@@ -12,7 +12,7 @@
 //          4) get PSF model at that pixel coordinate
 //          5) meausure PSF model size and shape
 //          6) print output
-//
+// 
 
 #include "FDNT.h"
 #include "StringStuff.h"
@@ -40,11 +40,12 @@ main(int argc,
     
     // The fit:
     double maskSigma;
-    int    psfOrder = atoi(argv[3]);
+    int    psfOrder = atoi(argv[4]);
     
     // Input files
     string psfName = argv[1];
-    string wcsName = argv[2];
+    int chipNumber = atoi(argv[2]);
+    string wcsName = argv[3];
     
     // Data properties
     double sky = 0.;
@@ -57,12 +58,9 @@ main(int argc,
 	// (1) Read the PSF
 	PSFExModel *model;
 	try {
-	    model = new PSFExModel(psfName.c_str());
+	    model = new PSFExModel(psfName.c_str(), chipNumber);
 	} catch (PSFExError &e) {
 	    cerr << "Error reading PSFEx model: " << e.what() << "; exiting." << endl; 
-	    exit(1);
-	} catch (...) {
-	    cerr << "Error reading PSFEx model; exiting." << endl; 
 	    exit(1);
 	}
 	
@@ -185,19 +183,14 @@ main(int argc,
 	    double ee50psf = model->getFWHM()/2.*rescale; 
 	    Ellipse psfBasis(0., 0., log(ee50psf/1.17));
 	    
-	    /*/ generate PSF image in WC
+	    // generate PSF image in WC
 	    SBDistort psfWCS(*(model->sb()),J(0,0),J(0,1),J(1,0),J(1,1));
 	    // sets flux of basis correctly to have flux normalization after distortion
 	    psfWCS.setFlux(1.); 
-	    /*/
-	    // use pixel-based interpolated PSF representation instead
-	    SBPixel psfPix = *(model->sb());
 	    
-	    // double dx = ee50psf / 2.35; // psfWCS: magic 4.7 factor from PSFEx
-	    double dx = model->getDx(); // psfPix: use input dx used to construct model
-	    cerr << "drawing psf postage stamp with dx=" << dx << endl;
-	    //Image<> ipsf = psfWCS.draw(dx);  // psfWCS
-	    Image<> ipsf = psfPix.draw(dx);  // psfPix
+	    double dx = ee50psf / 2.35; // psfWCS: magic 4.7 factor from PSFEx
+	    //cerr << "drawing psf postage stamp with dx=" << dx << endl;
+	    Image<> ipsf = psfWCS.draw(dx);
 	    
 	    // Measure PSF GL size & significance
 	    Image<> psfwt(ipsf.getBounds());

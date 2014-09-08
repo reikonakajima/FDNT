@@ -148,7 +148,7 @@ list<Phrase> SplitAt(const Phrase in) {
   return ls;
 }
 
-SBProfile* SBParse(Phrase in) {
+SBProfile* SBParse(Phrase in, Shear& s) {
   if (in.empty())
     throw SBError("SBParse: null expression");
 
@@ -194,7 +194,7 @@ SBProfile* SBParse(Phrase in) {
   if (ls.size()>1) {
     SBAdd* sba = new SBAdd;
     for (list<Phrase>::iterator i=ls.begin(); i!=ls.end(); ++i) {
-      SBProfile* summand = SBParse(*i);
+      SBProfile* summand = SBParse(*i, s);
       sba->add(*summand);
       delete summand;
     }
@@ -209,7 +209,7 @@ SBProfile* SBParse(Phrase in) {
   if (ls.size()>1) {
     SBConvolve* sbc = new SBConvolve;
     for (list<Phrase>::iterator i=ls.begin(); i!=ls.end(); ++i) {
-      SBProfile* term = SBParse(*i);
+      SBProfile* term = SBParse(*i, s);
       sbc->add(*term);
       delete term;
     }
@@ -226,7 +226,7 @@ SBProfile* SBParse(Phrase in) {
 	  || TranslateOp::test(i) || FluxOp::test(i)
 	  || RotateOp::test(i)) {
 	// Found a modifier.  Parse the LHS and apply modification
-	SBProfile* base = SBParse(in);
+	SBProfile* base = SBParse(in, s);
 	// Apply appropriate modification:
 	Phrase::iterator ia=args.begin();
 	if (ShearOp::test(i)) {
@@ -236,6 +236,7 @@ SBProfile* SBParse(Phrase in) {
 	      || !isNumber((*(ia++))->print(),e1) 
 	      || !isNumber((*ia)->print(),e2))
 	    throw SBError("SBParse: bad arguments for shear: " + args.print());
+	  s = Shear(e1,e2);
 	  SBProfile* out = base->shear(e1,e2);
 	  delete base;
 	  return out;
@@ -377,8 +378,8 @@ SBProfile* SBParse(Phrase in) {
   }
 }
 
-SBProfile* sbp::SBParse(string instring) {
+SBProfile* sbp::SBParse(string instring, Shear& s) {
   Phrase in = wordify(instring);
-  return SBParse(in);
+  return SBParse(in, s);
 }
 
