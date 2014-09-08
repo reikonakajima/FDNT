@@ -1,0 +1,321 @@
+ ############### dependencies
+
+plotlnaked 6
+        limits $3 $4 $5 $6
+        plotbp $1 $2
+
+plotbp 2
+        lweight 3
+        expand 1.5
+        box
+        expand 2
+
+        ctype black
+        expand 2
+        points $1 $2
+
+plotl 6
+        normal
+        erase
+        plotlnaked $1 $2 $3 $4 $5 $6
+
+        xlabel $1
+        ylabel $2
+        expand 1.5
+
+normal
+        ctype 2 ltype 0 ptype 4 1 expand 1 lweight 1
+        location 6500 30000 4500 30000
+
+filter 3
+   # filter X min max -- filter galaxies with property X between min and max and save temporarily in vectors prefixed "t"
+        DO 4=0,dimen(vecc)-1 {
+                set t$(vecc[$4]) = $(vecc[$4]) if ($1 >= $2 && $1 <= $3)
+        }
+        if($verbose>0) {
+                echo filter returned $(dimen(t$(vecc[0]))) objects with $1 between $2 and $3
+        }
+
+filter2 3
+   # filter2: filter temporary objects again by second criterium
+        DO 4=0,dimen(vecc)-1 {
+                set tt$(vecc[$4]) = t$(vecc[$4]) if (t$1 >= $2 && t$1 <= $3)
+        }
+        DO 4=0,dimen(vecc)-1 {
+                set t$(vecc[$4]) = tt$(vecc[$4])
+        }
+        if($verbose>0) {
+                echo filter2 returned $(dimen(t$(vecc[0]))) objects with $1 between $2 and $3
+        }
+
+
+savefiltered
+   # savefiltered -- save to vectors with prefix t removed
+        DO 1=0,dimen(vecc)-1 {
+                set $(vecc[$1]) = t$(vecc[$1])
+        }
+
+
+
+ ############## end dependencies on my standard sm macros
+
+############## handy stuff ##
+
+get_network_output 3
+# get_network_output NET_FILE SN E: run annz_test to get network outputs as a function of size for fixed S/N and e
+# outputs are saved in vectors rad and nnout
+ 
+	set rad = $(exp(-5)),(exp(-1)),0.001  # note we're using exp(-r)
+	set sn  = 0*rad + 1./$2/$2            # note we're using 1/sn^2
+        set e   = 0*rad + $3
+	set drad = 0*rad
+	set de = 0*rad
+	set dsn = 0*rad
+	set blah = 0*rad
+
+	define print_noheader 1
+	print tmp.txt {sn e rad dsn de drad blah}
+
+	! echo ../src/annz_test tmp.txt tmp.out $1
+	! ../src/annz_test tmp.txt tmp.out $1
+
+	data tmp.out
+	read { nnout 2 }
+
+	set rad = -ln(rad)
+
+
+get_training_data 3
+# get_training_data TRAIN_FILE SN E: get training inputs from TRAIN_FILE at fixed S/N and e
+# data is saved in vectors rad and truth
+
+	data $1
+	read { sn 1 e 2 rad 3 truth 7 dtruth 8 }
+	set vecc = { sn e rad truth dtruth }
+
+	# transform sn back from 1/sn^2
+	filter  sn $(1./$2/$2*0.99) $(1./$2/$2*1.01)
+	filter2 e $($3*0.99) $($3*1.01)
+	savefiltered
+	set rad = -ln(rad)
+
+#### plotting ####	
+
+plotssnm 2
+# plotssnm TRAIN_FILE E: plot bias m as a function of (SN x size) for fixed ellipticity; train file should probably be all.train
+	data $1
+        read { sn 1 e 2 rad 3 truth 7 dtruth 8 }
+        set vecc = { sn e rad truth dtruth ssn }
+
+	filter e $($2*0.99) $($2*1.01)
+	savefiltered
+
+	set sn=1./sqrt(sn)
+	set rad = -ln(rad)
+	set ssn = sn*rad
+
+	limits 0 300 0.95 1.3
+	lweight 5 expand 2
+	erase box
+
+	xlabel S/N\times r
+	ylabel m
+
+	filter rad 0 1.7
+	ctype black
+	points tssn ttruth
+	error_y tssn ttruth tdtruth
+
+
+	filter rad 1.7 1.9
+	ctype red
+	points tssn ttruth
+	error_y tssn ttruth tdtruth
+
+	filter rad 1.9 2.1
+	ctype green
+	points tssn ttruth
+	error_y tssn ttruth tdtruth
+
+	filter rad 2.1 100
+	ctype blue
+	points tssn ttruth
+	error_y tssn ttruth tdtruth
+
+	ctype black
+
+plotssnc 2
+# plotssnc TRAIN_FILE E: plot bias c as a function of (SN x size) for fixed ellipticity; train file should probably be all_c.train
+	data $1
+        read { sn 1 e 2 rad 3 truth 7 dtruth 8 }
+        set vecc = { sn e rad truth dtruth ssn }
+
+	filter e $($2*0.99) $($2*1.01)
+	savefiltered
+
+	set sn=1./sqrt(sn)
+	set rad = -ln(rad)
+	set ssn = sn*rad
+
+	limits 0 300 -0.3 0.05
+	lweight 5 expand 2
+	erase box
+
+	xlabel S/N\times r
+	ylabel c/e_{PSF}
+
+	filter rad 0 1.7
+	ctype black
+	points tssn ttruth
+	error_y tssn ttruth tdtruth
+
+
+	filter rad 1.7 1.9
+	ctype red
+	points tssn ttruth
+	error_y tssn ttruth tdtruth
+
+	filter rad 1.9 2.1
+	ctype green
+	points tssn ttruth
+	error_y tssn ttruth tdtruth
+
+	filter rad 2.1 100
+	ctype blue
+	points tssn ttruth
+	error_y tssn ttruth tdtruth
+
+	ctype black
+
+
+varrad_m 4
+# varrad_[m/c] NET_FILE TRAIN_FILE SN E: vary radius, fix S/N and ellipticity; NET_FILE is the trained network, TRAIN_FILE the training input file
+	
+	get_network_output $1 $3 $4
+
+	set m = nnout
+
+	plotl rad m 0.5 5 0.9 1.4
+
+	get_training_data $2 $3 $4
+	
+        ctype red
+	points rad truth
+        error_y rad truth dtruth
+	ctype black
+
+varrad_c 4
+	
+	get_network_output $1 $3 $4
+
+	set c = nnout
+
+	plotl rad c 0.5 5 -0.3 0.3
+
+	get_training_data $2 $3 $4
+	
+        ctype red
+	points rad truth
+        error_y rad truth dtruth
+	ctype black
+
+mplot 1
+# mplot E: make a plot of m as a function of r for e=$1 and three different S/N
+	
+	lweight 5 expand 2.5
+	limits 1 4.5 0.95 1.4
+	erase box
+	xlabel r
+	ylabel m
+
+	xtcolors
+
+	get_network_output net.out 20 $1
+	ctype black
+	connect rad nnout
+	get_training_data all.train 20 $1
+	points rad truth
+	error_y	rad truth dtruth
+
+	get_network_output net.out 30 $1
+	ctype red  
+	connect rad nnout
+	get_training_data all.train 30 $1
+	points rad truth
+	error_y	rad truth dtruth
+
+	get_network_output net.out 40 $1
+	ctype green
+	connect rad nnout
+	get_training_data all.train 40 $1
+	points rad truth
+	error_y	rad truth dtruth
+
+	get_network_output net.out 60 $1
+	ctype blue
+	connect rad nnout
+	get_training_data all.train 60 $1
+	points rad truth
+	error_y	rad truth dtruth
+
+	get_network_output net.out 80 $1
+	ctype cyan
+	connect rad nnout
+	get_training_data all.train 80 $1
+	points rad truth
+	error_y	rad truth dtruth
+
+	ctype black
+	relocate 3 1.3
+	label |e|=$1
+
+
+cplot 1
+# cplot E: make a plot of c/e_psf as a function of r for e=$1 and three different S/N
+	
+	lweight 5 expand 2.5
+	limits 1 4.5 -0.3 0.05
+	erase box
+	xlabel r
+	ylabel "c/e_{PSF}     "
+
+	xtcolors
+
+	get_network_output net_c.out 20 $1
+	ctype black
+	connect rad nnout
+	get_training_data all_c.train 20 $1
+	points rad truth
+	error_y	rad truth dtruth
+
+	get_network_output net_c.out 30 $1
+	ctype red  
+	connect rad nnout
+	get_training_data all_c.train 30 $1
+	points rad truth
+	error_y	rad truth dtruth
+
+	get_network_output net_c.out 40 $1
+	ctype green
+	connect rad nnout
+	get_training_data all_c.train 40 $1
+	points rad truth
+	error_y	rad truth dtruth
+
+	get_network_output net_c.out 60 $1
+	ctype blue
+	connect rad nnout
+	get_training_data all_c.train 60 $1
+	points rad truth
+	error_y	rad truth dtruth
+
+	get_network_output net_c.out 80 $1
+	ctype cyan
+	connect rad nnout
+	get_training_data all_c.train 80 $1
+	points rad truth
+	error_y	rad truth dtruth
+
+	ctype black
+	relocate 3 -0.2
+	label |e|=$1
