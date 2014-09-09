@@ -17,6 +17,8 @@ struct PyFDNTShapeData {
 
   template <typename T>
   static void wrapTemplates() {
+
+    // RunFDNT()
     typedef FDNTShapeData (*RunFDNT_func) (const Image<T>&, const Image<T>&, const Image<T>&,
 					    double, double, double, double, double, double, double,
 					    double, int, double);
@@ -26,6 +28,18 @@ struct PyFDNTShapeData {
 	     bp::arg("x_pix"), bp::arg("y_pix"), bp::arg("a_wc"), bp::arg("b_wc"), bp::arg("pa_wc"),
 	     bp::arg("r_pix"), bp::arg("ee50psf"), bp::arg("bg"), bp::arg("order"), bp::arg("sky")),
 	    "Run the FDNT shape measurement method for a given galaxy and psf.");
+
+    // GLMoments()
+    typedef FDNTShapeData (*GLMoments_func) (const Image<T>&, const Image<T>&,
+					     double, double, double, double, double, double,
+					     double, int, double);
+    bp::def("_GLMoments",
+	    GLMoments_func(&GLMoments<T>),
+	    (bp::arg("gal_image"), bp::arg("weight_image"),
+	     bp::arg("x_pix"), bp::arg("y_pix"), bp::arg("a_wc"), bp::arg("b_wc"), bp::arg("pa_wc"),
+	     bp::arg("r_pix"), bp::arg("bg"), bp::arg("order"), bp::arg("sky")),
+	    "Run the FDNT shape measurement method for a given galaxy and psf.");
+
   }  // static void wrapTemplates()
 
 
@@ -41,6 +55,9 @@ struct PyFDNTShapeData {
       .def_readwrite("observed_flags", &FDNTShapeData::observed_flags)
       .def_readwrite("observed_e1", &FDNTShapeData::observed_e1)
       .def_readwrite("observed_e2", &FDNTShapeData::observed_e2)
+      .def_readwrite("observed_e1_var", &FDNTShapeData::observed_e1_var)
+      .def_readwrite("observed_e2_var", &FDNTShapeData::observed_e2_var)
+      .def_readwrite("observed_e1e2_covar", &FDNTShapeData::observed_e1e2_covar)
       .def_readwrite("observed_sigma", &FDNTShapeData::observed_sigma)
       .def_readwrite("observed_b00", &FDNTShapeData::observed_b00)
       .def_readwrite("observed_b00_var", &FDNTShapeData::observed_b00_var)

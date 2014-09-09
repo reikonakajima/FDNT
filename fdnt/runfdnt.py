@@ -109,6 +109,9 @@ class FDNTShapeData(object):
             self.observed_flags = args[0].observed_flags
             self.observed_e1 = args[0].observed_e1
             self.observed_e2 = args[0].observed_e2
+            self.observed_e1_var = args[0].observed_e1_var
+            self.observed_e2_var = args[0].observed_e2_var
+            self.observed_e1e2_covar = args[0].observed_e1e2_covar
             self.observed_sigma = args[0].observed_sigma
             self.observed_b00 = args[0].observed_b00
             self.observed_b00_var = args[0].observed_b00_var
@@ -145,6 +148,9 @@ class FDNTShapeData(object):
             self.observed_flags = -1
             self.observed_e1 = -10.
             self.observed_e2 = -10.
+            self.observed_e1_var = -1.
+            self.observed_e2_var = -1.
+            self.observed_e1e2_covar = -1.
             self.observed_sigma = -1.0
             self.observed_b00 = -1.0
             self.observed_b00_var = -1.0

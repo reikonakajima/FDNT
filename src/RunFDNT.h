@@ -48,6 +48,15 @@ namespace fdnt{
     /// @brief Distortion component e2 of the observed shape.  -10. if not measured.
     double observed_e2;
 
+    /// @brief Distortion variance in component e1.  -1. if not measured.
+    double observed_e1_var;
+
+    /// @brief Distortion variance in component e2.  -1. if not measured.
+    double observed_e2_var;
+
+    /// @brief Distortion covariance in components e1 and e2.  -1. if not measured.
+    double observed_e1e2_covar;
+
     /// @brief Size sigma=exp(mu) of observed galaxy, currently (!) in units of pixels
     float observed_sigma;
 
@@ -63,6 +72,9 @@ namespace fdnt{
 
     /// @brief Centroid of best-fit elliptical Gaussian
     Position<double> observed_centroid;
+
+    /// @brief Signal-to-noise calculator
+    double observedSignificance()  { return observed_b00/sqrt(observed_b00_var); }
 
     //
     // (ii) Estmiated PSF information:
@@ -155,9 +167,6 @@ namespace fdnt{
       resolution_factor(-1.), error_message("")
       {}
 
-    /// @brief Signal-to-noise calculator
-    double observedSignificance()  { return observed_b00/sqrt(observed_b00_var); }
-
   };
 
 
@@ -186,6 +195,15 @@ namespace fdnt{
 			   double ee50psf,
 			   double bg,
 			   int order, double sky);
+
+  template <typename T>
+    FDNTShapeData GLMoments(const Image<T>& gal_image,
+			    const Image<T>& weight_image,
+			    double x_wc, double y_wc,
+			    double a_wc, double b_wc, double pa_wc,
+			    double sigma_pix, // in pixels, not wcs
+			    double bg,
+			    int order, double sky);
 
 }
 
