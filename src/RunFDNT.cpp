@@ -471,8 +471,11 @@ FDNTShapeData GLMoments(const Image<T>& gal_image,
 	  exit(0);
 	}
     */
-    if (!safe_chip_bounds.includes(int(x_pix), int(y_pix)))
-      throw MyException("x_pix, y_pix not within image bounds");
+    if (!safe_chip_bounds.includes(int(x_pix), int(y_pix))) {
+      //throw MyException("x_pix, y_pix not within image bounds");
+      cerr << "x_pix, y_pix not within image bounds" << endl;
+      exit(1);
+    }
 
     /*  /// future project
 	Matrix22 J = fullmap->dWorlddPix(x_pix,y_pix);
@@ -513,7 +516,6 @@ FDNTShapeData GLMoments(const Image<T>& gal_image,
       results.psf_DOF = gl.getDOF();
     }
     */
-
 
     double e1start = (a_wc*a_wc-b_wc*b_wc)/(a_wc*a_wc+b_wc*b_wc);
     double e2start = e1start * sin(2*pa_wc*PI/180.);
@@ -564,47 +566,55 @@ FDNTShapeData GLMoments(const Image<T>& gal_image,
 
     double meanweight=0.;
     vector< Position<int> > bp = fep->badPixels(meanweight);
-    if (bp.size()>maxBadPixels*stampSize*stampSize)
-      throw MyException ("too many bad pixels");
+    if (bp.size()>maxBadPixels*stampSize*stampSize){
+      //throw MyException ("too many bad pixels");
+      cerr << "GLSimple fit failed." << endl;
+      exit(1);
+    }
 
-    // has bad pixels, but not too many to begin with: do GL interpolation
     Ellipse basis;
     int flags = -1;
     bool success = false;
-    if (bp.size() > 0) {
-      GLSimple<> gal(*fep, sexE, interpolationOrder);
-      if (!(success = gal.solve()))
-	throw MyException("GL fit failed");
-
-      LVector bvec = gal.getB();
-      double fluxModel = bvec.flux();
-      basis = gal.getBasis();
-      flags = gal.getFlags();
-      gal.b00(results.observed_b00, results.observed_b00_var);
-      results.observed_b22 = bvec[PQIndex(2,2).rIndex()];
-      covE = gal.covar();
-      double missingFlux = 0.;
-      double scaleFactor = exp(basis.getMu());
-
-      for (vector< Position<int> >::iterator it=bp.begin(); it<bp.end(); it++) {
-	LVector psi(bvec.getOrder());
-	Position<double> xunit =
-	  basis.inv(Position<double>(xwstamp((*it).x,(*it).y),
-				     ywstamp((*it).x,(*it).y)));
-	psi.fillBasis(xunit.x, xunit.y, scaleFactor);
-	scistamp((*it).x,(*it).y)=bvec.dot(psi);
-	wtstamp((*it).x,(*it).y)=meanweight;
-	// The interpolated pixel is assumed to have the mean weight of the good pixels;
-	// this makes sense because in the Fourier code homogeneous uncertainties are
-	// assumed
-	missingFlux += scistamp((*it).x,(*it).y);
-	scistamp((*it).x,(*it).y)+=sky+bg;
-      }
-      missingFlux *= rescale*rescale; // scale flux with coordinate system
-
-      if (missingFlux/fluxModel > maxBadFlux)
-	throw MyException("bad pixels have too high flux fraction");
+    GLSimple<> gal(*fep, sexE, interpolationOrder);
+    if (!(success = gal.solve())) {
+      //throw MyException("GL fit failed");
+      cerr << "GLSimple fit failed." << endl;
+      exit(1);
     }
+
+    LVector bvec = gal.getB();
+    double fluxModel = bvec.flux();
+    basis = gal.getBasis();
+    cout << "basis = " << basis << endl;
+    flags = gal.getFlags();
+    cout << "flags = " << flags << endl;
+    gal.b00(results.observed_b00, results.observed_b00_var);
+    cout << "results: b00, b00_var = " << results.observed_b00 << " "
+	 << results.observed_b00_var << endl;
+    results.observed_b22 = bvec[PQIndex(2,2).rIndex()];
+    cout << "results: b22 = " << results.observed_b22 << endl;
+    covE = gal.covar();
+    double missingFlux = 0.;
+    double scaleFactor = exp(basis.getMu());
+
+    for (vector< Position<int> >::iterator it=bp.begin(); it<bp.end(); it++) {
+      LVector psi(bvec.getOrder());
+      Position<double> xunit =
+	basis.inv(Position<double>(xwstamp((*it).x,(*it).y),
+				   ywstamp((*it).x,(*it).y)));
+      psi.fillBasis(xunit.x, xunit.y, scaleFactor);
+      scistamp((*it).x,(*it).y)=bvec.dot(psi);
+      wtstamp((*it).x,(*it).y)=meanweight;
+      // The interpolated pixel is assumed to have the mean weight of the good pixels;
+      // this makes sense because in the Fourier code homogeneous uncertainties are
+      // assumed
+      missingFlux += scistamp((*it).x,(*it).y);
+      scistamp((*it).x,(*it).y)+=sky+bg;
+    }
+    missingFlux *= rescale*rescale; // scale flux with coordinate system
+
+    if (missingFlux/fluxModel > maxBadFlux)
+      throw MyException("bad pixels have too high flux fraction");
 
     double eta1, eta2;
     double g1, g2;
