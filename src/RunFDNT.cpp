@@ -611,6 +611,9 @@ FDNTShapeData GLMoments(const Image<T>& gal_image,
     // save measurement results on observed galaxy properties
     results.observed_flags = gal.getFlags();
     if (success) {
+
+      gal.b00(results.observed_b00, results.observed_b00_var);
+      results.observed_b22 = bvec[PQIndex(2,2).rIndex()];
       results.observed_e1 = basis.getS().getE1();
       results.observed_e2 = basis.getS().getE2();
       results.observed_e1_var = covE(0,0);
