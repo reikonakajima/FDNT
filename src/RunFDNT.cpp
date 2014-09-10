@@ -657,4 +657,14 @@ template FDNTShapeData RunFDNT<double>(const Image<double>&, const Image<double>
 				       double, double, double, double, double, double, double,
 				       double, int, double);
 */
+
+template FDNTShapeData GLMoments<float>(const Image<float>&, const Image<float>&,
+				      double, double, double, double, double, double,
+				      double, int, double);
+/*
+template FDNTShapeData GLMoments<double>(const Image<double>&, const Image<double>&,
+                                         double, double, double, double, double, double,
+				         double, int, double);
+*/
+
 } // namespace fdnt
