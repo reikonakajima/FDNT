@@ -589,6 +589,7 @@ FDNTShapeData GLMoments(const Image<T>& gal_image,
     double missingFlux = 0.;
     double scaleFactor = exp(basis.getMu());
 
+    // check for bad pixels
     if (bp.size() > 0) {
       for (vector< Position<int> >::iterator it=bp.begin(); it<bp.end(); it++) {
 	LVector psi(bvec.getOrder());
@@ -609,15 +610,6 @@ FDNTShapeData GLMoments(const Image<T>& gal_image,
     if (missingFlux/fluxModel > maxBadFlux)
       throw MyException("bad pixels have too high flux fraction");
 
-    double eta1, eta2;
-    double g1, g2;
-    basis.getS().getEta1Eta2(eta1, eta2);
-    basis.getS().getG1G2(g1, g2);
-    double sig1 = 0., sig2 = 0.;
-    double cov12 = 0.;
-
-    double mu = basis.getMu();
-
     // save measurement results on observed galaxy properties
     results.observed_flags = flags;
     if (success) {
@@ -626,7 +618,7 @@ FDNTShapeData GLMoments(const Image<T>& gal_image,
       results.observed_e1_var = covE(0,0);
       results.observed_e2_var = covE(1,1);
       results.observed_e1e2_covar = covE(0,1);
-      results.observed_sigma = exp(mu);
+      results.observed_sigma = exp(basis.getMu());
     }
 
     delete fep;
