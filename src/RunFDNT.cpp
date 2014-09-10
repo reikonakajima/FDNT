@@ -448,7 +448,6 @@ FDNTShapeData GLMoments(const Image<T>& gal_image,
     safe_chip_bounds.addBorder(-2);
 
     UnweightedShearEstimator se;
-    tmv::SymMatrix<double> covE(2);
 
     double x_pix = x_wc, y_pix = y_wc;
 
@@ -568,12 +567,11 @@ FDNTShapeData GLMoments(const Image<T>& gal_image,
     vector< Position<int> > bp = fep->badPixels(meanweight);
     if (bp.size()>maxBadPixels*stampSize*stampSize){
       //throw MyException ("too many bad pixels");
-      cerr << "GLSimple fit failed." << endl;
+      cerr << "Too many bad pixels" << endl;
       exit(1);
     }
 
     Ellipse basis;
-    int flags = -1;
     bool success = false;
     GLSimple<> gal(*fep, sexE, interpolationOrder);
     if (!(success = gal.solve())) {
@@ -585,9 +583,9 @@ FDNTShapeData GLMoments(const Image<T>& gal_image,
     LVector bvec = gal.getB();
     double fluxModel = bvec.flux();
     basis = gal.getBasis();
-    covE = gal.covar();
-    double missingFlux = 0.;
     double scaleFactor = exp(basis.getMu());
+    double missingFlux = 0.;
+    tmv::SymMatrix<double> covE = gal.covar();
 
     // check for bad pixels
     if (bp.size() > 0) {
@@ -611,7 +609,7 @@ FDNTShapeData GLMoments(const Image<T>& gal_image,
       throw MyException("bad pixels have too high flux fraction");
 
     // save measurement results on observed galaxy properties
-    results.observed_flags = flags;
+    results.observed_flags = gal.getFlags();
     if (success) {
       results.observed_e1 = basis.getS().getE1();
       results.observed_e2 = basis.getS().getE2();
