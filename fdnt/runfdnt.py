@@ -27,6 +27,12 @@ class FDNTShapeData(object):
 
     - observed_e2: distortion component e2 of the observed shape based on Gauss-Laguerre fits.
 
+    - observed_e1_var: variance in distortion component e1
+
+    - observed_e2_var: variance in distortion component e2
+
+    - observed_e1e2_covar: covariance in distortion components e1 and e2
+
     - observed_sigma: size sigma of the best-fit Gaussian, in units of pixels; -1 if
       not measured.
 
@@ -43,6 +49,9 @@ class FDNTShapeData(object):
     - observed_centroid: a PositionD object representing the centroid based on GLMoment fit.
       The convention for centroids is such that the center of the lower-left pixel is
       (0,0).
+
+    - observed_significance: signal-to-noise, defined as the ratio
+      [observed_b00 / sqrt(observed_b00_var)].
 
     If FDNTEstimateShear() was used, then the following fields related to PSF-corrected shape will
     also be populated:
