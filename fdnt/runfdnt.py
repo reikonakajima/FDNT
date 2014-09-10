@@ -237,8 +237,8 @@ def _convertMask(image, weight = None, badpix = None):
     return mask   ## all this copying is dangerous---if one is modified, so will the other!
 
 
-def RunFDNT(gal_image, PSF_image, guess_x_centroid, guess_y_centroid, 
-            guess_sig_gal_pix, guess_sig_PSF_pix, guess_a_wc, guess_b_wc, guess_pa_wc, 
+def RunFDNT(gal_image, PSF_image, guess_x_centroid, guess_y_centroid,
+            guess_sig_gal_pix, guess_sig_PSF_pix, guess_a_wc, guess_b_wc, guess_pa_wc,
             weight=None, order=0, bg=0., sky=0., badpix=None):
     """Carry out Fourier Domain Null Test PSF-corrected shape measurement routines.
 
@@ -248,14 +248,14 @@ def RunFDNT(gal_image, PSF_image, guess_x_centroid, guess_y_centroid,
     Typical application to a single object:
 
         >>> galaxy = galsim.Gaussian(flux = 1.0, sigma = 1.0)
-        >>> galaxy = galaxy.shear(g1=0.05, g2=0.0)  # shears the Gaussian by (0.05, 0) using the 
+        >>> galaxy = galaxy.shear(g1=0.05, g2=0.0)  # shears the Gaussian by (0.05, 0) using the
         >>>                                         # |g| = (a - b)/(a + b) definition
         >>> psf = galsim.Kolmogorov(flux = 1.0, fwhm = 0.7)
         >>> final = galsim.Convolve([galaxy, psf])
         >>> final_image = final.drawImage(dx = 0.2)
         >>> final_epsf_image = psf.drawImage(dx = 0.2)
         >>> result = fdnt.RunFDNT(final_image, final_epsf_image)
-    
+
     After running the above code, `result.observed_shape` ["shape" = distortion, the 
     (a^2 - b^2)/(a^2 + b^2) definition of ellipticity] is
     `(0.XX, 0.XX)` and `result.corrected_e1`, `result_corrected_e2` are
@@ -300,7 +300,7 @@ def RunFDNT(gal_image, PSF_image, guess_x_centroid, guess_y_centroid,
                                 a_wc=guess_a_wc, b_wc=guess_b_wc, pa_wc=guess_pa_wc,
                                 r_pix=guess_sig_gal_pix, ee50psf=guess_sig_PSF_pix,
                                 bg=bg, order=order, sky=sky)
-                               
+
     except RuntimeError as err:
         raise RuntimeError
 
