@@ -580,6 +580,9 @@ FDNTShapeData GLMoments(const Image<T>& gal_image,
       double fluxModel = bvec.flux();
       basis = gal.getBasis();
       flags = gal.getFlags();
+      gal.b00(results.observed_b00, results.observed_b00_var);
+      results.observed_b22 = bvec[PQIndex(2,2).rIndex()];
+      covE = gal.covar();
       double missingFlux = 0.;
       double scaleFactor = exp(basis.getMu());
 
