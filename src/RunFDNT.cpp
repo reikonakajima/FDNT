@@ -624,9 +624,6 @@ FDNTShapeData GLMoments(const Image<T>& gal_image,
       results.observed_e2_var = covE(1,1);
       results.observed_e1e2_covar = covE(0,1);
       results.observed_sigma = exp(mu);
-      //results.evaluation_count = fd.getEvaluationCount();
-      //results.e_trial_count = fd.getETrialCount();
-      // XXX  ADD MORE WHERE NECESSARY
     }
 
     delete fep;
