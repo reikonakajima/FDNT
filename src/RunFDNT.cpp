@@ -27,14 +27,7 @@ FDNTShapeData RunFDNT(const Image<T>& gal_image, const Image<T>& psf_image,
 		      double bg, int order, double sky) {
 
   // necessary input:
-  // sky: sky_level, order: FDNT GL-fit order (0 for FFT)
   double maskSigma = -1.0;  // GL and FDNT mask sigma (-1 auto)
-  string weightScaleKey = "WTSCALE"; // Scaling factor for weight map keyword in WCS header
-  // This is the scale that transforms weight proportional to 1/sig^2 to weights EQUAL to
-  // 1/sig^2 of the respective single frame.
-  // Note that single frame rescaling is happening on top of this on both the science and
-  // weight frames
-  string fluxScaleKey = "FLXSCALE";
   int psfOrder;  // maximum order of polynomial psf variation used; -1 for order of PSFEx model
 
   // make sure stamp size is large enough to be able to measure the shape
@@ -59,9 +52,6 @@ FDNTShapeData RunFDNT(const Image<T>& gal_image, const Image<T>& psf_image,
   double maxBadPixels = 0.1;  // Maximum fraction of bad pixels in postage stamp
   int interpolationOrder = 4; // GL order for bad pixel interpolation
   double maxBadFlux = 0.05;   // Maximum fraction of model flux in bad pixels
-
-  // g1Col: g1 shape estimate (use native shape if 0)
-  // g2Col: g2 shape estimate (use native shape if 0)
 
   // output:
   FDNTShapeData results;
@@ -404,6 +394,13 @@ FDNTShapeData RunFDNT(const Image<T>& gal_image, const Image<T>& psf_image,
 }
 
 
+/*
+ * fdnt::GLMoments()
+ *
+ *
+ *
+ *
+ */
 template <typename T>
 FDNTShapeData GLMoments(const Image<T>& gal_image,
 			const Image<T>& weight_image,
@@ -413,14 +410,7 @@ FDNTShapeData GLMoments(const Image<T>& gal_image,
 			double bg, int order, double sky) {
 
   // necessary input:
-  // sky: sky_level, order: FDNT GL-fit order (0 for FFT)
-  double maskSigma = -1.0;  // GL and FDNT mask sigma (-1 auto)
-  string weightScaleKey = "WTSCALE"; // Scaling factor for weight map keyword in WCS header
-  // This is the scale that transforms weight proportional to 1/sig^2 to weights EQUAL to
-  // 1/sig^2 of the respective single frame.
-  // Note that single frame rescaling is happening on top of this on both the science and
-  // weight frames
-  string fluxScaleKey = "FLXSCALE";
+  double maskSigma = -1.0;  // GL mask sigma (-1=auto)
 
   // make sure stamp size is large enough to be able to measure the shape
   int refSize = minimumStampSigma * sigma_pix;
@@ -445,9 +435,6 @@ FDNTShapeData GLMoments(const Image<T>& gal_image,
   int interpolationOrder = 4; // GL order for bad pixel interpolation
   double maxBadFlux = 0.05;   // Maximum fraction of model flux in bad pixels
 
-  // g1Col: g1 shape estimate (use native shape if 0)
-  // g2Col: g2 shape estimate (use native shape if 0)
-
   // output:
   FDNTShapeData results;
 
@@ -455,28 +442,13 @@ FDNTShapeData GLMoments(const Image<T>& gal_image,
 
     Image<T> sci = gal_image.duplicate();
     Image<T> wt = weight_image.duplicate();
-    double weightScale = 1.0;  // SCAMP weight scale
-    double fluxScale = 1.0;
 
     Bounds<int> chip_bounds = sci.getBounds();
     Bounds<int> safe_chip_bounds = chip_bounds;
     safe_chip_bounds.addBorder(-2);
 
-    // the inverse variance scales with flux in the following way:
-    weightScale = weightScale / (fluxScale*fluxScale);
-    for (int iy=chip_bounds.getYMin(); iy<=chip_bounds.getYMax(); iy++)
-      for (int ix=chip_bounds.getXMin(); ix<=chip_bounds.getXMax(); ix++) {
-	// weight map just rescaled sky inverse-variance:
-	wt(ix,iy)  = wt(ix,iy) * weightScale;
-	sci(ix,iy) = sci(ix,iy) * fluxScale;
-      }
-
     UnweightedShearEstimator se;
     tmv::SymMatrix<double> covE(2);
-
-    // DEBUG: REMOVE
-    cerr << "# x_pix y_pix eta1 eta2 sig1 sig2 cov12 mu egFix fdFlags considered_success"
-	 << endl;
 
     double x_pix = x_wc, y_pix = y_wc;
 
@@ -662,35 +634,8 @@ FDNTShapeData GLMoments(const Image<T>& gal_image,
       // XXX  ADD MORE WHERE NECESSARY
     }
 
-    // DEBUG: REMOVE
-    cerr << x_pix
-	 << " " << y_pix
-	 << " " << eta1
-	 << " " << eta2
-	 << " " << sig1
-	 << " " << sig2
-	 << " " << cov12
-	 << " " << mu
-	 << " " << flags
-	 << " " << success
-	 << endl;
-
     delete fep;
 
-    //delete model;   /// future project, to include psfmodel and astrometry
-    //delete fullmap;
-
-    // Print out mean shear estimate
-    Shear S(se);
-    S.getG1G2(g1,g2);
-    se.sigmaE(sig1,sig2, false);
-
-    // DEBUG: REMOVE
-    cerr << fixed << setprecision(6);
-    // Approximate the reduced-shear error as 1/2 of the distortion error
-    cerr << "# Means: " << g1 << " +- " << sig1/2
-	 << " " << g2 << " +- " << sig2/2
-	 << endl;
   } catch (std::runtime_error &m) {
     cerr << m.what() << endl;
     quit(m,1);
@@ -712,5 +657,4 @@ template FDNTShapeData RunFDNT<double>(const Image<double>&, const Image<double>
 				       double, double, double, double, double, double, double,
 				       double, int, double);
 */
-
 } // namespace fdnt
