@@ -585,34 +585,27 @@ FDNTShapeData GLMoments(const Image<T>& gal_image,
     LVector bvec = gal.getB();
     double fluxModel = bvec.flux();
     basis = gal.getBasis();
-    cout << "basis = " << basis << endl;
-    flags = gal.getFlags();
-    cout << "flags = " << flags << endl;
-    gal.b00(results.observed_b00, results.observed_b00_var);
-    cout << "results: b00, b00_var = " << results.observed_b00 << " "
-	 << results.observed_b00_var << endl;
-    results.observed_b22 = bvec[PQIndex(2,2).rIndex()];
-    cout << "results: b22 = " << results.observed_b22 << endl;
     covE = gal.covar();
     double missingFlux = 0.;
     double scaleFactor = exp(basis.getMu());
 
-    for (vector< Position<int> >::iterator it=bp.begin(); it<bp.end(); it++) {
-      LVector psi(bvec.getOrder());
-      Position<double> xunit =
-	basis.inv(Position<double>(xwstamp((*it).x,(*it).y),
-				   ywstamp((*it).x,(*it).y)));
-      psi.fillBasis(xunit.x, xunit.y, scaleFactor);
-      scistamp((*it).x,(*it).y)=bvec.dot(psi);
-      wtstamp((*it).x,(*it).y)=meanweight;
-      // The interpolated pixel is assumed to have the mean weight of the good pixels;
-      // this makes sense because in the Fourier code homogeneous uncertainties are
-      // assumed
-      missingFlux += scistamp((*it).x,(*it).y);
-      scistamp((*it).x,(*it).y)+=sky+bg;
+    if (bp.size() > 0) {
+      for (vector< Position<int> >::iterator it=bp.begin(); it<bp.end(); it++) {
+	LVector psi(bvec.getOrder());
+	Position<double> xunit =
+	  basis.inv(Position<double>(xwstamp((*it).x,(*it).y),
+				     ywstamp((*it).x,(*it).y)));
+	psi.fillBasis(xunit.x, xunit.y, scaleFactor);
+	scistamp((*it).x,(*it).y)=bvec.dot(psi);
+	wtstamp((*it).x,(*it).y)=meanweight;
+	// The interpolated pixel is assumed to have the mean weight of the good pixels;
+	// this makes sense because in the Fourier code homogeneous uncertainties are
+	// assumed
+	missingFlux += scistamp((*it).x,(*it).y);
+	scistamp((*it).x,(*it).y) += (sky + bg);
+      }
+      missingFlux *= rescale*rescale; // scale flux with coordinate system
     }
-    missingFlux *= rescale*rescale; // scale flux with coordinate system
-
     if (missingFlux/fluxModel > maxBadFlux)
       throw MyException("bad pixels have too high flux fraction");
 
