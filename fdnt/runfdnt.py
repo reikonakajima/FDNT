@@ -308,5 +308,67 @@ def RunFDNT(gal_image, PSF_image, guess_x_centroid, guess_y_centroid,
 
 
 
+def GLMoments(gal_image, guess_x_centroid, guess_y_centroid,
+              guess_sig_gal_pix, guess_a_wc, guess_b_wc, guess_pa_wc,
+              weight=None, order=0, bg=0., sky=0., badpix=None):
+    """Carry out Fourier Domain Null Test PSF-corrected shape measurement routines.
+
+    Example usage
+    -------------
+
+    Typical application to a single object:
+
+        >>> galaxy = galsim.Gaussian(flux = 1.0, sigma = 1.0)
+        >>> galaxy = galaxy.shear(g1=0.05, g2=0.0)  # shears the Gaussian by (0.05, 0) using the
+        >>>                                         # |g| = (a - b)/(a + b) definition
+        >>> galaxy_image = galaxy.drawImage(dx = 0.2)
+        >>> result = fdnt.GLMoments(galaxy_image,)
+
+    After running the above code, `result.observed_shape` ["shape" = distortion, the
+    (a^2 - b^2)/(a^2 + b^2) definition of ellipticity] is
+    `(0.XX, 0.XX)`  compared with the  expected `(0.09975, 0)` for a perfect measurement.
+
+    @param gal_image        The Image of the galaxy being measured.
+    @param weight           The optional weight image for the galaxy being measured.  Can be an int
+                            or a float array.  Currently, GalSim does not account for the variation
+                            in non-zero weights, i.e., a weight map is converted to an image with 0
+                            and 1 for pixels that are not and are used.  Full use of spatial
+                            variation in non-zero weights will be included in a future version of
+                            the code.
+    @param guess_x_centroid  An initial guess for the x component of the object centroid (useful in
+                            case it is not located at the center, which is the default
+                            assumption).  The convention for centroids is such that the center of
+                            the lower-left pixel is (0,0). [default: gal_image.trueCenter().x]
+    @param guess_y_centroid  An initial guess for the y component of the object centroid (useful in
+                            case it is not located at the center, which is the default
+                            assumption).  The convention for centroids is such that the center of
+                            the lower-left pixel is (0,0). [default: gal_image.trueCenter().y]
+    @param guess_sig_gal    Optional argument with an initial guess for the Gaussian sigma of the
+                            galaxy (in pixels).
+    @param order            The optional GL-fit order, when GL fits are used to fill masked-out
+                            pixels.  [default: 0]
+    @param bg               The optional background level. [default: 0.]
+    @param sky              The optional sky level.  [default: 0.]
+
+    @returns a ShapeData object containing the results of shape measurement.
+    """
+    # prepare inputs to C++ routines: ImageView for galaxy, PSF, and weight map
+    gal_fdnt_image = _fdnt.FDNTImageF(gal_image.array, gal_image.xmin, gal_image.ymin)
+    weight_fdnt_image = _convertMask(gal_image, weight=weight, badpix=badpix)
+
+    try:
+        result = _fdnt._GLMoments(gal_fdnt_image, weight_fdnt_image,
+                                  x_pix=guess_x_centroid, y_pix=guess_y_centroid,
+                                  a_wc=guess_a_wc, b_wc=guess_b_wc, pa_wc=guess_pa_wc,
+                                  r_pix=guess_sig_gal_pix, bg=bg, order=order, sky=sky)
+
+    except RuntimeError as err:
+        raise RuntimeError
+
+    return FDNTShapeData(result)
+
+
+
+
 # make FindAdaptiveMom a method of Image class
 ##galsim.Image.FindAdaptiveMom = FindAdaptiveMom
