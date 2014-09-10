@@ -38,7 +38,7 @@ struct PyFDNTShapeData {
 	    (bp::arg("gal_image"), bp::arg("weight_image"),
 	     bp::arg("x_pix"), bp::arg("y_pix"), bp::arg("a_wc"), bp::arg("b_wc"), bp::arg("pa_wc"),
 	     bp::arg("r_pix"), bp::arg("bg"), bp::arg("order"), bp::arg("sky")),
-	    "Run the FDNT shape measurement method for a given galaxy and psf.");
+	    "Run the FDNT shape measurement method for a given galaxy.");
 
   }  // static void wrapTemplates()
 
