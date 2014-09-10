@@ -521,17 +521,9 @@ FDNTShapeData GLMoments(const Image<T>& gal_image,
     // all in wcs pixel coordinates
     Ellipse sexE(e1start, e2start, log(sigma_pix*rescale), x_wc, y_wc);
 
-    Shear initShear;
-    Ellipse initE;
-    double g1_wc;
-    double g2_wc;
-
-    // approximate g1, g2 with native shape (if external g1, g2 not available)
-    initE = sexE;
-
     FitExposure<T>* fep;
 
-    // set-up bounds for postagestamp
+    // set-up bounds for postage stamp
     int xi0 = x_pix-stampSize/2;
     if (xi0 < chip_bounds.getXMin())
       xi0 = chip_bounds.getXMin();
