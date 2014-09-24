@@ -361,7 +361,7 @@ def GLMoments(gal_image, guess_x_centroid, guess_y_centroid,
 
     @returns a ShapeData object containing the results of shape measurement.
     """
-    # prepare inputs to C++ routines: ImageView for galaxy, PSF, and weight map
+    # prepare inputs to C++ routines: ImageView for galaxy, and weight map
     gal_fdnt_image = _fdnt.FDNTImageF(gal_image.array, gal_image.xmin, gal_image.ymin)
     weight_fdnt_image = _convertMask(gal_image, weight=weight, badpix=badpix)
 
