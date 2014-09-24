@@ -585,7 +585,9 @@ FDNTShapeData GLMoments(const Image<T>& gal_image,
     basis = gal.getBasis();
     double scaleFactor = exp(basis.getMu());
     double missingFlux = 0.;
-    tmv::SymMatrix<double> covE = gal.covar();
+    tmv::SymMatrix<double> covE = gal.covar();  // THIS IS WRONG: covar() GIVES covariance in "b"
+    double sigE1=0., sigE2=0., covarE1E2=0.;
+    //gal.shapeVariance(sigE1, sigE2, covarE1E2);   // TO BE IMPLEMENTED
 
     // check for bad pixels
     if (bp.size() > 0) {
@@ -616,9 +618,9 @@ FDNTShapeData GLMoments(const Image<T>& gal_image,
       results.observed_b22 = bvec[PQIndex(2,2).rIndex()];
       results.observed_e1 = basis.getS().getE1();
       results.observed_e2 = basis.getS().getE2();
-      results.observed_e1_var = covE(0,0);
-      results.observed_e2_var = covE(1,1);
-      results.observed_e1e2_covar = covE(0,1);
+      results.observed_e1_var = sigE1*sigE1;
+      results.observed_e2_var = sigE2*sigE2;
+      results.observed_e1e2_covar = covarE1E2;
       results.observed_sigma = exp(basis.getMu());
     }
 
