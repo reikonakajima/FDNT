@@ -622,6 +622,7 @@ FDNTShapeData GLMoments(const Image<T>& gal_image,
       results.observed_e2_var = sigE2*sigE2;
       results.observed_e1e2_covar = covarE1E2;
       results.observed_sigma = exp(basis.getMu());
+      results.observed_centroid = basis.getX0();
     }
 
     delete fep;
