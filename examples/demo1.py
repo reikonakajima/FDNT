@@ -105,8 +105,9 @@ def main(argv):
                 results.observed_e1, np.sqrt(results.observed_e1_var),
                 results.observed_e2, np.sqrt(results.observed_e2_var),
                 results.observed_e1e2_covar)
-    logger.info('    sigma = %.3f (pixels), sig = %.1f',
-                results.observed_sigma, results.observed_significance)
+    logger.info('    sigma = %.3f (pixels), sig = %.1f, centroid = %s',
+                results.observed_sigma, results.observed_significance,
+                str(results.observed_centroid))
 
     logger.info('Expected values in the limit that pixel response and noise are negligible:')
     logger.info('    e1 = %.3f, e2 = %.3f, sigma = %.3f', 0.0, 0.0,
