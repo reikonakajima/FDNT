@@ -27,12 +27,12 @@ def loadimg(img_file_path):
 	logger.info("Loading FITS image %s..." % (os.path.basename(img_file_path)))
 	bigimg = galsim.fits.read(img_file_path)
 	bigimg.setOrigin(0,0)
-	logger.info("Done with loading %s, shape is %s" % (os.path.basename(imgfilepath),
+	logger.info("Done with loading %s, shape is %s" % (os.path.basename(img_file_path),
 							   bigimg.array.shape))
 	
 	logger.warning("The origin and stampsize conventions are new and should be tested !")
 	
-	bigimg.origimgfilepath = img_file_path  # Just to keep this somewhere
+	#bigimg.origimgfilepath = img_file_path  # Just to keep this somewhere
 	
 	return bigimg
 
@@ -87,7 +87,7 @@ def measure(bigimg, catalog, xname="x", yname="y", stampsize=100, prefix="mes_gl
 	#			   fill_value=-1)
 	
 	# Save something useful to the meta dict
-	output.meta[prefix + "_imgfilepath"] = bigimg.origimgfilepath
+	#output.meta[prefix + "_imgfilepath"] = bigimg.origimgfilepath
 	output.meta[prefix + "_xname"] = xname
 	output.meta[prefix + "_yname"] = yname
 	
@@ -104,24 +104,18 @@ def measure(bigimg, catalog, xname="x", yname="y", stampsize=100, prefix="mes_gl
 							       gal.index, n))
 		# get centroid from catalog
 		(x, y) = (gal[xname], gal[yname])
-		# get the postagestamp from the mosaic
-		(gps, flag) = getstamp(x, y, bigimg, stampsize)
-		
-		if flag != 0:
-			logger.debug("Galaxy not fully within image:\n %s" % (str(gal)))
-			gal[prefix+"_flag"] = flag
-			continue
 		
 		# We measure the moments... GLMoment may fail from time to time, hence the try:
 		try:
-			res = fdnt.GLMoments(gps, x, y, gal['tru_sig'], 0., 0., 0.)
+			# for now, give shape info a,b,theta = 0  *** TODO  FIX  XXX ***
+			res = fdnt.GLMoments(bigimg, x, y, gal['tru_sig'], 0., 0., 0.,)
 			
 		except:
 			# This is awesome, but clutters the output 
-			logger.exception("GLMoments failed on: %s" % (str(gal)))
+			#logger.exception("GLMoments failed on: %s" % (str(gal)))
 			# So insted of logging this as an exception, we use debug, but include
 			# the traceback :
-			logger.debug("GLMoments failed on:\n %s" % (str(gal)), exc_info = True)
+			logger.debug("GLMoments failed on:\n %s" % (str(gal)), exc_info=True)
 			gal[prefix + "_flag"] = 3	
 			continue
 		
@@ -131,7 +125,7 @@ def measure(bigimg, catalog, xname="x", yname="y", stampsize=100, prefix="mes_gl
 		gal[prefix+"_g1"] = res.observed_shape.g1
 		gal[prefix+"_g2"] = res.observed_shape.g2
 		gal[prefix+"_sigma"] = res.moments_sigma
-		gal[prefix+"_rho4"] = res.moments_rho4
+		#gal[prefix+"_rho4"] = res.moments_rho4
 
 		# If we made it so far, we check that the centroid is roughly ok:
 		if np.hypot(x - gal[prefix+"_x"], y - gal[prefix+"_y"]) > 10.0:
