@@ -361,9 +361,20 @@ def GLMoments(gal_image, guess_x_centroid, guess_y_centroid,
 
     @returns a ShapeData object containing the results of shape measurement.
     """
-    # prepare inputs to C++ routines: ImageView for galaxy, and weight map
+
+    # prepare inputs to C++ routines:
+    # _GLMoments(img::Image<float> gal_image, img::Image<float> weight_image,
+    #            double x_pix, double y_pix, double a_wc, double b_wc, double pa_wc,
+    #            double r_pix, double bg, int order, double sky)
+    ## convert image formats
     gal_fdnt_image = _fdnt.FDNTImageF(gal_image.array, gal_image.xmin, gal_image.ymin)
-    weight_fdnt_image = _convertMask(gal_image, weight=weight, badpix=badpix)
+    if weieght == None:
+        weight_fdnt_image = _convertMask(gal_image, weight=weight, badpix=badpix)
+    else:
+        weight_fdnt_image = _fdnt.FDNTImageF(weight.array, weight.xmin, weight.ymin)
+    ## convert int to float
+    guess_x_centroid = float(guess_x_centroid)   # centroids often specified by integers (pixels)
+    guess_y_centroid = float(guess_y_centroid)
 
     try:
         result = _fdnt._GLMoments(gal_fdnt_image, weight_fdnt_image,
@@ -375,9 +386,3 @@ def GLMoments(gal_image, guess_x_centroid, guess_y_centroid,
         raise RuntimeError
 
     return FDNTShapeData(result)
-
-
-
-
-# make FindAdaptiveMom a method of Image class
-##galsim.Image.FindAdaptiveMom = FindAdaptiveMom
