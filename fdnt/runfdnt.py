@@ -246,7 +246,7 @@ def _convertMask(image, weight = None, badpix = None):
     return mask   ## all this copying is dangerous---if one is modified, so will the other!
 
 
-def RunFDNT(gal_image, PSF_image, guess_x_centroid, guess_y_centroid,
+def RunFDNT(gal_image, PSF_image, guess_x_wc, guess_y_wc,
             guess_sig_gal_pix, guess_sig_PSF_pix, guess_a_wc, guess_b_wc, guess_pa_wc,
             weight=None, order=0, bg=0., sky=0., badpix=None):
     """Carry out Fourier Domain Null Test PSF-corrected shape measurement routines.
@@ -279,11 +279,11 @@ def RunFDNT(gal_image, PSF_image, guess_x_centroid, guess_y_centroid,
                             and 1 for pixels that are not and are used.  Full use of spatial
                             variation in non-zero weights will be included in a future version of
                             the code.
-    @param guess_x_centroid  An initial guess for the x component of the object centroid (useful in
+    @param guess_x_wc       An initial guess for the x component of the object centroid (useful in
                             case it is not located at the center, which is the default
                             assumption).  The convention for centroids is such that the center of
                             the lower-left pixel is (0,0). [default: gal_image.trueCenter().x]
-    @param guess_y_centroid  An initial guess for the y component of the object centroid (useful in
+    @param guess_y_wc       An initial guess for the y component of the object centroid (useful in
                             case it is not located at the center, which is the default
                             assumption).  The convention for centroids is such that the center of
                             the lower-left pixel is (0,0). [default: gal_image.trueCenter().y]
@@ -310,12 +310,12 @@ def RunFDNT(gal_image, PSF_image, guess_x_centroid, guess_y_centroid,
     else:
         weight_fdnt_image = _fdnt.FDNTImageF(weight.array, weight.xmin, weight.ymin)
     ## convert int to float
-    guess_x_centroid = float(guess_x_centroid)   # centroids often specified by integers (pixels)
-    guess_y_centroid = float(guess_y_centroid)
+    guess_x_wc = float(guess_x_wc)   # centroids often specified by integers (pixels)
+    guess_y_wc = float(guess_y_wc)
 
     try:
         result = _fdnt._RunFDNT(gal_fdnt_image, PSF_fdnt_image, weight_fdnt_image,
-                                x_pix=guess_x_centroid, y_pix=guess_y_centroid,
+                                x_pix=guess_x_wc, y_pix=guess_y_wc,
                                 a_wc=guess_a_wc, b_wc=guess_b_wc, pa_wc=guess_pa_wc,
                                 r_pix=guess_sig_gal_pix, ee50psf=guess_sig_PSF_pix,
                                 bg=bg, order=order, sky=sky)
@@ -327,7 +327,7 @@ def RunFDNT(gal_image, PSF_image, guess_x_centroid, guess_y_centroid,
 
 
 
-def GLMoments(gal_image, guess_x_centroid, guess_y_centroid,
+def GLMoments(gal_image, guess_x_wc, guess_y_wc,
               guess_sig_gal_pix, guess_a_wc, guess_b_wc, guess_pa_wc,
               weight=None, order=0, bg=0., sky=0., badpix=None):
     """Carry out Fourier Domain Null Test PSF-corrected shape measurement routines.
@@ -354,11 +354,11 @@ def GLMoments(gal_image, guess_x_centroid, guess_y_centroid,
                             and 1 for pixels that are not and are used.  Full use of spatial
                             variation in non-zero weights will be included in a future version of
                             the code.
-    @param guess_x_centroid  An initial guess for the x component of the object centroid (useful in
+    @param guess_x_wc       An initial guess for the x component of the object centroid (useful in
                             case it is not located at the center, which is the default
                             assumption).  The convention for centroids is such that the center of
                             the lower-left pixel is (0,0). [default: gal_image.trueCenter().x]
-    @param guess_y_centroid  An initial guess for the y component of the object centroid (useful in
+    @param guess_y_wc       An initial guess for the y component of the object centroid (useful in
                             case it is not located at the center, which is the default
                             assumption).  The convention for centroids is such that the center of
                             the lower-left pixel is (0,0). [default: gal_image.trueCenter().y]
@@ -383,12 +383,12 @@ def GLMoments(gal_image, guess_x_centroid, guess_y_centroid,
     else:
         weight_fdnt_image = _fdnt.FDNTImageF(weight.array, weight.xmin, weight.ymin)
     ## convert int to float
-    guess_x_centroid = float(guess_x_centroid)   # centroids often specified by integers (pixels)
-    guess_y_centroid = float(guess_y_centroid)
+    guess_x_wc = float(guess_x_wc)   # centroids often specified by integers (pixels)
+    guess_y_wc = float(guess_y_wc)
 
     try:
         result = _fdnt._GLMoments(gal_fdnt_image, weight_fdnt_image,
-                                  x_pix=guess_x_centroid, y_pix=guess_y_centroid,
+                                  x_pix=guess_x_wc, y_pix=guess_y_wc,  # currently wc == pix ...
                                   a_wc=guess_a_wc, b_wc=guess_b_wc, pa_wc=guess_pa_wc,
                                   r_pix=guess_sig_gal_pix, bg=bg, order=order, sky=sky)
 
