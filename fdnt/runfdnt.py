@@ -306,7 +306,7 @@ def RunFDNT(gal_image, PSF_image, guess_x_wc, guess_y_wc,
     ## convert image formats
     gal_fdnt_image = _fdnt.FDNTImageF(gal_image.array, gal_image.xmin, gal_image.ymin)
     PSF_fdnt_image = _fdnt.FDNTImageF(PSF_image.array, PSF_image.xmin, PSF_image.ymin)
-    weight_fdnt_image = _convertMask(gal_image, badpix=badpix)
+    weight_fdnt_image = _convertMask(gal_image, weight=weight, badpix=badpix)
     ## convert int to float
     guess_x_wc = float(guess_x_wc)   # centroids often specified by integers (pixels)
     guess_y_wc = float(guess_y_wc)
