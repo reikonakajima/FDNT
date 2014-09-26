@@ -194,7 +194,7 @@ class FDNTShapeData(object):
 
 # A helper function for taking input weight and badpix Images, and returning a weight Image in the
 # format that the C++ functions want
-def _convertMask(image, weight = None, badpix = None):
+def _convertMask(image, weight=None, badpix=None):
     """Convert from input weight and badpix images to a single mask image needed by C++ functions.
 
     This is used by RunFDNT().
@@ -303,19 +303,17 @@ def RunFDNT(gal_image, PSF_image, guess_x_wc, guess_y_wc,
     #          img::Image<float> weight_image,
     #          double x_pix, double y_pix, double a_wc, double b_wc, double pa_wc,
     #          double r_pix, double ee50psf, double bg, int order, double sky)
+    ## convert image formats
     gal_fdnt_image = _fdnt.FDNTImageF(gal_image.array, gal_image.xmin, gal_image.ymin)
     PSF_fdnt_image = _fdnt.FDNTImageF(PSF_image.array, PSF_image.xmin, PSF_image.ymin)
-    if weight == None:
-        weight_fdnt_image = _convertMask(gal_image, weight=weight, badpix=badpix)
-    else:
-        weight_fdnt_image = _fdnt.FDNTImageF(weight.array, weight.xmin, weight.ymin)
+    weight_fdnt_image = _convertMask(gal_image, badpix=badpix)
     ## convert int to float
     guess_x_wc = float(guess_x_wc)   # centroids often specified by integers (pixels)
     guess_y_wc = float(guess_y_wc)
 
     try:
         result = _fdnt._RunFDNT(gal_fdnt_image, PSF_fdnt_image, weight_fdnt_image,
-                                x_pix=guess_x_wc, y_pix=guess_y_wc,
+                                x_pix=guess_x_wc, y_pix=guess_y_wc,  # currently wc == pix
                                 a_wc=guess_a_wc, b_wc=guess_b_wc, pa_wc=guess_pa_wc,
                                 r_pix=guess_sig_gal_pix, ee50psf=guess_sig_PSF_pix,
                                 bg=bg, order=order, sky=sky)
@@ -378,10 +376,7 @@ def GLMoments(gal_image, guess_x_wc, guess_y_wc,
     #            double r_pix, double bg, int order, double sky)
     ## convert image formats
     gal_fdnt_image = _fdnt.FDNTImageF(gal_image.array, gal_image.xmin, gal_image.ymin)
-    if weight == None:
-        weight_fdnt_image = _convertMask(gal_image, weight=weight, badpix=badpix)
-    else:
-        weight_fdnt_image = _fdnt.FDNTImageF(weight.array, weight.xmin, weight.ymin)
+    weight_fdnt_image = _convertMask(gal_image, weight=weight, badpix=badpix)
     ## convert int to float
     guess_x_wc = float(guess_x_wc)   # centroids often specified by integers (pixels)
     guess_y_wc = float(guess_y_wc)
