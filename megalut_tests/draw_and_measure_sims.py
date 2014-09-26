@@ -23,7 +23,7 @@ create_new_catalog_and_image = True
 
 class MySimParams(megalut.sim.params.Params):
 	def get_flux(self):
-		return 300.0
+		return 3000.0
 	def get_g(self):
 		return np.random.uniform(low=-0.05, high=0.05, size=2)
 		
@@ -48,7 +48,7 @@ if create_new_catalog_and_image:
 
 # We can directly proceed by measuring the images
 
-gridimg = fdnt_glmom.loadimg("simpsfimg.fits")
+gridimg = fdnt_glmom.loadimg("simgalimg.fits")
 
 meascat = fdnt_glmom.measure(gridimg, simcat, stampsize=48, prefix="mes")
 
