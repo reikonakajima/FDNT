@@ -271,30 +271,30 @@ def RunFDNT(gal_image, PSF_image, guess_x_wc, guess_y_wc,
     `(0.XX, 0.XX)`, compared with the  expected `(0.09975, 0)` for a perfect
     PSF correction method.
 
-    @param gal_image        The Image of the galaxy being measured.
-    @param PSF_image        The Image for the PSF.
-    @param weight           The optional weight image for the galaxy being measured.  Can be an int
-                            or a float array.  Currently, GalSim does not account for the variation
-                            in non-zero weights, i.e., a weight map is converted to an image with 0
-                            and 1 for pixels that are not and are used.  Full use of spatial
-                            variation in non-zero weights will be included in a future version of
-                            the code.
-    @param guess_x_wc       An initial guess for the x component of the object centroid (useful in
-                            case it is not located at the center, which is the default
-                            assumption).  The convention for centroids is such that the center of
-                            the lower-left pixel is (0,0). [default: gal_image.trueCenter().x]
-    @param guess_y_wc       An initial guess for the y component of the object centroid (useful in
-                            case it is not located at the center, which is the default
-                            assumption).  The convention for centroids is such that the center of
-                            the lower-left pixel is (0,0). [default: gal_image.trueCenter().y]
-    @param guess_sig_gal    Optional argument with an initial guess for the Gaussian sigma of the
-                            galaxy (in pixels).
-    @param guess_sig_PSF    Optional argument with an initial guess for the Gaussian sigma of the
-                            PSF (in pixels).
-    @param order            The optional GL-fit order, when GL fits are used to fill masked-out
-                            pixels.  [default: 0]
-    @param bg               The optional background level. [default: 0.]
-    @param sky              The optional sky level.  [default: 0.]
+    @param gal_image       The Image of the galaxy being measured.
+    @param PSF_image       The Image for the PSF.
+    @param weight          The optional weight image for the galaxy being measured.  Can be an int
+                           or a float array.  Currently, GalSim does not account for the variation
+                           in non-zero weights, i.e., a weight map is converted to an image with 0
+                           and 1 for pixels that are not and are used.  Full use of spatial
+                           variation in non-zero weights will be included in a future version of
+                           the code.
+    @param guess_x_wc      An initial guess for the x component of the object centroid (useful in
+                           case it is not located at the center, which is the default
+                           assumption).  The convention for centroids is such that the center of
+                           the lower-left pixel is (0,0). [default: gal_image.trueCenter().x]
+    @param guess_y_wc      An initial guess for the y component of the object centroid (useful in
+                           case it is not located at the center, which is the default
+                           assumption).  The convention for centroids is such that the center of
+                           the lower-left pixel is (0,0). [default: gal_image.trueCenter().y]
+    @param guess_sig_gal   Optional argument with an initial guess for the Gaussian sigma of the
+                           galaxy (in pixels).
+    @param guess_sig_PSF   Optional argument with an initial guess for the Gaussian sigma of the
+                           PSF (in pixels).
+    @param order           The optional GL-fit order, when GL fits are used to fill masked-out
+                           pixels.  [default: 0]
+    @param bg              The optional background level. [default: 0.]
+    @param sky             The optional sky level.  [default: 0.]
 
     @returns a ShapeData object containing the results of shape measurement.
     """
@@ -345,27 +345,27 @@ def GLMoments(gal_image, guess_x_wc, guess_y_wc,
     (a^2 - b^2)/(a^2 + b^2) definition of ellipticity] is
     `(0.XX, 0.XX)`  compared with the  expected `(0.09975, 0)` for a perfect measurement.
 
-    @param gal_image        The Image of the galaxy being measured.
-    @param weight           The optional weight image for the galaxy being measured.  Can be an int
-                            or a float array.  Currently, GalSim does not account for the variation
-                            in non-zero weights, i.e., a weight map is converted to an image with 0
-                            and 1 for pixels that are not and are used.  Full use of spatial
-                            variation in non-zero weights will be included in a future version of
-                            the code.
-    @param guess_x_wc       An initial guess for the x component of the object centroid (useful in
-                            case it is not located at the center, which is the default
-                            assumption).  The convention for centroids is such that the center of
-                            the lower-left pixel is (0,0). [default: gal_image.trueCenter().x]
-    @param guess_y_wc       An initial guess for the y component of the object centroid (useful in
-                            case it is not located at the center, which is the default
-                            assumption).  The convention for centroids is such that the center of
-                            the lower-left pixel is (0,0). [default: gal_image.trueCenter().y]
-    @param guess_sig_gal    Optional argument with an initial guess for the Gaussian sigma of the
-                            galaxy (in pixels).
-    @param order            The optional GL-fit order, when GL fits are used to fill masked-out
-                            pixels.  [default: 0]
-    @param bg               The optional background level. [default: 0.]
-    @param sky              The optional sky level.  [default: 0.]
+    @param gal_image       The Image of the galaxy being measured.
+    @param weight          The optional weight image for the galaxy being measured.  Can be an int
+                           or a float array.  Currently, GalSim does not account for the variation
+                           in non-zero weights, i.e., a weight map is converted to an image with 0
+                           and 1 for pixels that are not and are used.  Full use of spatial
+                           variation in non-zero weights will be included in a future version of
+                           the code.
+    @param guess_x_wc      An initial guess for the x component of the object centroid (useful in
+                           case it is not located at the center, which is the default
+                           assumption).  The convention for centroids is such that the center of
+                           the lower-left pixel is (0,0). [default: gal_image.trueCenter().x]
+    @param guess_y_wc      An initial guess for the y component of the object centroid (useful in
+                           case it is not located at the center, which is the default
+                           assumption).  The convention for centroids is such that the center of
+                           the lower-left pixel is (0,0). [default: gal_image.trueCenter().y]
+    @param guess_sig_gal   Optional argument with an initial guess for the Gaussian sigma of the
+                           galaxy (in pixels).
+    @param order           The optional GL-fit order, when GL fits are used to fill masked-out
+                           pixels.  [default: 0]
+    @param bg              The optional background level. [default: 0.]
+    @param sky             The optional sky level.  [default: 0.]
 
     @returns a ShapeData object containing the results of shape measurement.
     """
