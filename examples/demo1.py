@@ -95,10 +95,9 @@ def main(argv):
     y0 = image.bounds.center().y
 
     # First, measure the native shape
-    results = fdnt.GLMoments(image, guess_x_centroid=x0, guess_y_centroid=y0,
+    results = fdnt.GLMoments(image, guess_x_wc=x0, guess_y_wc=y0,
                              guess_sig_gal_pix=gal_sigma / pixel_scale,
-                             guess_a_wc=gal_sigma / pixel_scale, guess_b_wc=gal_sigma / pixel_scale,
-                             guess_pa_wc=0.,)
+                             guess_a_b_pa=(gal_sigma/pixel_scale,gal_sigma/pixel_scale,0.,))
 
     logger.info('GLMoments() reports that the image has observed shape, size, and significance:')
     logger.info('    e1 = %.3f +/- %.3f, e2 = %.3f +/- %.3f, <e1e2> = %.5f',
@@ -114,7 +113,7 @@ def main(argv):
                 math.sqrt(gal_sigma**2 + psf_sigma**2)/pixel_scale)
 
     # Then measure the intrinsic galaxy shape
-    results = fdnt.RunFDNT(image, image_epsf, guess_x_centroid=x0, guess_y_centroid=y0,
+    results = fdnt.RunFDNT(image, image_epsf, guess_x_wc=x0, guess_y_wc=y0,
                            guess_sig_gal_pix=gal_sigma / pixel_scale,
                            guess_sig_PSF_pix=psf_sigma / pixel_scale,
                            guess_a_wc=gal_sigma / pixel_scale, guess_b_wc=gal_sigma / pixel_scale,
