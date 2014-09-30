@@ -7,6 +7,7 @@ logging.basicConfig(level=logging.INFO)
 
 import megalut
 import megalut.sim
+import stampgrid
 import sys
 import fdnt_glmom
 import numpy as np
@@ -30,7 +31,7 @@ class MySimParams(megalut.sim.params.Params):
 mysimparams = MySimParams()
 
 if create_new_catalog_and_image:
-	simcat = megalut.sim.stampgrid.drawcat(mysimparams, n=10, stampsize=48)
+	simcat = stampgrid.drawcat(mysimparams, n=10, stampsize=48)
 	megalut.utils.writepickle(simcat, "simcat.pkl")
 else:
 	simcat = megalut.utils.readpickle("simcat.pkl")
@@ -40,11 +41,11 @@ print simcat[:5]
 # Now, we pass this catalog to drawimg, to generate the actual simulated images.
 
 if create_new_catalog_and_image:
-	megalut.sim.stampgrid.drawimg(simcat,
-				      simgalimgfilepath="simgalimg.fits",
-				      simtrugalimgfilepath="simtrugalimg.fits",
-				      simpsfimgfilepath="simpsfimg.fits"
-				      )
+	stampgrid.drawimg(simcat,
+			  simgalimgfilepath="simgalimg.fits",
+			  simtrugalimgfilepath="simtrugalimg.fits",
+			  simpsfimgfilepath="simpsfimg.fits"
+			  )
 
 # We can directly proceed by measuring the images
 
