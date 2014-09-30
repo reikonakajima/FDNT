@@ -10,6 +10,8 @@ PSF and mask images (reference: Bernstein 2010, Bernstein & Jarvis 2002).
 from . import _fdnt
 import fdntimage
 import bounds
+import galsim
+import numpy as np
 
 class FDNTShapeData(object):
     """A class to contain the outputs of using the FDNT shape and moments measurement routines.
@@ -326,7 +328,7 @@ def RunFDNT(gal_image, PSF_image, guess_x_wc, guess_y_wc,
 
 
 def GLMoments(gal_image, guess_x_wc, guess_y_wc,
-              guess_sig_gal_pix, guess_a_wc, guess_b_wc, guess_pa_wc,
+              guess_sig_gal_pix, guess_a_b_pa=None, guess_g1g2=None,
               weight=None, order=0, bg=0., sky=0., badpix=None):
     """Carry out Fourier Domain Null Test PSF-corrected shape measurement routines.
 
@@ -370,6 +372,13 @@ def GLMoments(gal_image, guess_x_wc, guess_y_wc,
     @returns a ShapeData object containing the results of shape measurement.
     """
 
+    if guess_a_b_pa == None and guess_g1g2 == None:
+        raise RuntimeError("Either guess_a_b_pa or guess_g1g2 must be specified")
+    elif guess_g1g2==None:
+        (guess_a_wc, guess_b_wc, guess_pa_wc) = guess_a_b_pa
+    else:  # assuming wc == pix, so guess_sig_gal_pix==guess_sig_gal_wc
+        (guess_a_wc, guess_b_wc, guess_pa_wc) = calculate_a_b_pa(guess_sig_gal_pix, guess_g1g2)
+
     # prepare inputs to C++ routines:
     # _GLMoments(img::Image<float> gal_image, img::Image<float> weight_image,
     #            double x_pix, double y_pix, double a_wc, double b_wc, double pa_wc,
@@ -391,3 +400,25 @@ def GLMoments(gal_image, guess_x_wc, guess_y_wc,
         raise RuntimeError
 
     return FDNTShapeData(result)
+
+
+def calculate_a_b_pa(sigma, g1g2):
+    """
+    Estimate major axis a, minor axis b, and position angle pa (the SExtractor output format)
+    The math goes as follows:
+       (a^2-b^2)/(a^2+b^2) = |e|
+       ab = sigma^2 (conservation of area after non-dilating shear)
+       let   x == a/b > 1
+       then  x^2 = (1+e)/(1-e)
+             a^2 = sigma^2 * x
+             b^2 = sigma^2 * x^-1
+             pa = arctan(e_2, e_1) / 2 = arctan(g_2, g_1) / 2  (orientation is the same)
+    """
+    (g1, g2) = g1g2
+    s = galsim.Shear(g1=g1, g2=g2)
+    x_sqrt = (((1+s.getE()) / (1-s.getE()))) ** 0.25
+    a = sigma * x_sqrt
+    b = sigma / x_sqrt
+    pa = (np.arctan2(g2, g1) / 2.0) / np.pi * 180.
+
+    return a, b, pa
