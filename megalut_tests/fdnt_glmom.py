@@ -26,7 +26,7 @@ def loadimg(img_file_path):
 	
 	logger.info("Loading FITS image %s..." % (os.path.basename(img_file_path)))
 	bigimg = galsim.fits.read(img_file_path)
-	bigimg.setOrigin(0,0)
+	bigimg.setOrigin(0,0)  # it must match the catalog coordinates
 	logger.info("Done with loading %s, shape is %s" % (os.path.basename(img_file_path),
 							   bigimg.array.shape))
 	
@@ -103,12 +103,29 @@ def measure(bigimg, catalog, xname="x", yname="y", stampsize=100, prefix="mes_gl
 			logger.info("%6.2f%% done (%i/%i) " % (100.0*float(gal.index)/float(n),
 							       gal.index, n))
 		# get centroid from catalog
-		(x, y) = (gal[xname], gal[yname])
+		(x, y) = (gal[xname]+0.5, gal[yname]+0.5)
+		(gps, flag) = getstamp(x, y, bigimg, stampsize)
+
+		if flag != 0:
+			logger.debug("Galaxy not fully within image:\n %s" % (str(gal)))
+			gal[prefix+"_flag"] = flag
+			continue
 		
+		print
+		print gps.bounds
+		print gps.array
+		print gal['tru_rad']
+		print
+
+		g1g2 = (gal['tru_g1'], gal['tru_g2'])
+		print g1g2
+		print
+		res = fdnt.GLMoments(gps, x, y, gal['tru_rad'], guess_g1g2=g1g2,)
+
+		"""
 		# We measure the moments... GLMoment may fail from time to time, hence the try:
 		try:
-			# for now, give shape info a,b,theta = 0  *** TODO  FIX  XXX ***
-			res = fdnt.GLMoments(bigimg, x, y, gal['tru_sig'], 0., 0., 0.,)
+			res = fdnt.GLMoments(gps, x, y, gal['tru_sig'], guess_g1g2,)
 			
 		except:
 			# This is awesome, but clutters the output 
@@ -116,21 +133,35 @@ def measure(bigimg, catalog, xname="x", yname="y", stampsize=100, prefix="mes_gl
 			# So insted of logging this as an exception, we use debug, but include
 			# the traceback :
 			logger.debug("GLMoments failed on:\n %s" % (str(gal)), exc_info=True)
+			#print "GLMoments failed on:\n %s" % (str(gal))
 			gal[prefix + "_flag"] = 3	
 			continue
+		"""
 		
-		gal[prefix+"_flux"] = res.moments_amp
-		gal[prefix+"_x"] = res.moments_centroid.x
-		gal[prefix+"_y"] = res.moments_centroid.y
-		gal[prefix+"_g1"] = res.observed_shape.g1
-		gal[prefix+"_g2"] = res.observed_shape.g2
-		gal[prefix+"_sigma"] = res.moments_sigma
+		s = galsim.Shear(e1=res.observed_e1, e2=res.observed_e2)
+		print s
+		print s.getG1(), s.getG2()
+		print s.getE1(), s.getE2()
+		print 'size', res.observed_sigma   # size
+		print 'centroid', res.observed_centroid
+		print 'S/N (needs DEBUG)', res.observed_significance
+		print
+		print g1g2, gal['tru_rad'], x, y
+		print
+
+		gal[prefix+"_flux"] = res.observed_b00
+		gal[prefix+"_x"] = res.observed_centroid.x
+		gal[prefix+"_y"] = res.observed_centroid.y
+		gal[prefix+"_g1"] = s.getG1()
+		gal[prefix+"_g2"] = s.getG2()
+		gal[prefix+"_size_sigma"] = res.observed_sigma
 		#gal[prefix+"_rho4"] = res.moments_rho4
 
 		# If we made it so far, we check that the centroid is roughly ok:
 		if np.hypot(x - gal[prefix+"_x"], y - gal[prefix+"_y"]) > 10.0:
 			gal[prefix + "_flag"] = 2
 		
+		break  ## DEBUG
 	
 	endtime = datetime.now()	
 	logger.info("All done")
@@ -155,10 +186,10 @@ def getstamp(x, y, bigimg, stampsize):
 
 	assert int(stampsize)%2 == 0 # checking that it's even
 
-	xmin = int(np.floor(x)) - int(stampsize)/2 + 1
-	xmax = int(np.floor(x)) + int(stampsize)/2
-	ymin = int(np.floor(y)) - int(stampsize)/2 + 1
-	ymax = int(np.floor(y)) + int(stampsize)/2
+	xmin = int(np.round(x-0.5)) - int(stampsize)/2
+	xmax = int(np.round(x-0.5)) + int(stampsize)/2 - 1
+	ymin = int(np.round(y-0.5)) - int(stampsize)/2
+	ymax = int(np.round(y-0.5)) + int(stampsize)/2 - 1
 			
 	assert ymax - ymin == stampsize - 1
 	assert xmax - xmin == stampsize - 1
