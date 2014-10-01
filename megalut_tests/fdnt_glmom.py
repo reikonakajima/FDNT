@@ -119,7 +119,7 @@ def measure(bigimg, catalog, xname="x", yname="y", stampsize=100, prefix="mes_gl
 			# the traceback :
 			logger.debug("GLMoments failed with %s:\n %s" % (m, str(gal)), exc_info=True)
 			#print "GLMoments failed on:\n %s" % (str(gal))
-			gal[prefix + "_flag"] = res.observed_flags
+			gal[prefix + "_flag"] = 9999
 			continue
 
 		
@@ -144,7 +144,7 @@ def measure(bigimg, catalog, xname="x", yname="y", stampsize=100, prefix="mes_gl
 
 		# If we made it so far, we check that the centroid is roughly ok:
 		if np.hypot(x - gal[prefix+"_x"], y - gal[prefix+"_y"]) > 10.0:
-			gal[prefix + "_flag"] = 2
+			gal[prefix + "_flag"] = res.observed_flags
 		
 	endtime = datetime.now()	
 	logger.info("All done")
