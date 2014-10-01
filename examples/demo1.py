@@ -95,8 +95,9 @@ def main(argv):
     y0 = image.bounds.center().y
 
     # First, measure the native shape
+    native_size = math.sqrt(gal_sigma**2 + psf_sigma**2)/pixel_scale
     results = fdnt.GLMoments(image, guess_x_wc=x0, guess_y_wc=y0,
-                             guess_sig_gal_pix=gal_sigma / pixel_scale,
+                             guess_sig_gal_pix=native_size,
                              guess_a_b_pa=(gal_sigma/pixel_scale,gal_sigma/pixel_scale,0.,))
 
     logger.info('GLMoments() reports that the image has observed shape, size, and significance:')
