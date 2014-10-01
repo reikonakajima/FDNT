@@ -26,7 +26,7 @@ def loadimg(img_file_path):
 	
 	logger.info("Loading FITS image %s..." % (os.path.basename(img_file_path)))
 	bigimg = galsim.fits.read(img_file_path)
-	bigimg.setOrigin(0,0)  # it must match the catalog coordinates
+	# note: no need to setOrigin() here, as we are not taking the postage stamps
 	logger.info("Done with loading %s, shape is %s" % (os.path.basename(img_file_path),
 							   bigimg.array.shape))
 	
@@ -76,7 +76,7 @@ def measure(bigimg, catalog, xname="x", yname="y", stampsize=100, prefix="mes_gl
 		astropy.table.Column(name=prefix+"_y", dtype=float, length=len(output)),
 		astropy.table.Column(name=prefix+"_g1", dtype=float, length=len(output)),
 		astropy.table.Column(name=prefix+"_g2", dtype=float, length=len(output)),
-		astropy.table.Column(name=prefix+"_sigma", dtype=float, length=len(output)),
+		astropy.table.Column(name=prefix+"_size_sigma", dtype=float, length=len(output)),
 		astropy.table.Column(name=prefix+"_rho4", dtype=float, length=len(output))
 	])
 	
@@ -103,40 +103,25 @@ def measure(bigimg, catalog, xname="x", yname="y", stampsize=100, prefix="mes_gl
 			logger.info("%6.2f%% done (%i/%i) " % (100.0*float(gal.index)/float(n),
 							       gal.index, n))
 		# get centroid from catalog
-		(x, y) = (gal[xname]+0.5, gal[yname]+0.5)
-		(gps, flag) = getstamp(x, y, bigimg, stampsize)
-
-		if flag != 0:
-			logger.debug("Galaxy not fully within image:\n %s" % (str(gal)))
-			gal[prefix+"_flag"] = flag
-			continue
-		
-		print
-		print gps.bounds
-		print gps.array
-		print gal['tru_rad']
-		print
-
+		(x, y) = (gal[xname], gal[yname])
 		g1g2 = (gal['tru_g1'], gal['tru_g2'])
-		print g1g2
-		print
-		res = fdnt.GLMoments(gps, x, y, gal['tru_rad'], guess_g1g2=g1g2,)
 
-		"""
 		# We measure the moments... GLMoment may fail from time to time, hence the try:
 		try:
-			res = fdnt.GLMoments(gps, x, y, gal['tru_sig'], guess_g1g2,)
+			# TODO:  GLMoments tend to fail for sigma < 2.71828 (e).  FIX!!
+			res = fdnt.GLMoments(bigimg, x, y, gal['tru_rad'], guess_g1g2=g1g2)
 			
-		except:
+		except RuntimeError, m:
+			print m
 			# This is awesome, but clutters the output 
 			#logger.exception("GLMoments failed on: %s" % (str(gal)))
 			# So insted of logging this as an exception, we use debug, but include
 			# the traceback :
-			logger.debug("GLMoments failed on:\n %s" % (str(gal)), exc_info=True)
+			logger.debug("GLMoments failed with %s:\n %s" % (m, str(gal)), exc_info=True)
 			#print "GLMoments failed on:\n %s" % (str(gal))
-			gal[prefix + "_flag"] = 3	
+			gal[prefix + "_flag"] = res.observed_flags
 			continue
-		"""
+
 		
 		s = galsim.Shear(e1=res.observed_e1, e2=res.observed_e2)
 		print s
@@ -161,8 +146,6 @@ def measure(bigimg, catalog, xname="x", yname="y", stampsize=100, prefix="mes_gl
 		if np.hypot(x - gal[prefix+"_x"], y - gal[prefix+"_y"]) > 10.0:
 			gal[prefix + "_flag"] = 2
 		
-		break  ## DEBUG
-	
 	endtime = datetime.now()	
 	logger.info("All done")
 
