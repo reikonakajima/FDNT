@@ -325,7 +325,7 @@ GLSimple<T>::solve() {
       trustRadius = INITIAL_TRUST_RADIUS;
       if (!reMask()) return false;
       nRemasks++;
-      dbg << "Solving at basis " << basis << endl;
+      dbg << "Solving at basis (before initial linearSolution) " << basis << endl;
       linearSolution();
       if (!fitIsValid) return false;
       // Set up the data vector from current basis
@@ -460,6 +460,7 @@ GLSimple<T>::solve() {
     } 
 
     // Adjust the trustRadius
+    dbg << "gainFactor: " << gainFactor << endl;
     if (gainFactor < 0.25) {
       trustRadius *= 0.5;
     } else if (gainFactor > 0.75) {
@@ -469,12 +470,14 @@ GLSimple<T>::solve() {
 
     // Abort for trust radius too small
     if (trustRadius < MINIMUM_TRUST_RADIUS) {
+      dbg << "trust radius too small, " << trustRadius << endl;
       flags |= DidNotConverge;
       return false;
     }
   }
   // Here for too many steps?
   flags |= DidNotConverge;
+  dbg << "too many steps" << endl;
   return false;
 }
 
