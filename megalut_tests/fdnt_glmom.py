@@ -71,6 +71,7 @@ def measure(bigimg, catalog, xname="x", yname="y", stampsize=100, prefix="mes_gl
 	output = copy.deepcopy(catalog)
 	output.add_columns([
 		astropy.table.Column(name=prefix+"_flag", data=np.zeros(len(output), dtype=int)),
+		astropy.table.Column(name=prefix+"_gl_flag", data=np.zeros(len(output), dtype=int)),
 		astropy.table.Column(name=prefix+"_flux", dtype=float, length=len(output)),
 		astropy.table.Column(name=prefix+"_x", dtype=float, length=len(output)),
 		astropy.table.Column(name=prefix+"_y", dtype=float, length=len(output)),
@@ -119,32 +120,22 @@ def measure(bigimg, catalog, xname="x", yname="y", stampsize=100, prefix="mes_gl
 			# the traceback :
 			logger.debug("GLMoments failed with %s:\n %s" % (m, str(gal)), exc_info=True)
 			#print "GLMoments failed on:\n %s" % (str(gal))
-			gal[prefix + "_flag"] = 9999
+			gal[prefix + "_flag"] = 3
 			continue
 
-		
 		s = galsim.Shear(e1=res.observed_e1, e2=res.observed_e2)
-		print s
-		print s.getG1(), s.getG2()
-		print s.getE1(), s.getE2()
-		print 'size', res.observed_sigma   # size
-		print 'centroid', res.observed_centroid
-		print 'S/N (needs DEBUG)', res.observed_significance
-		print
-		print g1g2, gal['tru_rad'], x, y
-		print
-
 		gal[prefix+"_flux"] = res.observed_b00
 		gal[prefix+"_x"] = res.observed_centroid.x
 		gal[prefix+"_y"] = res.observed_centroid.y
 		gal[prefix+"_g1"] = s.getG1()
 		gal[prefix+"_g2"] = s.getG2()
 		gal[prefix+"_size_sigma"] = res.observed_sigma
-		#gal[prefix+"_rho4"] = res.moments_rho4
+		gal[prefix + "_gl_flag"] = res.observed_flags
+		#gal[prefix+"_rho4"] = res.moments_rho4   # TODO: implement 4th order moments
 
 		# If we made it so far, we check that the centroid is roughly ok:
 		if np.hypot(x - gal[prefix+"_x"], y - gal[prefix+"_y"]) > 10.0:
-			gal[prefix + "_flag"] = res.observed_flags
+			gal[prefix + "_flag"] = 2
 		
 	endtime = datetime.now()	
 	logger.info("All done")
