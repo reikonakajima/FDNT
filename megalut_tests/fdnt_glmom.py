@@ -46,7 +46,7 @@ def measure(bigimg, catalog, xname="x", yname="y", stampsize=100, prefix="mes_gl
 	One of these columns is the flag:
 	
 	* 0: OK
-	* 1: stamp is not fully within image
+	* 1: stamp is not fully within image  (not implemented for GLMoments)
 	* 2: galsim centroid failed (distance > 10 pixels...)
 	* 3: galsim failed
 	
