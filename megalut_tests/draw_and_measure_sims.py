@@ -24,9 +24,11 @@ create_new_catalog_and_image = True
 
 class MySimParams(megalut.sim.params.Params):
 	def get_flux(self):
-		return 3000.0
+		return 6000.0
 	def get_g(self):
-		return np.random.uniform(low=-0.05, high=0.05, size=2)
+		return np.random.uniform(low=-0.4, high=0.4, size=2)
+	def get_rad(self):
+		return np.random.uniform(2.5, 5.0)
 		
 mysimparams = MySimParams()
 
