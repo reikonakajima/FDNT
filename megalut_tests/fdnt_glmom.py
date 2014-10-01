@@ -262,7 +262,3 @@ def pngstampgrid(pngfilepath, bigimg, catalog, xname="x", yname="y", stampsize=1
 		stamprows.append(stamprow)
 	f2n.compose(stamprows, pngfilepath)
 	logger.info("Wrote %s" % (pngfilepath))
-	
-	
-	
-	
