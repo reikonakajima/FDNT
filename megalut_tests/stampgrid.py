@@ -27,7 +27,7 @@ def drawcat(params, n=10, stampsize=64, idprefix=""):
 	:type n: int	
 	:param stampsize: width = height of desired stamps, in pixels
 	:type stampsize: int
-	:param idprefix: a string to use as prefix for the galaxy ids. Was tempted to call this idefix.
+	:param idprefix: a string to use as prefix for the galaxy ids.
 	
 	"""
 	assert int(stampsize)%2 == 0 # checking that it's even
@@ -39,9 +39,13 @@ def drawcat(params, n=10, stampsize=64, idprefix=""):
 	for iy in range(n):
 		for ix in range(n):
 		
-			gal = params.get(ix, iy, n) # That's a dict, containing, among the params, also "ix" and "iy".
+			# That's a dict, containing, among the params, also "ix" and "iy".
+			gal = params.get(ix, iy, n)
+
 			gal["id"] = idprefix + str(ix + n*iy)
-			gal["x"] = ix*stampsize + stampsize/2.0 + 0.5 # I'm not calling this tru_x, as it will be jittered, and also as a simple x is default.
+			# I'm not calling this tru_x, as it will be jittered,
+			# and also as a simple x is default.
+			gal["x"] = ix*stampsize + stampsize/2.0 + 0.5
 			gal["y"] = iy*stampsize + stampsize/2.0 + 0.5
 			rows.append(gal) # So rows will be a list of dicts
 		
@@ -65,15 +69,17 @@ def drawimg(catalog, simgalimgfilepath, simtrugalimgfilepath = None,
 	"""
 	Truns a catalog as obtained from drawcat into FITS images.
 	The position jitter and the pixel noise are randomized.
-	Call me several times for the same catalog to get different realizations of the same galaxies.
+	Call several times for the same catalog to get different realizations of the same galaxies.
 	
 	:param catalog: an input catalog, as returned by drawcat.	
 	:param simgalimgfilepath: : where I write my output image
-	:param simtrugalimgfilepath: : optional, where I write the image without convolution and noise
+	:param simtrugalimgfilepath: : optional, where I write the image without convolution
+	                               and noise
 	:param simpsfimgfilepath: : optional, where I write the PSFs
 	
 	.. note::
-		See this function in MegaLUT v4 (great3) for attemps to speed up galsim by playing with fft params, accuracy, etc...
+		See this function in MegaLUT v4 (great3) for attemps to speed up galsim by
+		playing with fft params, accuracy, etc...
 	
 	.. note::
 		About speed, if you specify trunc, better express the scale radius.
@@ -85,7 +91,8 @@ def drawimg(catalog, simgalimgfilepath, simtrugalimgfilepath = None,
 	if "n" not in catalog.meta.keys():
 		raise RuntimeError("Provide n in the meta data of the input catalog to drawimg.")
 	if "stampsize" not in catalog.meta.keys():
-		raise RuntimeError("Provide stampsize in the meta data of the input catalog to drawimg.")
+		raise RuntimeError("Provide stampsize in the meta data of the input catalog"+
+				   " to drawimg.")
 	
 	n = catalog.meta["n"]
 	stampsize = catalog.meta["stampsize"]
@@ -113,7 +120,9 @@ def drawimg(catalog, simgalimgfilepath, simtrugalimgfilepath = None,
 		ix = int(row["ix"])
 		iy = int(row["iy"])
 		assert ix < n and iy < n
-		bounds = galsim.BoundsI(ix*stampsize+1 , (ix+1)*stampsize, iy*stampsize+1 , (iy+1)*stampsize) # Default Galsim convention, index starts at 1.
+		# Default Galsim convention, index starts at 1.
+		bounds = galsim.BoundsI(ix*stampsize+1, (ix+1)*stampsize, iy*stampsize+1,
+					(iy+1)*stampsize)
 		gal_stamp = gal_image[bounds]
 		trugal_stamp = trugal_image[bounds]
 		psf_stamp = psf_image[bounds]
@@ -121,25 +130,27 @@ def drawimg(catalog, simgalimgfilepath, simtrugalimgfilepath = None,
 		# We draw a sersic profile
 		gal = galsim.Gaussian(sigma=row["tru_rad"], flux=row["tru_flux"])
 				    
-		gal.applyShear(g1=row["tru_g1"], g2=row["tru_g2"]) # This combines shear AND the ellipticity of the galaxy
+		# This combines shear AND the ellipticity of the galaxy
+		gal.applyShear(g1=row["tru_g1"], g2=row["tru_g2"])
 		
 		# We apply some jitter to the position of this galaxy
-		xjitter = ud() - 0.5 # This is the minimum amount -- should we do more, as real galaxies are not that well centered in their stamps ?
-		yjitter = ud() - 0.5
-		##gal.applyShift(xjitter,yjitter)
+		xjitter = ud() - 0.5 # This is the minimum amount -- should we do more,
+		yjitter = ud() - 0.5 # as real galaxies are not that well centered in their stamps ?
+		gal.applyShift(xjitter,yjitter)
 		
 		# We draw the pure unconvolved galaxy
 		gal.draw(trugal_stamp)
 
 		# We prepare the PSF
-		#psf = galsim.OpticalPSF(lam_over_diam = 0.39, defocus = 0.5, obscuration = 0.1)# Boy is this slow, do not regenerate for every stamp !
+		#psf = galsim.OpticalPSF(lam_over_diam = 0.39, defocus = 0.5, obscuration = 0.1)
+		# Boy is this slow, do not regenerate for every stamp !
 		psf = galsim.Gaussian(flux=1., sigma=1.5)
 
 		# Convolution by the PSF
 		galconv = galsim.Convolve([gal,psf], real_space=False)
 		
 		# Draw the convolved galaxy and the PSF		
-		gal.draw(gal_stamp)
+		galconv.draw(gal_stamp)
 		psf.draw(psf_stamp)
 	
 		# And add shot noise to the convolved galaxy:
@@ -158,6 +169,3 @@ def drawimg(catalog, simgalimgfilepath, simtrugalimgfilepath = None,
 	
 	endtime = datetime.now()
 	logger.info("This drawing took %s" % (str(endtime - starttime)))
-
-
-
