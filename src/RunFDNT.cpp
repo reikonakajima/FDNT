@@ -575,9 +575,8 @@ FDNTShapeData GLMoments(const Image<T>& gal_image,
     bool success = false;
     GLSimple<> gal(*fep, sexE, interpolationOrder);
     if (!(success = gal.solve())) {
-      //throw MyException("GL fit failed");
       cerr << "GLSimple fit failed with flag: " << gal.getFlags() << endl;
-      exit(1);
+      throw MyException("GL fit failed");
     }
 
     LVector bvec = gal.getB();
