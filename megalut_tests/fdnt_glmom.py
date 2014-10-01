@@ -142,8 +142,10 @@ def measure(bigimg, catalog, xname="x", yname="y", stampsize=100, prefix="mes_gl
 
 	nfailed = np.sum(output[prefix+"_flag"] > 0)
 	
-	logger.info("I failed on %i out of %i sources (%.1f percent)" % (nfailed, n, 100.0*float(nfailed)/float(n)))
-	logger.info("This measurement took %.3f ms per galaxy" % (1e3*(endtime - starttime).total_seconds() / float(n)))
+	logger.info("I failed on %i out of %i sources (%.1f percent)" % \
+			    (nfailed, n, 100.0*float(nfailed)/float(n)))
+	logger.info("This measurement took %.3f ms per galaxy" % \
+			    (1e3*(endtime - starttime).total_seconds() / float(n)))
 	
 	return output
 
@@ -208,9 +210,11 @@ def getstamp(x, y, bigimg, stampsize):
 
 
 
-def pngstampgrid(pngfilepath, bigimg, catalog, xname="x", yname="y", stampsize=100, ncols=5, upsample=4, z1="auto", z2="auto"):
+def pngstampgrid(pngfilepath, bigimg, catalog, xname="x", yname="y", stampsize=100, ncols=5,
+		 upsample=4, z1="auto", z2="auto"):
 	"""
-	I write a grid of stamps corresponding to your catalog in a png image, so that you can visualize those galaxies...
+	I write a grid of stamps corresponding to your catalog in a png image, so that
+	you can visualize those galaxies...
 	For this I need f2n, but anyway I'm just a little helper.
 	"""
 	
