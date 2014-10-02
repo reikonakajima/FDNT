@@ -128,7 +128,8 @@ def drawimg(catalog, simgalimgfilepath, simtrugalimgfilepath = None,
 		psf_stamp = psf_image[bounds]
 	
 		# We draw a sersic profile
-		gal = galsim.Gaussian(sigma=row["tru_rad"], flux=row["tru_flux"])
+		gal = galsim.Sersic(n=row["tru_sersicn"], half_light_radius=row["tru_rad"],
+				    flux=row["tru_flux"])
 				    
 		# This combines shear AND the ellipticity of the galaxy
 		gal.applyShear(g1=row["tru_g1"], g2=row["tru_g2"])
