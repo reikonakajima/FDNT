@@ -26,13 +26,11 @@ def loadimg(img_file_path):
 	
 	logger.info("Loading FITS image %s..." % (os.path.basename(img_file_path)))
 	bigimg = galsim.fits.read(img_file_path)
-	# note: no need to setOrigin() here, as we are not taking the postage stamps
+	# note: no need to setOrigin() here for FDNT (postage stamp extraction not needed)
 	logger.info("Done with loading %s, shape is %s" % (os.path.basename(img_file_path),
 							   bigimg.array.shape))
 	
 	logger.warning("The origin and stampsize conventions are new and should be tested !")
-	
-	#bigimg.origimgfilepath = img_file_path  # Just to keep this somewhere
 	
 	return bigimg
 
@@ -79,6 +77,7 @@ def measure(bigimg, catalog, xname="x", yname="y", stampsize=100, prefix="mes_gl
 		astropy.table.Column(name=prefix+"_g2", dtype=float, length=len(output)),
 		astropy.table.Column(name=prefix+"_sigma", dtype=float, length=len(output)),
 		astropy.table.Column(name=prefix+"_rho4", dtype=float, length=len(output)),
+		astropy.table.Column(name=prefix+"_snratio", dtype=float, length=len(output)),
 	])
 	
 	# Can have boolean columns:
@@ -138,7 +137,8 @@ def measure(bigimg, catalog, xname="x", yname="y", stampsize=100, prefix="mes_gl
 		gal[prefix+"_g2"] = g2
 		gal[prefix+"_sigma"] = res.observed_sigma
 		gal[prefix + "_gl_flag"] = res.observed_flags
-		gal[prefix+"_rho4"] = res.observed_b22 / res.observed_b00
+		gal[prefix+"_rho4"] = res.observed_b22 / res.observed_b00 - 2 # assumes b_11 == 0
+		gal[prefix + "_snratio"] = res.observed_significance
 
 		# If we made it so far, we check that the centroid is roughly ok:
 		if np.hypot(x - gal[prefix+"_x"], y - gal[prefix+"_y"]) > 10.0:
