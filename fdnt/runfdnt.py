@@ -174,11 +174,11 @@ class FDNTShapeData(object):
             self.psf_e2 = -10.
             self.psf_sigma = -1.
             self.psf_order = -1
-            self.psf_b00 = args[0].psf_b00
-            self.psf_b00_var = args[0].psf_b00_var
-            self.psf_b22 = args[0].psf_b22
-            self.psf_chisq = args[0].psf_chisq
-            self.psf_DOF = args[0].psf_DOF
+            self.psf_b00 = -1.
+            self.psf_b00_var = 0.
+            self.psf_b22 = -1.
+            self.psf_chisq = 0.
+            self.psf_DOF = -1
 
             self.intrinsic_flags = -1
             self.intrinsic_e1 = -10.
