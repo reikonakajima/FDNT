@@ -8,6 +8,7 @@
 #include <cmath>
 #include <list>
 
+//#define DEBUGLOGGING
 #include "Std.h"
 #include "UseTMV.h"
 #include "TMV_SymBand.h"
