@@ -74,7 +74,13 @@ namespace fdnt{
     Position<double> observed_centroid;
 
     /// @brief Signal-to-noise calculator
-    double observedSignificance()  { return observed_b00/sqrt(observed_b00_var); }
+    double observedSignificance()  {
+      double sn = observed_b00/sqrt(observed_b00_var);
+      if (!std::isnan(sn))
+	return sn;
+      else
+	return 0.;
+    }
 
     //
     // (ii) Estmiated PSF information:
