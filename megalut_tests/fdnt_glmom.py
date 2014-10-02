@@ -77,8 +77,8 @@ def measure(bigimg, catalog, xname="x", yname="y", stampsize=100, prefix="mes_gl
 		astropy.table.Column(name=prefix+"_y", dtype=float, length=len(output)),
 		astropy.table.Column(name=prefix+"_g1", dtype=float, length=len(output)),
 		astropy.table.Column(name=prefix+"_g2", dtype=float, length=len(output)),
-		astropy.table.Column(name=prefix+"_size_sigma", dtype=float, length=len(output)),
-		astropy.table.Column(name=prefix+"_rho4", dtype=float, length=len(output))
+		astropy.table.Column(name=prefix+"_sigma", dtype=float, length=len(output)),
+		astropy.table.Column(name=prefix+"_rho4", dtype=float, length=len(output)),
 	])
 	
 	# Can have boolean columns:
@@ -123,15 +123,22 @@ def measure(bigimg, catalog, xname="x", yname="y", stampsize=100, prefix="mes_gl
 			gal[prefix + "_flag"] = 3
 			continue
 
-		s = galsim.Shear(e1=res.observed_e1, e2=res.observed_e2)
+		try:
+			s = galsim.Shear(e1=res.observed_e1, e2=res.observed_e2)
+			g1 = s.getG1()
+			g2 = s.getG2()
+		except ValueError:
+			g1 = res.observed_e1   # they should be "nonsense value" == -10.
+			g2 = res.observed_e2
+
 		gal[prefix+"_flux"] = res.observed_b00
 		gal[prefix+"_x"] = res.observed_centroid.x
 		gal[prefix+"_y"] = res.observed_centroid.y
-		gal[prefix+"_g1"] = s.getG1()
-		gal[prefix+"_g2"] = s.getG2()
-		gal[prefix+"_size_sigma"] = res.observed_sigma
+		gal[prefix+"_g1"] = g1
+		gal[prefix+"_g2"] = g2
+		gal[prefix+"_sigma"] = res.observed_sigma
 		gal[prefix + "_gl_flag"] = res.observed_flags
-		#gal[prefix+"_rho4"] = res.moments_rho4   # TODO: implement 4th order moments
+		gal[prefix+"_rho4"] = res.observed_b22 / res.observed_b00
 
 		# If we made it so far, we check that the centroid is roughly ok:
 		if np.hypot(x - gal[prefix+"_x"], y - gal[prefix+"_y"]) > 10.0:
