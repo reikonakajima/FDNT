@@ -39,7 +39,7 @@ namespace fdnt{
     // (i) Observed galaxy information:
     //
 
-    /// @brief Status after measuring adaptive moments (via GLSimple).  -1 if not set.
+    /// @brief Status after measuring Gauss-Laguerre moments (via GLSimple).
     int observed_flags;
 
     /// @brief Distortion component e1 of the observed shape.  -10. if not measured.
