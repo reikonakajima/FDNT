@@ -137,7 +137,8 @@ def measure(bigimg, catalog, xname="x", yname="y", stampsize=100, prefix="mes_gl
 		gal[prefix+"_g2"] = g2
 		gal[prefix+"_sigma"] = res.observed_sigma
 		gal[prefix + "_gl_flag"] = res.observed_flags
-		gal[prefix+"_rho4"] = res.observed_b22 / res.observed_b00 - 2 # assumes b_11 == 0
+		# note: b_22 = rho4-4*rho2+2 = rho4-4*b_11+2*b_00;  b22/b00 is a substitute
+		gal[prefix+"_rho4"] = res.observed_b22/res.observed_b00
 		gal[prefix + "_snratio"] = res.observed_significance
 
 		# If we made it so far, we check that the centroid is roughly ok:
