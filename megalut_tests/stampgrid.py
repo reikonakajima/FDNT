@@ -151,7 +151,8 @@ def drawimg(catalog, simgalimgfilepath, simtrugalimgfilepath = None,
 		galconv = galsim.Convolve([gal,psf], real_space=False)
 		
 		# Draw the convolved galaxy and the PSF		
-		galconv.draw(gal_stamp)
+		#galconv.draw(gal_stamp)
+		gal.draw(gal_stamp)   ### DEBUG for plain shape measurements
 		psf.draw(psf_stamp)
 	
 		# And add shot noise to the convolved galaxy:
