@@ -9,7 +9,7 @@ using namespace sbp;
 using namespace astrometry;
 
 double minimumStampSigma = 7.0;  // should be >2*minimumMaskSigma (a param from GLSimple.cpp)
-int minimumStampSize = 12;       // a minimum stamp size
+int minimumStampSize = 32;       // a minimum stamp size
 
 namespace fdnt {
 
