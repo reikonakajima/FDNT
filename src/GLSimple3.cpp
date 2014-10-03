@@ -280,9 +280,9 @@ template <class T>
 bool
 GLSimple<T>::solve() {
 
-  // Solve with Dogleg trust region method, using current order
-  // and current basis as starting point.  Use analytic
-  // derivatives and see what happens.
+  // Solve with Dogleg trust region method, using
+  // current order and current basis as starting point.
+  // Use analytic derivatives and see what happens.
 
   // Re-mask at start of the fit and if the basis changes by more
   // than REMASK_THRESHOLD in any direction, up to MAXIMUM_REMASK
@@ -380,6 +380,17 @@ GLSimple<T>::solve() {
 	dE = grad + alpha*vb;
       }
     }
+    /*
+    // for small-sized galaxies, make sure that |dE[iMu]| < 0.1
+    double smallMuThres = 0.;
+    double maximumDMu = 0.05;
+    if ((bestE[LVector::iMu] < smallMuThres) && (std::abs(dE[LVector::iMu]) > maximumDMu)) {
+      double factor = maximumDMu / dE[LVector::iMu];
+      if (dE[LVector::iMu] < 0)
+	factor *= -1.0;
+      dE *= factor;
+    }
+    */
     dbg << "dE: " << dE <<endl;
     // Set basis to the suggested trial:
     DVector tryE = bestE + dE;
