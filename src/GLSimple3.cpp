@@ -312,7 +312,7 @@ GLSimple<T>::solve() {
   bool restart = true;
   int nRemasks=0;
 
-  double eta1,eta2, x0, y0;
+  double eta1,eta2, x0, y0, mu;
   double trustRadius = INITIAL_TRUST_RADIUS;
 
   DVector bestE(nFit);
@@ -386,11 +386,12 @@ GLSimple<T>::solve() {
     for (int i=0; i<tryE.size(); i++) {
       if (whatFit[i]==LVector::iX) x0=xyscale*tryE[i];
       else if (whatFit[i]==LVector::iY) y0=xyscale*tryE[i];
-      else if (whatFit[i]==LVector::iMu) basis.setMu(tryE[i]);
+      else if (whatFit[i]==LVector::iMu) mu=tryE[i];
       else if (whatFit[i]==LVector::iE1) eta1=tryE[i];
       else if (whatFit[i]==LVector::iE2) eta2=tryE[i];
     }
     if (centering) basis.setX0(Position<double>(x0,y0));
+    if (dilating) basis.setMu(mu);
     if (shearing) {
       Shear S; S.setEta1Eta2(eta1,eta2);
       basis.setS(S);
