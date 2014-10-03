@@ -4,7 +4,7 @@
 const double DEFAULT_TOLERANCE = 0.001; //  ??
 const double DEFAULT_MAX_MASK_MU = 4.; // ??
 const int DEFAULT_MAX_ITERATIONS = 40; // ???
-const double minimumMaskSigma=3.5;  // Smallest mask size 
+const double minimumMaskSigma=3.5;  // Smallest mask size
 const double sqrtMaskFactor=1.4;    // Factor for mask size
 
 const double MINIMUM_TRUST_RADIUS=0.03;
