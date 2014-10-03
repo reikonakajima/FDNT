@@ -380,6 +380,17 @@ GLSimple<T>::solve() {
 	dE = grad + alpha*vb;
       }
     }
+    /*
+    // for small-sized galaxies, make sure that |dE[iMu]| < 0.1
+    double smallMuThres = 0.;
+    double maximumDMu = 0.08;
+    if ((bestE[LVector::iMu] < smallMuThres) && (std::abs(dE[LVector::iMu]) > maximumDMu)) {
+      if (dE[LVector::iMu] > 0)
+	dE[LVector::iMu] = maximumDMu;
+      else
+	dE[LVector::iMu] = - maximumDMu;
+    }
+    */
     dbg << "dE: " << dE <<endl;
     // Set basis to the suggested trial:
     DVector tryE = bestE + dE;
