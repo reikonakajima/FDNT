@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 import astropy.table
 import galsim
 import fdnt
-
+import megalut.gsutils as gsutils
 
 
 def loadimg(img_file_path):
@@ -27,6 +27,7 @@ def loadimg(img_file_path):
 	logger.info("Loading FITS image %s..." % (os.path.basename(img_file_path)))
 	bigimg = galsim.fits.read(img_file_path)
 	# note: no need to setOrigin() here for FDNT (postage stamp extraction not needed)
+	bigimg.setOrigin(0,0)  # just to make it work with megalut.gsutils
 	logger.info("Done with loading %s, shape is %s" % (os.path.basename(img_file_path),
 							   bigimg.array.shape))
 	
@@ -106,11 +107,23 @@ def measure(bigimg, catalog, xname="x", yname="y", stampsize=100, prefix="mes_gl
 		(x, y) = (gal[xname], gal[yname])
 		g1g2 = (gal['tru_g1'], gal['tru_g2'])
 
+		(gps, flag) = gsutils.getstamp(x, y, bigimg, stampsize)
+		try:
+			res2 = galsim.hsm.FindAdaptiveMom(gps)
+			print "=================================="
+			print "galsim.hsm.FindAdaptiveMom success:"
+			print "  ", res2.observed_shape.g1, res2.observed_shape.g2,
+			print res2.moments_sigma,
+			print res2.moments_centroid.x + 1.0, res2.moments_centroid.y + 1.0
+			print "=================================="
+		except:
+			print "galsim.hsm.FindAdaptiveMom FAILED"
+
 		# We measure the moments... GLMoment may fail from time to time, hence the try:
 		try:
 			# TODO:  GLMoments tend to fail for sigma < 2.71828 (e).  FIX!!
 			res = fdnt.GLMoments(bigimg, x, y, gal['tru_rad'], guess_g1g2=g1g2)
-			
+
 		except RuntimeError, m:
 			print m
 			# This is awesome, but clutters the output 
