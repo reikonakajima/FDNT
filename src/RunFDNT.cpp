@@ -9,6 +9,7 @@ using namespace sbp;
 using namespace astrometry;
 
 double minimumStampSigma = 7.0;  // should be >2*minimumMaskSigma (a param from GLSimple.cpp)
+int minimumStampSize = 12;       // a minimum stamp size
 
 namespace fdnt {
 
@@ -425,6 +426,11 @@ FDNTShapeData GLMoments(const Image<T>& gal_image,
     stampSize *= 3;
   else
     stampSize *= 4;
+  if (stampSize < minimumStampSize) {
+    stampSize = minimumStampSize;
+  }
+  cerr << "STAMP SIZE: " << stampSize << endl;
+
   // check stamp size
   if (stampSize > gal_image.XMax() - gal_image.XMin() + 1)
     throw MyException((string("image size smaller than recommended for measurement") +
