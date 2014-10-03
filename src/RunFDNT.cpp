@@ -429,7 +429,6 @@ FDNTShapeData GLMoments(const Image<T>& gal_image,
   if (stampSize < minimumStampSize) {
     stampSize = minimumStampSize;
   }
-  cerr << "STAMP SIZE: " << stampSize << endl;
 
   // check stamp size
   if (stampSize > gal_image.XMax() - gal_image.XMin() + 1)
