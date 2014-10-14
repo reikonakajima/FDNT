@@ -41,7 +41,8 @@ def drawcat(params, n=10, stampsize=64, idprefix=""):
 		
 			# That's a dict, containing, among the params, also "ix" and "iy".
 			gal = params.get(ix, iy, n)
-
+			gal["ix"] = ix
+			gal["iy"] = iy
 			gal["id"] = idprefix + str(ix + n*iy)
 			# I'm not calling this tru_x, as it will be jittered,
 			# and also as a simple x is default.

@@ -32,13 +32,16 @@ class MySimParams(megalut.sim.params.Params):
 		return 1.0
 
 	def get_rad(self):
-		return np.random.uniform(0.5, 5.0)
+		#return np.random.uniform(0.5, 2.0)
+		return 0.9
 
 	def get_flux(self):
-		return np.random.uniform(10.0, 200.0)
+		#return np.random.uniform(10.0, 200.0)
+		return 50.
 
 	def get_g(self):
-		return np.random.uniform(low=-0.4, high=0.4, size=2)
+		#return np.random.uniform(low=-0.4, high=0.4, size=2)
+		return (0., 0.)
 
 	def get_sersicn(self, ix=0, iy=0, n=1):
 		"""
@@ -52,7 +55,7 @@ class MySimParams(megalut.sim.params.Params):
 
 		"""
 		pseudorand = float(iy)/float(n)
-		return 0.5 + pseudorand * 5.0
+		return 0.5 + pseudorand * 0.0
 
 
 		
@@ -60,9 +63,9 @@ mysimparams = MySimParams()
 
 if create_new_catalog_and_image:
 	simcat = stampgrid.drawcat(mysimparams, n=n, stampsize=48)
-	megalut.utils.writepickle(simcat, "simcat.pkl")
+	megalut.tools.io.writepickle(simcat, "simcat.pkl")
 else:
-	simcat = megalut.utils.readpickle("simcat.pkl")
+	simcat = megalut.tools.io.readpickle("simcat.pkl")
 
 print simcat
 
@@ -85,7 +88,7 @@ meascat = fdnt_glmom.measure(gridimg, simcat, stampsize=48, prefix="mes")
 print meascat
 
 # We save it into a pickle
-megalut.utils.writepickle(meascat, "meascat.pkl")
+megalut.tools.io.writepickle(meascat, "meascat.pkl")
 
 # Let's make a simple comparision plot:
 import matplotlib
