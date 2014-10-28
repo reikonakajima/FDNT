@@ -27,7 +27,6 @@ def loadimg(img_file_path):
 	logger.info("Loading FITS image %s..." % (os.path.basename(img_file_path)))
 	bigimg = galsim.fits.read(img_file_path)
 	# note: no need to setOrigin() here for FDNT (postage stamp extraction not needed)
-	bigimg.setOrigin(0,0)  # just to make it work with megalut.gsutils
 	logger.info("Done with loading %s, shape is %s" % (os.path.basename(img_file_path),
 							   bigimg.array.shape))
 	
@@ -39,8 +38,7 @@ def loadimg(img_file_path):
 
 def measure(bigimg, catalog, xname="x", yname="y", stampsize=100, prefix="mes_glmom"):
 	"""
-	Use the pixel positions provided via the input table to extract postage stamps from
-	the image and measure their shape parameters.
+	Use the pixel positions provided via the input table to measure their shape parameters.
 	Return a copy of your input catalog with the new columns appended.
 	One of these columns is the flag:
 	
@@ -70,15 +68,15 @@ def measure(bigimg, catalog, xname="x", yname="y", stampsize=100, prefix="mes_gl
 	output = copy.deepcopy(catalog)
 	output.add_columns([
 		astropy.table.Column(name=prefix+"_flag", data=np.zeros(len(output), dtype=int)),
-		astropy.table.Column(name=prefix+"_gl_flag", data=np.zeros(len(output), dtype=int)),
 		astropy.table.Column(name=prefix+"_flux", dtype=float, length=len(output)),
 		astropy.table.Column(name=prefix+"_x", dtype=float, length=len(output)),
 		astropy.table.Column(name=prefix+"_y", dtype=float, length=len(output)),
 		astropy.table.Column(name=prefix+"_g1", dtype=float, length=len(output)),
 		astropy.table.Column(name=prefix+"_g2", dtype=float, length=len(output)),
 		astropy.table.Column(name=prefix+"_sigma", dtype=float, length=len(output)),
-		astropy.table.Column(name=prefix+"_rho4", dtype=float, length=len(output)),
+		#astropy.table.Column(name=prefix+"_rho4", dtype=float, length=len(output)),
 		astropy.table.Column(name=prefix+"_snratio", dtype=float, length=len(output)),
+		astropy.table.Column(name=prefix+"_gl_flag", data=np.zeros(len(output), dtype=int)),
 	])
 	
 	# Can have boolean columns:
@@ -96,6 +94,8 @@ def measure(bigimg, catalog, xname="x", yname="y", stampsize=100, prefix="mes_gl
 	
 	print "column names of output", output.colnames
 
+	galsim_failure_count = 0   # DEBUG
+
 	# Loop over each object
 	for gal in output:
 		
@@ -107,6 +107,7 @@ def measure(bigimg, catalog, xname="x", yname="y", stampsize=100, prefix="mes_gl
 		(x, y) = (gal[xname], gal[yname])
 		g1g2 = (gal['tru_g1'], gal['tru_g2'])
 
+		bigimg.setOrigin(0,0)  # just to make it work with megalut.gsutils
 		(gps, flag) = gsutils.getstamp(x, y, bigimg, stampsize)
 		try:
 			res2 = galsim.hsm.FindAdaptiveMom(gps)
@@ -117,12 +118,17 @@ def measure(bigimg, catalog, xname="x", yname="y", stampsize=100, prefix="mes_gl
 			print res2.moments_centroid.x + 1.0, res2.moments_centroid.y + 1.0
 			print "=================================="
 		except:
+			print "=================================="
 			print "galsim.hsm.FindAdaptiveMom FAILED"
+			print "=================================="
+			galsim_failure_count += 1
 
 		# We measure the moments... GLMoment may fail from time to time, hence the try:
+		bigimg.setOrigin(1,1)  # return to normal after megalut.gsutils
 		try:
-			# TODO:  GLMoments tend to fail for sigma < 2.71828 (e).  FIX!!
-			res = fdnt.GLMoments(bigimg, x, y, gal['tru_rad'], guess_g1g2=g1g2)
+			# TODO:  Implement different adaptive moments
+			#res = fdnt.GLMoments(bigimg, x, y, gal['tru_rad']/1.17741, guess_g1g2=g1g2)
+			res = fdnt.GLMoments(bigimg, x, y, gal['tru_rad']/0.77741, guess_g1g2=g1g2)
 
 		except RuntimeError, m:
 			print m
@@ -151,7 +157,7 @@ def measure(bigimg, catalog, xname="x", yname="y", stampsize=100, prefix="mes_gl
 		gal[prefix+"_sigma"] = res.observed_sigma
 		gal[prefix + "_gl_flag"] = res.observed_flags
 		# note: b_22 = rho4-4*rho2+2 = rho4-4*b_11+2*b_00;  b22/b00 is a substitute
-		gal[prefix+"_rho4"] = res.observed_b22/res.observed_b00
+		#gal[prefix+"_rho4"] = res.observed_b22/res.observed_b00
 		gal[prefix + "_snratio"] = res.observed_significance
 
 		# If we made it so far, we check that the centroid is roughly ok:
@@ -165,6 +171,8 @@ def measure(bigimg, catalog, xname="x", yname="y", stampsize=100, prefix="mes_gl
 	
 	logger.info("I failed on %i out of %i sources (%.1f percent)" % \
 			    (nfailed, n, 100.0*float(nfailed)/float(n)))
+	logger.info("GalSim::AdaptiveMom failed %i (%.1f percent)" % \
+			    (galsim_failure_count, 100.0*float(galsim_failure_count)/float(n)))
 	logger.info("This measurement took %.3f ms per galaxy" % \
 			    (1e3*(endtime - starttime).total_seconds() / float(n)))
 	
