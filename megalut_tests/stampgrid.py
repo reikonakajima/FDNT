@@ -39,7 +39,13 @@ def drawcat(params, n=10, stampsize=64, idprefix=""):
 	for iy in range(n):
 		for ix in range(n):
 		
-			# That's a dict, containing, among the params, also "ix" and "iy".
+			# params.get() returns a dict.
+			# "tru_sig" : self.get_sig(),
+			# "tru_rad" : self.get_rad(),
+			# "tru_flux" : self.get_flux(),
+			# "tru_sersicn" : self.get_sersicn(ix=ix, iy=iy, n=n),
+			# "tru_g1" : g1,
+			# "tru_g2" : g2
 			gal = params.get(ix, iy, n)
 			gal["ix"] = ix
 			gal["iy"] = iy
@@ -50,10 +56,8 @@ def drawcat(params, n=10, stampsize=64, idprefix=""):
 			gal["y"] = iy*stampsize + stampsize/2.0 + 0.5
 			rows.append(gal) # So rows will be a list of dicts
 		
-	# There are many ways to build a new astropy.table
-	# One of them directly uses a list of dicts...
-	
-	catalog = astropy.table.Table(rows=rows)
+	# generate a catalog
+	catalog = astropy.table.Table(rows=rows)   # list of dicts to generate a table
 	logger.info("Drawing of catalog done")
 	
 	catalog.meta["n"] = n
