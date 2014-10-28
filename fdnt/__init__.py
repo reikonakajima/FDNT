@@ -6,4 +6,4 @@ from _fdnt import *
 from . import position
 from . import bounds
 from fdntimage import FDNTImage, FDNTImageS, FDNTImageI, FDNTImageF, FDNTImageD
-from runfdnt import RunFDNT
+from runfdnt import RunFDNT, GLMoments

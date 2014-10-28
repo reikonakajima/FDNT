@@ -12,11 +12,12 @@ namespace laguerre {
     const int SizeOutOfRange=   1 << 4; // 16: Substantial likelihood of galaxy size out of bounds.
     const int SizeFixed=        1 << 5; // 32: Galaxy size was frozen by algorithms
     const int UnderSampled=     1 << 6; // 64: e prob distribution sampled with few points
-    const int DidNotConverge=   1 << 7; // 128: past maximum iterations
-    const int Singularity=      1 << 8;	// 256: Singular matrix or other failure
-    const int OutOfBounds=      1 << 9;	// 512: Fitting region off image
-    const int TooLarge=         1 << 10;// 1024: Object size too large
-    const int TooElliptical=    1 << 11;// 2048: Solver went too elliptical
-    const int GLFailure=        1 << 12;// 4096: Fatal error during GL fitting step of larger process
+    const int TooSmallTrustRad= 1 << 7; // 128: trust radius too small
+    const int DidNotConverge=   1 << 8; // 256: past maximum iterations
+    const int Singularity=      1 << 9; // 512: Singular matrix or other failure
+    const int OutOfBounds=      1 << 10;// 1024: Fitting region off image
+    const int TooLarge=         1 << 11;// 2048: Object size too large
+    const int TooElliptical=    1 << 12;// 4096: Solver went too elliptical
+    const int GLFailure=        1 << 13;// 8192: Fatal error during GL fitting step of larger process
 }
 #endif

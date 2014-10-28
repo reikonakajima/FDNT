@@ -9,6 +9,7 @@ using namespace sbp;
 using namespace astrometry;
 
 double minimumStampSigma = 7.0;  // should be >2*minimumMaskSigma (a param from GLSimple.cpp)
+int minimumStampSize = 32;       // a minimum stamp size
 
 namespace fdnt {
 
@@ -27,14 +28,7 @@ FDNTShapeData RunFDNT(const Image<T>& gal_image, const Image<T>& psf_image,
 		      double bg, int order, double sky) {
 
   // necessary input:
-  // sky: sky_level, order: FDNT GL-fit order (0 for FFT)
   double maskSigma = -1.0;  // GL and FDNT mask sigma (-1 auto)
-  string weightScaleKey = "WTSCALE"; // Scaling factor for weight map keyword in WCS header
-  // This is the scale that transforms weight proportional to 1/sig^2 to weights EQUAL to
-  // 1/sig^2 of the respective single frame.
-  // Note that single frame rescaling is happening on top of this on both the science and
-  // weight frames
-  string fluxScaleKey = "FLXSCALE";
   int psfOrder;  // maximum order of polynomial psf variation used; -1 for order of PSFEx model
 
   // make sure stamp size is large enough to be able to measure the shape
@@ -59,9 +53,6 @@ FDNTShapeData RunFDNT(const Image<T>& gal_image, const Image<T>& psf_image,
   double maxBadPixels = 0.1;  // Maximum fraction of bad pixels in postage stamp
   int interpolationOrder = 4; // GL order for bad pixel interpolation
   double maxBadFlux = 0.05;   // Maximum fraction of model flux in bad pixels
-
-  // g1Col: g1 shape estimate (use native shape if 0)
-  // g2Col: g2 shape estimate (use native shape if 0)
 
   // output:
   FDNTShapeData results;
@@ -403,6 +394,257 @@ FDNTShapeData RunFDNT(const Image<T>& gal_image, const Image<T>& psf_image,
   return results;
 }
 
+
+/*
+ * fdnt::GLMoments()
+ *
+ *
+ *
+ *
+ */
+template <typename T>
+FDNTShapeData GLMoments(const Image<T>& gal_image,
+			const Image<T>& weight_image,
+			double x_wc, double y_wc,
+			double a_wc, double b_wc, double pa_wc,
+			double sigma_pix,    // FLUX_RADIUS in pixels, not wcs;
+			double bg, int order, double sky) {
+
+  // necessary input:
+  double maskSigma = -1.0;  // GL mask sigma (-1=auto)
+
+  // make sure stamp size is large enough to be able to measure the shape
+  int refSize = minimumStampSigma * sigma_pix;
+  int stampSize = refSize;
+  int pow_2=0;
+  while (stampSize > 1) {
+    stampSize /= 2;
+    ++pow_2;
+  }
+  stampSize = pow(2., pow_2-1);
+  if (stampSize * 3 > refSize)
+    stampSize *= 3;
+  else
+    stampSize *= 4;
+  if (stampSize < minimumStampSize) {
+    stampSize = minimumStampSize;
+  }
+
+  // check stamp size
+  if (stampSize > gal_image.XMax() - gal_image.XMin() + 1)
+    throw MyException((string("image size smaller than recommended for measurement") +
+		       string(" (adjust stamp_size or MINIMUM_FFT_SIGMA?)")).c_str());
+
+  // GL interpolation of missing values
+  double maxBadPixels = 0.1;  // Maximum fraction of bad pixels in postage stamp
+  int interpolationOrder = 4; // GL order for bad pixel interpolation
+  double maxBadFlux = 0.05;   // Maximum fraction of model flux in bad pixels
+
+  // output:
+  FDNTShapeData results;
+
+  try {
+
+    Image<T> sci = gal_image.duplicate();
+    Image<T> wt = weight_image.duplicate();
+
+    Bounds<int> chip_bounds = sci.getBounds();
+    Bounds<int> safe_chip_bounds = chip_bounds;
+    safe_chip_bounds.addBorder(-2);
+
+    UnweightedShearEstimator se;
+
+    double x_pix = x_wc, y_pix = y_wc;
+
+    /*  /// future project
+	double x_wc, y_wc; // tangent plane coordinates
+	// deproject spherical coordinates to xi (x_wc) and eta (y_wc)
+	SphericalICRS point(ra0*DEGREE, dec0*DEGREE);
+	TangentPlane tp(point, fullmap->projection());
+	tp.getLonLat(x_wc, y_wc);
+	x_wc /= DEGREE;
+	y_wc /= DEGREE;
+	try {
+	  //cerr << "# object at WCS " << x_wc << " " << y_wc << endl; // DEBUG
+	  fullmap->toPix(x_wc, y_wc, x_pix, y_pix);
+	}
+	catch  (AstrometryError& e) {
+	  cerr << e.what() << endl;
+	  cerr << "(b) processing object at (RA,dec)=(" << ra0 << "," << dec0 << ")" << endl;
+	  cerr << "toPix failure" << endl;
+	  exit(0);
+	}
+    */
+    if (!safe_chip_bounds.includes(int(x_pix), int(y_pix))) {
+      //throw MyException("x_pix, y_pix not within image bounds");
+      cerr << "x_pix, y_pix not within image bounds" << endl;
+      exit(1);
+    }
+
+    /*  /// future project
+	Matrix22 J = fullmap->dWorlddPix(x_pix,y_pix);
+	// distorted approximate pixel scale: how much the scales are enlarged by WC transform
+	double rescale = sqrt(fabs(J(0,0)*J(1,1)-J(0,1)*J(1,0)));
+    */
+    double rescale = 1.0;
+
+    // Measure PSF GL size & significance   MODIFY THIS TO MEASURE NATIVE GALAXY SHAPE
+    /*
+    Image<T> psfwt(ipsf.getBounds());
+    psfwt = pow(1e-5/dx, -2.);
+    psfBasis.setMu( psfBasis.getMu() - log(dx));
+
+    GLSimple<> gl(ipsf, psfwt, psfBasis, 4);
+    bool psf_success = gl.solve();
+    if (!psf_success) {
+      std::ostringstream oss;
+      oss << "# Failed measuring psf, flags " << gl.getFlags()
+	  << "; ignoring object" << endl;
+      throw MyException(oss.str().c_str());
+    }
+    psfBasis = gl.getBasis();
+    psfBasis.setMu( psfBasis.getMu() + log(dx));
+
+    // save measurement results on observed galaxy properties
+    results.psf_flags = gl.getFlags();
+    if (psf_success) {
+      results.psf_e1 = psfBasis.getS().getE1();
+      results.psf_e2 = psfBasis.getS().getE2();
+      results.psf_sigma = exp(psfBasis.getMu());
+      gl.b00(results.psf_b00, results.psf_b00_var);
+      results.psf_order = gl.getOrder();
+      if (results.psf_order >= 4) {
+	results.psf_b22 = gl.getB()(2,2).real();
+      }
+      results.psf_chisq = gl.getChisq();
+      results.psf_DOF = gl.getDOF();
+    }
+    */
+
+    double e1start = (a_wc*a_wc-b_wc*b_wc)/(a_wc*a_wc+b_wc*b_wc);
+    double e2start = e1start * sin(2*pa_wc*PI/180.);
+    e1start *= cos(2*pa_wc*PI/180.);
+    // all in wcs pixel coordinates
+    Ellipse sexE(e1start, e2start, log(sigma_pix*rescale), x_wc, y_wc);
+
+    FitExposure<T>* fep;
+
+    // set-up bounds for postage stamp
+    int xi0 = x_pix-stampSize/2;
+    if (xi0 < chip_bounds.getXMin())
+      xi0 = chip_bounds.getXMin();
+    if ((xi0 + stampSize+1) > chip_bounds.getXMax())
+      xi0 = chip_bounds.getXMax() - stampSize - 1;
+    int yi0 = y_pix-stampSize / 2;
+    if (yi0 < chip_bounds.getYMin())
+      yi0 = chip_bounds.getYMin();
+    if ((yi0 + stampSize+1) > chip_bounds.getYMax())
+      yi0 = chip_bounds.getYMax() - stampSize - 1;
+
+    Bounds<int> stamp(xi0,xi0+stampSize-1, yi0, yi0+stampSize-1);
+    results.image_bounds = stamp;
+    Image<float> scistamp = sci.subimage(stamp);
+    Image<float> wtstamp  = wt.subimage(stamp);
+    Image<double> xwstamp(stamp);
+    Image<double> ywstamp(stamp);
+
+    try {
+      for (int iy=stamp.getYMin(); iy<=stamp.getYMax(); iy++)
+	{
+	  for (int ix=stamp.getXMin(); ix<=stamp.getXMax(); ix++) {
+	    double dxw = ix, dyw = iy;  // pixel coordinate is world coordinate
+	    //fullmap->toWorld(ix,iy,dxw,dyw);  /// future project
+	    xwstamp(ix,iy) = dxw;
+	    ywstamp(ix,iy) = dyw;
+	  }
+	}
+      fep = new FitExposure<>(scistamp,
+			      wtstamp,
+			      xwstamp,
+			      ywstamp, 0, sky+bg);
+      // stack background with sky-subtracted single frames ==
+      // photometric local background in stack flux scale
+    } catch (...) {
+      throw MyException("# fail: could not get postage stamp");
+    }
+
+    double meanweight=0.;
+    vector< Position<int> > bp = fep->badPixels(meanweight);
+    if (bp.size()>maxBadPixels*stampSize*stampSize){
+      //throw MyException ("too many bad pixels");
+      cerr << "Too many bad pixels" << endl;
+      exit(1);
+    }
+
+    Ellipse basis;
+    bool success = false;
+    GLSimple<> gal(*fep, sexE, interpolationOrder);
+    if (!(success = gal.solve())) {
+      //cerr << "GLSimple fit failed with flag: " << gal.getFlags()
+      //     << ", size: " << sigma_pix << ", shape: (" << e1start << "," << e2start << ")" << endl;
+      // Exit gracefully
+      delete fep;
+      results.observed_flags = gal.getFlags();
+      return results;
+    }
+
+    LVector bvec = gal.getB();
+    double fluxModel = bvec.flux();
+    basis = gal.getBasis();
+    double scaleFactor = exp(basis.getMu());
+    double missingFlux = 0.;
+    tmv::SymMatrix<double> covE = gal.covar();  // THIS IS WRONG: covar() GIVES covariance in "b"
+    double sigE1=9.999, sigE2=9.999, covarE1E2=9.999;   // REMOVE 9.999 when shapeVariance impl'd
+    //gal.shapeVariance(sigE1, sigE2, covarE1E2);   // TO BE IMPLEMENTED
+
+    // check for bad pixels
+    if (bp.size() > 0) {
+      for (vector< Position<int> >::iterator it=bp.begin(); it<bp.end(); it++) {
+	LVector psi(bvec.getOrder());
+	Position<double> xunit =
+	  basis.inv(Position<double>(xwstamp((*it).x,(*it).y),
+				     ywstamp((*it).x,(*it).y)));
+	psi.fillBasis(xunit.x, xunit.y, scaleFactor);
+	scistamp((*it).x,(*it).y)=bvec.dot(psi);
+	wtstamp((*it).x,(*it).y)=meanweight;
+	// The interpolated pixel is assumed to have the mean weight of the good pixels;
+	// this makes sense because in the Fourier code homogeneous uncertainties are
+	// assumed
+	missingFlux += scistamp((*it).x,(*it).y);
+	scistamp((*it).x,(*it).y) += (sky + bg);
+      }
+      missingFlux *= rescale*rescale; // scale flux with coordinate system
+    }
+    if (missingFlux/fluxModel > maxBadFlux)
+      throw MyException("bad pixels have too high flux fraction");
+
+    // save measurement results on observed galaxy properties
+    results.observed_flags = gal.getFlags();
+    if (success) {
+
+      gal.b00(results.observed_b00, results.observed_b00_var);
+      results.observed_b22 = bvec[PQIndex(2,2).rIndex()];
+      results.observed_e1 = basis.getS().getE1();
+      results.observed_e2 = basis.getS().getE2();
+      results.observed_e1_var = sigE1*sigE1;
+      results.observed_e2_var = sigE2*sigE2;
+      results.observed_e1e2_covar = covarE1E2;
+      results.observed_sigma = exp(basis.getMu());
+      results.observed_centroid = basis.getX0();
+    }
+
+    delete fep;
+
+  } catch (std::runtime_error &m) {
+    cerr << m.what() << endl;
+    quit(m,1);
+  }
+  return results;
+}
+
+
+
+
 // instantiate for expected types
 
 template FDNTShapeData RunFDNT<float>(const Image<float>&, const Image<float>&, const Image<float>&,
@@ -413,6 +655,15 @@ template FDNTShapeData RunFDNT<double>(const Image<double>&, const Image<double>
 				       const Image<double>&,
 				       double, double, double, double, double, double, double,
 				       double, int, double);
+*/
+
+template FDNTShapeData GLMoments<float>(const Image<float>&, const Image<float>&,
+				      double, double, double, double, double, double,
+				      double, int, double);
+/*
+template FDNTShapeData GLMoments<double>(const Image<double>&, const Image<double>&,
+                                         double, double, double, double, double, double,
+				         double, int, double);
 */
 
 } // namespace fdnt

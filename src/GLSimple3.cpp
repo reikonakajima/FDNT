@@ -280,9 +280,9 @@ template <class T>
 bool
 GLSimple<T>::solve() {
 
-  // Solve with Dogleg trust region method, using current order
-  // and current basis as starting point.  Use analytic
-  // derivatives and see what happens.
+  // Solve with Dogleg trust region method, using
+  // current order and current basis as starting point.
+  // Use analytic derivatives and see what happens.
 
   // Re-mask at start of the fit and if the basis changes by more
   // than REMASK_THRESHOLD in any direction, up to MAXIMUM_REMASK
@@ -312,7 +312,7 @@ GLSimple<T>::solve() {
   bool restart = true;
   int nRemasks=0;
 
-  double eta1,eta2, x0, y0;
+  double eta1,eta2, x0, y0, mu;
   double trustRadius = INITIAL_TRUST_RADIUS;
 
   DVector bestE(nFit);
@@ -325,7 +325,7 @@ GLSimple<T>::solve() {
       trustRadius = INITIAL_TRUST_RADIUS;
       if (!reMask()) return false;
       nRemasks++;
-      dbg << "Solving at basis " << basis << endl;
+      dbg << "Solving at basis (before initial linearSolution) " << basis << endl;
       linearSolution();
       if (!fitIsValid) return false;
       // Set up the data vector from current basis
@@ -383,14 +383,24 @@ GLSimple<T>::solve() {
     dbg << "dE: " << dE <<endl;
     // Set basis to the suggested trial:
     DVector tryE = bestE + dE;
+    int imu;
     for (int i=0; i<tryE.size(); i++) {
       if (whatFit[i]==LVector::iX) x0=xyscale*tryE[i];
       else if (whatFit[i]==LVector::iY) y0=xyscale*tryE[i];
-      else if (whatFit[i]==LVector::iMu) basis.setMu(tryE[i]);
+      else if (whatFit[i]==LVector::iMu) {mu=tryE[i]; imu=i;}
       else if (whatFit[i]==LVector::iE1) eta1=tryE[i];
       else if (whatFit[i]==LVector::iE2) eta2=tryE[i];
     }
     if (centering) basis.setX0(Position<double>(x0,y0));
+    if (dilating) {
+      /*
+      if (mu < 0.) {
+	dE[imu] *= 0.5;
+	mu = tryE[imu] = bestE[imu] + dE[imu];
+      }
+      */
+      basis.setMu(mu);
+    }
     if (shearing) {
       Shear S; S.setEta1Eta2(eta1,eta2);
       basis.setS(S);
@@ -460,6 +470,7 @@ GLSimple<T>::solve() {
     } 
 
     // Adjust the trustRadius
+    dbg << "gainFactor: " << gainFactor << endl;
     if (gainFactor < 0.25) {
       trustRadius *= 0.5;
     } else if (gainFactor > 0.75) {
@@ -469,12 +480,14 @@ GLSimple<T>::solve() {
 
     // Abort for trust radius too small
     if (trustRadius < MINIMUM_TRUST_RADIUS) {
-      flags |= DidNotConverge;
+      dbg << "trust radius too small, " << trustRadius << endl;
+      flags |= TooSmallTrustRad;
       return false;
     }
   }
   // Here for too many steps?
   flags |= DidNotConverge;
+  dbg << "too many steps" << endl;
   return false;
 }
 

@@ -8,6 +8,7 @@
 #include <cmath>
 #include <list>
 
+//#define DEBUGLOGGING
 #include "Std.h"
 #include "UseTMV.h"
 #include "TMV_SymBand.h"
@@ -100,7 +101,7 @@ namespace laguerre {
   template <class T=float>
   class GLSimple {
   public:
-    // Constructor for plgain-old fitting, single image, pixel coords
+    // Constructor for plain-old fitting, single image, pixel coords
     GLSimple(const Image<T> sci, const Image<T> wt,
 	  Ellipse e_, int startingOrder=8, double sky_=0.);
     // Constructor with multiple exposures:

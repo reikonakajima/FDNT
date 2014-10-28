@@ -20,6 +20,7 @@ import math
 import logging
 import galsim
 import fdnt
+import numpy as np
 
 def main(argv):
     """
@@ -92,13 +93,34 @@ def main(argv):
     # currently, everything is in units of pixels.  Upgrade required....
     x0 = image.bounds.center().x
     y0 = image.bounds.center().y
-    results = fdnt.RunFDNT(image, image_epsf, guess_x_centroid=x0, guess_y_centroid=y0,
+
+    # First, measure the native shape
+    native_size = math.sqrt(gal_sigma**2 + psf_sigma**2)/pixel_scale
+    results = fdnt.GLMoments(image, guess_x_wc=x0, guess_y_wc=y0,
+                             guess_sig_gal_pix=native_size,
+                             guess_a_b_pa=(gal_sigma/pixel_scale,gal_sigma/pixel_scale,0.,))
+
+    logger.info('GLMoments() reports that the image has observed shape, size, and significance:')
+    logger.info('    e1 = %.3f +/- %.3f, e2 = %.3f +/- %.3f, <e1e2> = %.5f',
+                results.observed_e1, np.sqrt(results.observed_e1_var),
+                results.observed_e2, np.sqrt(results.observed_e2_var),
+                results.observed_e1e2_covar)
+    logger.info('    sigma = %.3f (pixels), sig = %.1f, centroid = %s',
+                results.observed_sigma, results.observed_significance,
+                str(results.observed_centroid))
+
+    logger.info('Expected values in the limit that pixel response and noise are negligible:')
+    logger.info('    e1 = %.3f, e2 = %.3f, sigma = %.3f', 0.0, 0.0,
+                math.sqrt(gal_sigma**2 + psf_sigma**2)/pixel_scale)
+
+    # Then measure the intrinsic galaxy shape
+    results = fdnt.RunFDNT(image, image_epsf, guess_x_wc=x0, guess_y_wc=y0,
                            guess_sig_gal_pix=gal_sigma / pixel_scale,
                            guess_sig_PSF_pix=psf_sigma / pixel_scale,
                            guess_a_wc=gal_sigma / pixel_scale, guess_b_wc=gal_sigma / pixel_scale,
                            guess_pa_wc=0.,)
 
-    logger.info('FDNT reports that the image has observed shape, size, and significance:')
+    logger.info('RunFDNT() reports that the image has observed shape, size, and significance:')
     logger.info('    e1 = %.3f, e2 = %.3f, sigma = %.3f (pixels), sig = %.1f',
                 results.intrinsic_e1, results.intrinsic_e2, results.intrinsic_sigma,
                 results.observed_significance)
