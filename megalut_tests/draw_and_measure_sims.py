@@ -9,7 +9,8 @@ import megalut
 import megalut.sim
 import stampgrid
 import sys
-import fdnt_glmom
+#import fdnt_glmom
+import glmomfunc as fdnt_glmom
 import numpy as np
 import fdnt
 import galsim
@@ -17,45 +18,36 @@ import galsim
 #
 # debug flags
 #
-create_new_catalog_and_image = True
+create_new_catalog_and_image = False
 
 #
 # run conditions
 #
-n = 10  # 1d size of the sample postage stamp array (there will be n x n galaxies)
+n = 100  # 1d size of the sample postage stamp array (there will be n x n galaxies)
 
 
 # First, we set the desired distributions of parameters, by overwriting the default distributions.
 
 class MySimParams(megalut.sim.params.Params):
-	def get_sig(self):
-		return 1.0
 
-	def get_rad(self):
-		#return np.random.uniform(0.5, 2.0)
-		return 0.9
+	## try a set of parameters similar to GREAT3 CGV parameters
+        def get_rad(self):
+                return np.random.uniform(0.7, 2.7)
 
-	def get_flux(self):
-		#return np.random.uniform(10.0, 200.0)
-		return 50.
+        def get_flux(self):
+                if np.random.uniform() < 0.25:
+                        return np.random.uniform(70.0, 220.0)
+                else:
+                        return np.random.uniform(10.0, 70.0)
 
-	def get_g(self):
-		#return np.random.uniform(low=-0.4, high=0.4, size=2)
-		return (0., 0.)
+        def get_g(self):
+                theta = np.random.uniform(0.0, 2.0* np.pi)
+                eps = np.random.uniform(0.0, 0.7)
+                return (eps * np.cos(2.0 * theta), eps * np.sin(2.0 * theta))
 
-	def get_sersicn(self, ix=0, iy=0, n=1):
-		"""
-		This is a bit special: we do not draw sersic indices randomly, as changing it
-		from stamp to stamp significantly slows down galsim ! That's why we need to know
-		the stamp index.
-
-		:param ix: x index of the galaxy, going from 0 to n-1
-		:param iy: y index, idem
-		:param n: n x n is the number of stamps
-
-		"""
-		pseudorand = float(iy)/float(n)
-		return 0.5 + pseudorand * 0.0
+        def get_sersicn(self, ix=0, iy=0, n=1):
+                return 1.0 + (float(iy)/float(n)) * 2.0
+                # Lower sersic index = broader
 
 
 		
@@ -82,7 +74,7 @@ if create_new_catalog_and_image:
 
 gridimg = fdnt_glmom.loadimg("simgalimg.fits")
 
-meascat = fdnt_glmom.measure(gridimg, simcat, stampsize=48, prefix="mes")
+meascat = fdnt_glmom.measure(gridimg, simcat, prefix="mes_")
 
 # meascat is the output catalog, it contains the measured features:
 print meascat
