@@ -383,15 +383,24 @@ GLSimple<T>::solve() {
     dbg << "dE: " << dE <<endl;
     // Set basis to the suggested trial:
     DVector tryE = bestE + dE;
+    int imu;
     for (int i=0; i<tryE.size(); i++) {
       if (whatFit[i]==LVector::iX) x0=xyscale*tryE[i];
       else if (whatFit[i]==LVector::iY) y0=xyscale*tryE[i];
-      else if (whatFit[i]==LVector::iMu) mu=tryE[i];
+      else if (whatFit[i]==LVector::iMu) {mu=tryE[i]; imu=i;}
       else if (whatFit[i]==LVector::iE1) eta1=tryE[i];
       else if (whatFit[i]==LVector::iE2) eta2=tryE[i];
     }
     if (centering) basis.setX0(Position<double>(x0,y0));
-    if (dilating) basis.setMu(mu);
+    if (dilating) {
+      /*
+      if (mu < 0.) {
+	dE[imu] *= 0.5;
+	mu = tryE[imu] = bestE[imu] + dE[imu];
+      }
+      */
+      basis.setMu(mu);
+    }
     if (shearing) {
       Shear S; S.setEta1Eta2(eta1,eta2);
       basis.setS(S);
@@ -472,7 +481,7 @@ GLSimple<T>::solve() {
     // Abort for trust radius too small
     if (trustRadius < MINIMUM_TRUST_RADIUS) {
       dbg << "trust radius too small, " << trustRadius << endl;
-      flags |= DidNotConverge;
+      flags |= TooSmallTrustRad;
       return false;
     }
   }
