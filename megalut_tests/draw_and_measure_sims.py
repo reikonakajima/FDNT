@@ -10,7 +10,7 @@ import megalut.sim
 import stampgrid
 import sys
 #import fdnt_glmom
-import glmomfunc as fdnt_glmom
+import glmomfunc
 import numpy as np
 import fdnt
 import galsim
@@ -72,9 +72,9 @@ if create_new_catalog_and_image:
 
 # We can directly proceed by measuring the images
 
-gridimg = fdnt_glmom.loadimg("simgalimg.fits")
+gridimg = megalut.tools.image.loadimg("simgalimg.fits")
 
-meascat = fdnt_glmom.measure(gridimg, simcat, prefix="mes_")
+meascat = glmomfunc.measure(gridimg, simcat, prefix="mes_")
 
 # meascat is the output catalog, it contains the measured features:
 print meascat
