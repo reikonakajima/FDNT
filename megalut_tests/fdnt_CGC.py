@@ -29,21 +29,26 @@ def measure(img_fname,input_cat,stampsize,prefix):
 """
 
 class CGC_simparams(megalut.sim.params.Params):
-	def getrad(self):
-		return np.random.uniform(0.7, 2.7)
+	def get_rad(self):
+		#return np.random.uniform(0.7, 2.7)
+		return np.random.uniform(2.7, 3.7)
 	
-	def getflux(self):
+	def get_flux(self):
+		return 20000.0
+	"""
 		if np.random.uniform() < 0.25:
-			return np.random.uniform(70.0, 220.0)
+			return np.random.uniform(470.0, 620.0)
+			#return np.random.uniform(70.0, 220.0)
 		else:
-			return np.random.uniform(10.0, 70.0)
-	
-	def getg(self):
+			return np.random.uniform(410.0, 470.0)
+			#return np.random.uniform(10.0, 70.0)
+	"""
+	def get_g(self):
 		theta = np.random.uniform(0.0, 2.0* np.pi) 
 		eps = np.random.uniform(0.0, 0.7) 
 		return (eps * np.cos(2.0 * theta), eps * np.sin(2.0 * theta))
 		
-	def getsersicn(self, ix=0, iy=0, n=1):
+	def get_sersicn(self, ix=0, iy=0, n=1):
 		return 1.0 + (float(iy)/float(n)) * 2.0	
 		# Lower sersic index = broader
 
@@ -66,11 +71,11 @@ basedir = "/vol/euclid2/euclid2_1/reiko/MegaLUT/temp/"
 # Step 1: drawing the sims
 
 simdir = os.path.join(basedir, "simdir")
-simparams = megalut.sim.params.Params("CGC_simparams")
+simparams = CGC_simparams()
 drawcatkwargs = {"n":30, "stampsize":64}
 drawimgkwargs = {}
 
-#megalut.sim.run.multi(simdir, simparams, drawcatkwargs, drawimgkwargs, ncat=2, nrea=3, ncpu=6)
+#megalut.sim.run.multi(simdir, simparams, drawcatkwargs, drawimgkwargs, ncat=2, nrea=3, ncpu=6, savepsfimg=True, savetrugalimg=True)
 
 
 # Step 2, measuring
@@ -79,9 +84,9 @@ import megalut.meas.fdntfunc
 
 measdir = os.path.join(basedir, "meas_fdnt")
 measfct = megalut.meas.fdntfunc.measure
-measfctkwargs = {}
+measfctkwargs = {"sewpy_workdir": os.path.join(measdir,'sewpy'),}
 
-#megalut.meas.run.onsims(simdir, simparams, measdir, measfct, measfctkwargs, ncpu=24, skipdone=False)
+megalut.meas.run.onsims(simdir, simparams, measdir, measfct, measfctkwargs, ncpu=1, skipdone=False)
 
 
 # Step 3, plotting comparison
@@ -90,7 +95,7 @@ import plot_diagnosis as pd
 
 plot_pairs = [('tru_g1', 'fdnt_g1'), ('tru_g2', 'fdnt_g2'), ('tru_rad', 'fdnt_sigma'),
 	      ('tru_sersicn', 'fdnt_rho4'), ('tru_flux', 'fdnt_flux')]
-pd.plot_diagnosis(simparams, measdir, plot_pairs)
+#pd.plot_diagnosis(simparams, measdir, plot_pairs)
 
 
 
