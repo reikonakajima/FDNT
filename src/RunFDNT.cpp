@@ -49,6 +49,12 @@ FDNTShapeData RunFDNT(const Image<T>& gal_image, const Image<T>& psf_image,
     throw MyException((string("image size smaller than recommended for measurement") +
 		       string(" (adjust stamp_size or MINIMUM_FFT_SIGMA?)")).c_str());
 
+  // DEBUG BLOCK
+  Image<T> gal_copy = gal_image.duplicate();   // DEBUG
+  cerr << "gal_copy bounds:" << gal_copy.getBounds() << endl;
+  gal_copy.shift(1,1);
+  FITSImage<>::writeToFITS("gal_orig.fits", gal_copy);  // DEBUG
+
   // GL interpolation of missing values
   double maxBadPixels = 0.1;  // Maximum fraction of bad pixels in postage stamp
   int interpolationOrder = 4; // GL order for bad pixel interpolation
@@ -137,6 +143,11 @@ FDNTShapeData RunFDNT(const Image<T>& gal_image, const Image<T>& psf_image,
     const Quintic quintic(1e-4);
     InterpolantXY quintic_2d(quintic);
 
+    // DEBUG BLOCK
+    Image<T> psf_copy = psf_image.duplicate();
+    psf_copy.shift(1,1);
+    FITSImage<>::writeToFITS("psf_orig.fits", psf_copy);  // DEBUG
+
     SBPixel psfWCS(psf_image, quintic_2d);
     /* // generate PSF image in WC  /// future project
         SBDistort psfWCS(*(model->sb()),J(0,0),J(0,1),J(1,0),J(1,1));
@@ -147,6 +158,11 @@ FDNTShapeData RunFDNT(const Image<T>& gal_image, const Image<T>& psf_image,
     psfWCS.setFlux(1.);
     double dx = ee50psf / 2.35;  // for proper sampling
     Image<T> ipsf = psfWCS.draw(dx);  // future project: generate from model
+
+    // DEBUG BLOCK
+    Image<T> ipsf_copy = ipsf.duplicate();
+    ipsf_copy.shift(1,1);
+    FITSImage<>::writeToFITS("psf.fits", ipsf_copy);  // DEBUG
 
     // Measure PSF GL size & significance
     Image<T> psfwt(ipsf.getBounds());
@@ -257,6 +273,7 @@ FDNTShapeData RunFDNT(const Image<T>& gal_image, const Image<T>& psf_image,
       // stack background with sky-subtracted single frames ==
       // photometric local background in stack flux scale
     } catch (...) {
+      cerr << "no postage stamp" << endl;
       throw MyException("# fail: could not get postage stamp");
     }
 
@@ -268,14 +285,17 @@ FDNTShapeData RunFDNT(const Image<T>& gal_image, const Image<T>& psf_image,
     // has bad pixels, but not too many to begin with: do GL interpolation
     if (bp.size() > 0) {
       GLSimple<> gal(*fep, sexE, interpolationOrder);
-      if (!gal.solve())
-	throw MyException("GL fit failed");
+      bool native_success = gal.solve();
+      if (!native_success)
+	throw MyException("GL fit on native galaxy failed");
 
       LVector bvec = gal.getB();
       double fluxModel = bvec.flux();
       Ellipse basis = gal.getBasis();
       double missingFlux = 0.;
       double scaleFactor = exp(basis.getMu());
+
+      cerr << "galBasis (native): " << basis << endl << endl;  // DEBUG
 
       for (vector< Position<int> >::iterator it=bp.begin(); it<bp.end(); it++) {
 	LVector psi(bvec.getOrder());
@@ -311,6 +331,8 @@ FDNTShapeData RunFDNT(const Image<T>& gal_image, const Image<T>& psf_image,
       }
       catch (...) {
 	cerr << "fd.shape2() threw with flag: " << fd.getFlags() << endl;
+	results.intrinsic_flags = fd.getFlags();
+	return results;
       }
       // ??? Make flag mask an input parameter ???
       success = !(fd.getFlags() & (DidNotConverge + Singularity + OutOfBounds + TooLarge
@@ -335,6 +357,7 @@ FDNTShapeData RunFDNT(const Image<T>& gal_image, const Image<T>& psf_image,
       }
       catch (...)
       {
+	cerr << "error with previously successful measurement" << endl;
 	throw MyException("an error occured on previously successful measurement");
       }
     } else {
@@ -346,15 +369,18 @@ FDNTShapeData RunFDNT(const Image<T>& gal_image, const Image<T>& psf_image,
     // save measurement results on intrinsic galaxy properties
     results.intrinsic_flags = fd.getFlags();
     if (success) {
+      // currently implemented
       results.intrinsic_e1 = fd.getBasis().getS().getE1();
       results.intrinsic_e2 = fd.getBasis().getS().getE2();
-      results.intrinsic_e1_var = covE(0,0);
-      results.intrinsic_e2_var = covE(1,1);
-      results.intrinsic_e1e2_covar = covE(0,1);
       results.intrinsic_sigma = exp(mu);
+      // currently the following are unused at/after the python layer
       results.shrink_response = egFix;
       results.evaluation_count = fd.getEvaluationCount();
       results.e_trial_count = fd.getETrialCount();
+      // currently the following are not implemented
+      results.intrinsic_e1_var = covE(0,0);
+      results.intrinsic_e2_var = covE(1,1);
+      results.intrinsic_e1e2_covar = covE(0,1);
     }
 
     // DEBUG: REMOVE
@@ -389,7 +415,7 @@ FDNTShapeData RunFDNT(const Image<T>& gal_image, const Image<T>& psf_image,
 	 << endl;
   } catch (std::runtime_error &m) {
     cerr << m.what() << endl;
-    quit(m,1);
+    //quit(m,1);
   }
   return results;
 }
