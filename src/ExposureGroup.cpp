@@ -594,7 +594,7 @@ ExposureGroupFT<T>::prepare(Ellipse startBasis) {
     Nfits = MIN(Nfits, 2*(ipy0-fe.sci.getBounds().getYMin()));
 
     if (Nfits < MINIMUM_FFT_SIZE) {
-      //cout << "// Not enough data included" << endl;
+      cerr << "//OOB: Not enough data included" << endl;
       ExposureGroup<T>::flags |= OutOfBounds;
       return 0.;
     }
@@ -602,7 +602,7 @@ ExposureGroupFT<T>::prepare(Ellipse startBasis) {
     Bounds<int> btry(-Nfits/2+ipx0, Nfits/2-1+ipx0,
 		     -Nfits/2+ipy0, Nfits/2-1+ipy0);
     if (!fe.sci.getBounds().includes(btry)) {
-      //cout << "// If still a problem, we have failed (should not happen)" << endl;
+      cerr << "//OOB: If still a problem, we have failed (should not happen)" << endl;
       ExposureGroup<T>::flags |= OutOfBounds;
       
       return 0.;
@@ -614,7 +614,7 @@ ExposureGroupFT<T>::prepare(Ellipse startBasis) {
       Position<double> xy2 = pixBasis.inv(Position<double>(ix, bfft.getYMax()));
       if (hypot( xy1.x, xy1.y) < MINIMUM_FFT_SIGMA
 	  || hypot( xy2.x, xy2.y) < MINIMUM_FFT_SIGMA) {
-	//cout << "// hypot < MINIMUM_FFT_SIGMA in x" << endl;
+	cerr << "//OOB: hypot < MINIMUM_FFT_SIGMA in x" << endl;
 	ExposureGroup<T>::flags |= OutOfBounds;
 	return 0.;
       }
@@ -624,7 +624,7 @@ ExposureGroupFT<T>::prepare(Ellipse startBasis) {
       Position<double> xy2 = pixBasis.inv(Position<double>(bfft.getXMax(),iy));
       if (hypot( xy1.x, xy1.y) < MINIMUM_FFT_SIGMA
 	  || hypot( xy2.x, xy2.y) < MINIMUM_FFT_SIGMA) {
-	//cout << "// hypot < MINIMUM_FFT_SIGMA in y" << endl;
+	cerr << "//OOB: hypot < MINIMUM_FFT_SIGMA in y" << endl;
 	ExposureGroup<T>::flags |= OutOfBounds;
 	return 0.;
       }
@@ -641,7 +641,7 @@ ExposureGroupFT<T>::prepare(Ellipse startBasis) {
 	      (fe.sci( ix+ipx0, iy+ipy0 ) - fe.sky) * fe.sbScaleFactor);
       double wt = fe.wt( ix+ipx0, iy+ipy0 );
       if (wt<=0) {
-	//cout << "// Can't do FT with invalid data in the field" << endl;
+	cerr << "//OOB: Can't do FT with invalid data in the field" << endl;
 	ExposureGroup<T>::flags |= OutOfBounds;
 	return 0.;
       }
