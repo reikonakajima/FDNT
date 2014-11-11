@@ -39,15 +39,15 @@ FDNTShapeData RunFDNT(const Image<T>& gal_image, const Image<T>& psf_image,
     stampSize /= 2;
     ++pow_2;
   }
-  stampSize = pow(2., pow_2-1);
+  stampSize = pow(2., pow_2);
   if (stampSize * 3 > refSize)
     stampSize *= 3;
   else
     stampSize *= 4;
   // check stamp size
   if (stampSize > gal_image.XMax() - gal_image.XMin() + 1)
-    throw MyException((string("image size smaller than recommended for measurement") +
-		       string(" (adjust stamp_size or MINIMUM_FFT_SIGMA?)")).c_str());
+    throw MyException((string("image size smaller than recommended for measurement,") +
+		       string(" consider padding input image")).c_str());
 
   // DEBUG BLOCK
   Image<T> gal_copy = gal_image.duplicate();   // DEBUG
@@ -277,7 +277,7 @@ FDNTShapeData RunFDNT(const Image<T>& gal_image, const Image<T>& psf_image,
       throw MyException("# fail: could not get postage stamp");
     }
 
-    double meanweight=0.;
+    double meanweight=0.;  // fill with mean weight of the good pixels
     vector< Position<int> > bp = fep->badPixels(meanweight);
     if (bp.size()>maxBadPixels*stampSize*stampSize)
       throw MyException ("too many bad pixels");
