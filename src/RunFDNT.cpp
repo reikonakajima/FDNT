@@ -49,11 +49,11 @@ FDNTShapeData RunFDNT(const Image<T>& gal_image, const Image<T>& psf_image,
     throw MyException((string("image size smaller than recommended for measurement,") +
 		       string(" consider padding input image")).c_str());
 
-  // DEBUG BLOCK
+  /*/ DEBUG BLOCK
   Image<T> gal_copy = gal_image.duplicate();   // DEBUG
-  cerr << "gal_copy bounds:" << gal_copy.getBounds() << endl;
   gal_copy.shift(1,1);
   FITSImage<>::writeToFITS("gal_orig.fits", gal_copy);  // DEBUG
+  /*/
 
   // GL interpolation of missing values
   double maxBadPixels = 0.1;  // Maximum fraction of bad pixels in postage stamp
@@ -104,9 +104,10 @@ FDNTShapeData RunFDNT(const Image<T>& gal_image, const Image<T>& psf_image,
     UnweightedShearEstimator se;
     //tmv::SymMatrix<double> covE(2);
 
-    // DEBUG: REMOVE
+    /*/ DEBUG: REMOVE
     cerr << "# x_pix y_pix eta1 eta2 sig1 sig2 cov12 mu egFix fdFlags considered_success"
 	 << endl;
+    /*/
 
     double x_pix = x_wc, y_pix = y_wc;
 
@@ -143,10 +144,11 @@ FDNTShapeData RunFDNT(const Image<T>& gal_image, const Image<T>& psf_image,
     const Quintic quintic(1e-4);
     InterpolantXY quintic_2d(quintic);
 
-    // DEBUG BLOCK
+    /*/ DEBUG BLOCK
     Image<T> psf_copy = psf_image.duplicate();
     psf_copy.shift(1,1);
     FITSImage<>::writeToFITS("psf_orig.fits", psf_copy);  // DEBUG
+    /*/
 
     SBPixel psfWCS(psf_image, quintic_2d);
     /* // generate PSF image in WC  /// future project
@@ -407,12 +409,13 @@ FDNTShapeData RunFDNT(const Image<T>& gal_image, const Image<T>& psf_image,
     S.getG1G2(g1,g2);
     se.sigmaE(sig1,sig2, false);
 
-    // DEBUG: REMOVE
+    /*/ DEBUG: REMOVE
     cerr << fixed << setprecision(6);
     // Approximate the reduced-shear error as 1/2 of the distortion error
     cerr << "# Means: " << g1 << " +- " << sig1/2
 	 << " " << g2 << " +- " << sig2/2
 	 << endl;
+    /*/
   } catch (std::runtime_error &m) {
     cerr << m.what() << endl;
     //quit(m,1);
