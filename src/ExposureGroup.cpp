@@ -582,7 +582,7 @@ ExposureGroupFT<T>::prepare(Ellipse startBasis) {
   // Size of box containing data:
   int Nfits=N;
   //**/cerr << "N " << N << " pixBasis " << pixBasis << " want " << bfft << endl;
-  // If we don't have all the desired data, see if biggest imcluded
+  // If we don't have all the desired data, see if biggest included
   // square around the image is good enough
   if (!fe.sci.getBounds().includes(bfft)) {
     ExposureGroup<T>::flags |= Edge;
