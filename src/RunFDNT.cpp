@@ -45,9 +45,11 @@ FDNTShapeData RunFDNT(const Image<T>& gal_image, const Image<T>& psf_image,
   else
     stampSize *= 4;
   // check stamp size
-  if (stampSize > gal_image.XMax() - gal_image.XMin() + 1)
+  if (stampSize > gal_image.XMax() - gal_image.XMin() + 1) {
+    cerr << "image size smaller than recommended for measurement, consider padding input image for RunFDNT()" << endl;
     throw MyException((string("image size smaller than recommended for measurement,") +
 		       string(" consider padding input image")).c_str());
+  }
 
   /*/ DEBUG BLOCK
   Image<T> gal_copy = gal_image.duplicate();   // DEBUG
@@ -101,7 +103,7 @@ FDNTShapeData RunFDNT(const Image<T>& gal_image, const Image<T>& psf_image,
 	sci(ix,iy) = sci(ix,iy) * fluxScale;
       }
 
-    UnweightedShearEstimator se;
+    UnweightedShearEstimator se;  // don't need this, REMOVE
     //tmv::SymMatrix<double> covE(2);
 
     /*/ DEBUG: REMOVE
@@ -461,8 +463,9 @@ FDNTShapeData GLMoments(const Image<T>& gal_image,
 
   // check stamp size
   if (stampSize > gal_image.XMax() - gal_image.XMin() + 1)
-    throw MyException((string("image size smaller than recommended for measurement") +
-		       string(" (adjust stamp_size or MINIMUM_FFT_SIGMA?)")).c_str());
+    cerr << "image size smaller than recommended for measurement; consider padding the input image to GLMoment()" << endl;
+    throw MyException((string("image size smaller than recommended for measurement,") +
+		       string(" consider padding the input image.")).c_str());
 
   // GL interpolation of missing values
   double maxBadPixels = 0.1;  // Maximum fraction of bad pixels in postage stamp
