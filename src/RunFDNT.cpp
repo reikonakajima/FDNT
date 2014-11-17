@@ -51,11 +51,13 @@ FDNTShapeData RunFDNT(const Image<T>& gal_image, const Image<T>& psf_image,
 		       string(" consider padding input image")).c_str());
   }
 
-  /*/ DEBUG BLOCK
+  cerr << "gal_image bounds:" << gal_image.getBounds() << endl;
+
+  // DEBUG BLOCK
   Image<T> gal_copy = gal_image.duplicate();   // DEBUG
   gal_copy.shift(1,1);
   FITSImage<>::writeToFITS("gal_orig.fits", gal_copy);  // DEBUG
-  /*/
+  //
 
   // GL interpolation of missing values
   double maxBadPixels = 0.1;  // Maximum fraction of bad pixels in postage stamp
@@ -140,7 +142,7 @@ FDNTShapeData RunFDNT(const Image<T>& gal_image, const Image<T>& psf_image,
 	// distorted approximate pixel scale: how much the scales are enlarged by WC transform
 	double rescale = sqrt(fabs(J(0,0)*J(1,1)-J(0,1)*J(1,0)));
     */
-    double rescale = 1.0;
+    double rescale = 1.0; // for WCS rescaling
     Ellipse psfBasis(0., 0., log(ee50psf/1.17));
 
     const Quintic quintic(1e-4);
@@ -178,7 +180,7 @@ FDNTShapeData RunFDNT(const Image<T>& gal_image, const Image<T>& psf_image,
     if (!psf_success) {
       std::ostringstream oss;
       oss << "# Failed measuring psf, flags " << gl.getFlags()
-	  << "; ignoring object" << endl;
+	  << "; ignoring object.  (Try refining dx)" << endl;
       throw MyException(oss.str().c_str());
     }
     psfBasis = gl.getBasis();
@@ -245,12 +247,19 @@ FDNTShapeData RunFDNT(const Image<T>& gal_image, const Image<T>& psf_image,
     if ((yi0 + stampSize+1) > chip_bounds.getYMax())
       yi0 = chip_bounds.getYMax() - stampSize - 1;
 
+    /* //  trim input image.  remove for now, as python I/F already feeds in postage stamps.
     Bounds<int> stamp(xi0,xi0+stampSize-1, yi0, yi0+stampSize-1);
     results.image_bounds = stamp;
     Image<float> scistamp = sci.subimage(stamp);
     Image<float> wtstamp  = wt.subimage(stamp);
     Image<double> xwstamp(stamp);
     Image<double> ywstamp(stamp);
+    */
+    results.image_bounds = sci.getBounds();
+    Image<float> scistamp = sci;
+    Image<float> wtstamp  = wt;
+    Image<double> xwstamp(sci.getBounds());
+    Image<double> ywstamp(sci.getBounds());
 
     try {
       for (int iy=stamp.getYMin(); iy<=stamp.getYMax(); iy++)
