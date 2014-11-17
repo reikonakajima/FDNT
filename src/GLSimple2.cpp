@@ -169,8 +169,10 @@ GLSimple<T>::acquireData() {
 	 << endl;
 
     // Set Edge flag if pixels outside image would contribute
-    if ( !coverage.includes(pixBounds)) 
+    if ( !coverage.includes(pixBounds)) {
+      cerr << "Edge::GLSimple2: coverage does not include pixBounds" << endl;
       flags |= Edge;
+    }
 
     pixBounds = pixBounds & coverage;
 
