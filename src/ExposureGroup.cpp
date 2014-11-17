@@ -586,6 +586,9 @@ ExposureGroupFT<T>::prepare(Ellipse startBasis) {
   // square around the image is good enough
   if (!fe.sci.getBounds().includes(bfft)) {
     ExposureGroup<T>::flags |= Edge;
+    cerr << "Edge::sci bounds does not include fft bounds bfft" << endl;
+    cerr << "sci bounds: " << fe.sci.getBounds() << endl;
+    cerr << "bfft: " << bfft << endl;
     // Check that we have the data
       
     Nfits = 2*(fe.sci.getBounds().getXMax()-ipx0+1);
