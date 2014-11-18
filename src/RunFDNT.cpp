@@ -51,17 +51,16 @@ FDNTShapeData RunFDNT(const Image<T>& gal_image, const Image<T>& psf_image,
 		       string(" consider padding input image")).c_str());
   }
 
+  /*/ DEBUG BLOCK
   cerr << "gal_image bounds:" << gal_image.getBounds() << endl;
-
-  // DEBUG BLOCK
   Image<T> gal_copy = gal_image.duplicate();   // DEBUG
   gal_copy.shift(1,1);
   FITSImage<>::writeToFITS("gal_orig.fits", gal_copy);  // DEBUG
-  //
+  /*/
 
   // GL interpolation of missing values
   double maxBadPixels = 0.1;  // Maximum fraction of bad pixels in postage stamp
-  int interpolationOrder = 4; // GL order for bad pixel interpolation
+  int interpolationOrder = 4; // GL order for bad pixel interpolation (as well as size/shape meas.)
   double maxBadFlux = 0.05;   // Maximum fraction of model flux in bad pixels
 
   // output:
@@ -165,10 +164,11 @@ FDNTShapeData RunFDNT(const Image<T>& gal_image, const Image<T>& psf_image,
     double dx = ee50psf / 2.35;  // for proper sampling
     Image<T> ipsf = psfWCS.draw(dx);  // future project: generate from model
 
-    // DEBUG BLOCK
+    /*/ DEBUG BLOCK
     Image<T> ipsf_copy = ipsf.duplicate();
     ipsf_copy.shift(1,1);
     FITSImage<>::writeToFITS("psf.fits", ipsf_copy);  // DEBUG
+    /*/
 
     // Measure PSF GL size & significance
     Image<T> psfwt(ipsf.getBounds());
@@ -255,30 +255,30 @@ FDNTShapeData RunFDNT(const Image<T>& gal_image, const Image<T>& psf_image,
     Image<double> xwstamp(stamp);
     Image<double> ywstamp(stamp);
     */
-    results.image_bounds = sci.getBounds();
+    Bounds<int> stamp = sci.getBounds();
+    results.image_bounds = stamp;
     Image<float> scistamp = sci;
     Image<float> wtstamp  = wt;
-    Image<double> xwstamp(sci.getBounds());
-    Image<double> ywstamp(sci.getBounds());
+    Image<double> xwstamp(stamp);
+    Image<double> ywstamp(stamp);
 
     try {
-      for (int iy=stamp.getYMin(); iy<=stamp.getYMax(); iy++)
-	{
-	  for (int ix=stamp.getXMin(); ix<=stamp.getXMax(); ix++) {
-	    double dxw = ix, dyw = iy;  // pixel coordinate is world coordinate
-	    //fullmap->toWorld(ix,iy,dxw,dyw);  /// future project
-	    xwstamp(ix,iy) = dxw;
-	    ywstamp(ix,iy) = dyw;
-	    /*  /// deweight any irrelevant pixel (future project?)
-		if (segstamp(ix,iy) && segstamp(ix,iy)!=segId) { //it's another object!
-		  for (int iiy=max(stamp.getYMin(),iy-segmentationPadding);
-		       iiy<=min(stamp.getYMax(),iy+segmentationPadding); iiy++)
-		    for (int iix=max(stamp.getXMin(),ix-segmentationPadding);
-			 iix<=min(stamp.getXMax(),ix+segmentationPadding); iix++)
-		      wtstamp(iix,iiy)=0.;
-	    */
-	  }
+      for (int iy=stamp.getYMin(); iy<=stamp.getYMax(); iy++) {
+	for (int ix=stamp.getXMin(); ix<=stamp.getXMax(); ix++) {
+	  double dxw = ix, dyw = iy;  // pixel coordinate is world coordinate
+	  //fullmap->toWorld(ix,iy,dxw,dyw);  /// future project
+	  xwstamp(ix,iy) = dxw;
+	  ywstamp(ix,iy) = dyw;
+	  /*  /// deweight any irrelevant pixel (future project?)
+	      if (segstamp(ix,iy) && segstamp(ix,iy)!=segId) { //it's another object!
+	      for (int iiy=max(stamp.getYMin(),iy-segmentationPadding);
+	      iiy<=min(stamp.getYMax(),iy+segmentationPadding); iiy++)
+	      for (int iix=max(stamp.getXMin(),ix-segmentationPadding);
+	      iix<=min(stamp.getXMax(),ix+segmentationPadding); iix++)
+	      wtstamp(iix,iiy)=0.;
+	  */
 	}
+      }
       fep = new FitExposure<>(scistamp,
 			      wtstamp,
 			      xwstamp,
@@ -295,21 +295,36 @@ FDNTShapeData RunFDNT(const Image<T>& gal_image, const Image<T>& psf_image,
     if (bp.size()>maxBadPixels*stampSize*stampSize)
       throw MyException ("too many bad pixels");
 
-    // has bad pixels, but not too many to begin with: do GL interpolation
+    // Get GLSimple fit on native galaxy.
+    GLSimple<> gal(*fep, sexE, interpolationOrder);
+    bool native_success = gal.solve();
+    results.observed_flags = gal.getFlags();
+    if (!native_success)
+      throw MyException("GL fit on native galaxy failed");
+
+    LVector bvec = gal.getB();
+    double fluxModel = bvec.flux();
+    Ellipse basis = gal.getBasis();
+    double missingFlux = 0.;
+    double scaleFactor = exp(basis.getMu());
+
+    double sigE1=9.999, sigE2=9.999, covarE1E2=9.999;   // REMOVE 9.999 when shapeVariance impl'd
+    //gal.shapeVariance(sigE1, sigE2, covarE1E2);   // TO BE IMPLEMENTED
+    //cerr << "galBasis (native): " << basis << endl << endl;  // DEBUG
+
+    // fill in native fit results
+    gal.b00(results.observed_b00, results.observed_b00_var);
+    results.observed_b22 = bvec[PQIndex(2,2).rIndex()];
+    results.observed_e1 = basis.getS().getE1();
+    results.observed_e2 = basis.getS().getE2();
+    results.observed_e1_var = sigE1*sigE1;
+    results.observed_e2_var = sigE2*sigE2;
+    results.observed_e1e2_covar = covarE1E2;
+    results.observed_sigma = exp(basis.getMu());
+    results.observed_centroid = basis.getX0();
+
+    // If there are bad pixels (but not too many to begin with), do GL interpolation.
     if (bp.size() > 0) {
-      GLSimple<> gal(*fep, sexE, interpolationOrder);
-      bool native_success = gal.solve();
-      if (!native_success)
-	throw MyException("GL fit on native galaxy failed");
-
-      LVector bvec = gal.getB();
-      double fluxModel = bvec.flux();
-      Ellipse basis = gal.getBasis();
-      double missingFlux = 0.;
-      double scaleFactor = exp(basis.getMu());
-
-      cerr << "galBasis (native): " << basis << endl << endl;  // DEBUG
-
       for (vector< Position<int> >::iterator it=bp.begin(); it<bp.end(); it++) {
 	LVector psi(bvec.getOrder());
 	Position<double> xunit =
@@ -329,6 +344,7 @@ FDNTShapeData RunFDNT(const Image<T>& gal_image, const Image<T>& psf_image,
       if (missingFlux/fluxModel > maxBadFlux)
 	throw MyException("bad pixels have too high flux fraction");
     }
+
 
     FDNT<> fd(*fep, psfinfo, initE, order);
     fd.setMaskSigma(maskSigma);
@@ -590,15 +606,14 @@ FDNTShapeData GLMoments(const Image<T>& gal_image,
     Image<double> ywstamp(stamp);
 
     try {
-      for (int iy=stamp.getYMin(); iy<=stamp.getYMax(); iy++)
-	{
-	  for (int ix=stamp.getXMin(); ix<=stamp.getXMax(); ix++) {
-	    double dxw = ix, dyw = iy;  // pixel coordinate is world coordinate
-	    //fullmap->toWorld(ix,iy,dxw,dyw);  /// future project
-	    xwstamp(ix,iy) = dxw;
-	    ywstamp(ix,iy) = dyw;
-	  }
+      for (int iy=stamp.getYMin(); iy<=stamp.getYMax(); iy++) {
+	for (int ix=stamp.getXMin(); ix<=stamp.getXMax(); ix++) {
+	  double dxw = ix, dyw = iy;  // pixel coordinate is world coordinate
+	  //fullmap->toWorld(ix,iy,dxw,dyw);  /// future project
+	  xwstamp(ix,iy) = dxw;
+	  ywstamp(ix,iy) = dyw;
 	}
+      }
       fep = new FitExposure<>(scistamp,
 			      wtstamp,
 			      xwstamp,
@@ -611,21 +626,20 @@ FDNTShapeData GLMoments(const Image<T>& gal_image,
 
     double meanweight=0.;
     vector< Position<int> > bp = fep->badPixels(meanweight);
-    if (bp.size()>maxBadPixels*stampSize*stampSize){
-      //throw MyException ("too many bad pixels");
+    if (bp.size()>maxBadPixels*stampSize*stampSize) {
       cerr << "Too many bad pixels" << endl;
-      exit(1);
+      throw MyException ("too many bad pixels");
     }
 
     Ellipse basis;
-    bool success = false;
     GLSimple<> gal(*fep, sexE, interpolationOrder);
-    if (!(success = gal.solve())) {
-      //cerr << "GLSimple fit failed with flag: " << gal.getFlags()
+    bool success = gal.solve();
+    results.observed_flags = gal.getFlags();
+    if (!success) {
+      //cerr << "GLSimple fit on native failed with flag: " << gal.getFlags()
       //     << ", size: " << sigma_pix << ", shape: (" << e1start << "," << e2start << ")" << endl;
       // Exit gracefully
       delete fep;
-      results.observed_flags = gal.getFlags();
       return results;
     }
 
@@ -660,9 +674,7 @@ FDNTShapeData GLMoments(const Image<T>& gal_image,
       throw MyException("bad pixels have too high flux fraction");
 
     // save measurement results on observed galaxy properties
-    results.observed_flags = gal.getFlags();
     if (success) {
-
       gal.b00(results.observed_b00, results.observed_b00_var);
       results.observed_b22 = bvec[PQIndex(2,2).rIndex()];
       results.observed_e1 = basis.getS().getE1();
