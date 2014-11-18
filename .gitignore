@@ -22,9 +22,13 @@ bin/*
 .depend
 *.bkp.cpp
 output
-test.cpp
+test*.cpp
+temp*.cpp
+*_debug.cpp
 test
 test.py
 *.backup.py
 *.backup.cpp
 *.backup.h
+*.png
+*.pkl
