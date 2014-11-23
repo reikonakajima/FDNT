@@ -44,7 +44,7 @@ basedir = "/vol/euclid2/euclid2_1/reiko/MegaLUT/temp/"
 
 simdir = os.path.join(basedir, "simdir")
 simparams = CGC_simparams()
-drawcatkwargs = {"n":30, "stampsize":64}
+drawcatkwargs = {"n":3, "stampsize":64}
 drawimgkwargs = {}
 
 #megalut.sim.run.multi(simdir, simparams, drawcatkwargs, drawimgkwargs, ncat=2, nrea=3, ncpu=6, savepsfimg=True, savetrugalimg=True)
@@ -52,19 +52,26 @@ drawimgkwargs = {}
 
 # Step 2, measuring
 
-import megalut.meas.fdntfunc
+## Measure native galaxy size with SExtractor, add to catalog
+import megalut.meas.sewfunc
+sexpath = 'sex'
+sewfunc_kwargs = {'sexpath': sexpath, 'workdir': 'sewpy'}
+megalut.meas.run.onsims(simdir, simparams, measdir, megalut.meas.sewfunc.measure, sewfunc_kwargs, skipdone=True)
 
+## Measure PSF size with SExtractor, add to catalog
+import megalut.meas.sewfunc_psf
+megalut.meas.run.onsims(simdir, simparams, measdir, megalut.meas.sewfunc_psf.measure, sewfunc_kwargs, skipdone=True)
+
+## Measure intrinsic galaxy size with FDNT
+import megalut.meas.fdntfunc
 measdir = os.path.join(basedir, "meas_fdnt")
 measfct = megalut.meas.fdntfunc.measure
-measfctkwargs = {"sewpy_workdir": os.path.join(measdir,'sewpy'), "stampsize": 64}
-
+measfctkwargs = {"stampsize": 64,}
 megalut.meas.run.onsims(simdir, simparams, measdir, measfct, measfctkwargs, ncpu=1, skipdone=False)
 
 
 # Step 3, plotting comparison
-
 import plot_diagnosis as pd
-
 plot_pairs = [('tru_g1', 'fdnt_g1'), ('tru_g2', 'fdnt_g2'), ('tru_rad', 'fdnt_sigma'),
 	      ('tru_sersicn', 'fdnt_b22'), ('tru_flux', 'fdnt_flux')]
 pd.plot_diagnosis(simparams, measdir, plot_pairs)
