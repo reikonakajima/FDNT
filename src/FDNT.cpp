@@ -414,6 +414,11 @@ FDNT<T>::marginalizedCentroid(Shear targetS,
       DVector xyShift = dE.subVector(iX, iY+1)
 	+ (Fisher.subMatrix(iX,iY+1,0,nRe) / Fisher.subSymMatrix(iX, iY+1) ) * dE.subVector(0, nRe);
       if (hypot(xyShift[0],xyShift[1]) > CENTROID_MISMATCH_THRESHOLD * exp(nativeBasis.getMu())) {
+	/*/
+	cerr << "CentroidMismatch set #1.  Difference is: "
+	     << hypot(xyShift[0],xyShift[1]) - CENTROID_MISMATCH_THRESHOLD * exp(nativeBasis.getMu())
+	     << endl;
+	/*/
 	flags |= CentroidMismatch;
       } else {
 	flags &= ~CentroidMismatch;
@@ -652,6 +657,10 @@ FDNT<T>::shape2(double& logLikelihood,
 
   // Set centroid flag if it was set for significant fraction
   // of the likelihood
+    /*/
+    cerr << "fraction of likelihood which has centroid mismatch flag set: "
+         << (sumpCentroidMismatch / sump) << " >? " << CENTROID_FLAG_THRESHOLD << endl;
+    /*/
   if (sumpCentroidMismatch / sump > CENTROID_FLAG_THRESHOLD) {
     flags |= CentroidMismatch;
   } else {
