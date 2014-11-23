@@ -19,6 +19,7 @@ import logging
 logging.basicConfig(level=logging.INFO)
 import numpy as np
 
+import fdnt_measfct
 
 ###################################################################################################
 # User-defined functions and classes needed for GREAT3
@@ -59,11 +60,6 @@ basedir = "/vol/euclid2/euclid2_1/reiko/MegaLUT/temp/"
 simparam_name = 'CGC_FDNT_debug'
 cgc_simparam = CGC_simparams(simparam_name)
 
-measfct = megalut.meas.fdntfunc.measure
-measdir = os.path.join(basedir, "meas_fdnt")
-measfctkwargs = {"sewpy_workdir": os.path.join(measdir,'sewpy'), }
-
-
 """
 import plot_diagnosis as pd
 plot_pairs = [('tru_g1', 'fdnt_g1'), ('tru_g2', 'fdnt_g2'), ('tru_rad', 'fdnt_sigma'),
@@ -75,12 +71,15 @@ pd.plot_diagnosis(simparams, measdir, plot_pairs)
 # Start of the code
 
 # Create an instance of the GREAT3 class
-cgc=megalut.great3.great3.Run("control", "ground", "constant",
+cgc = megalut.great3.great3.Run("control", "ground", "constant",
 	datadir="/vol/euclid4/euclid4_1/reiko/GREAT3_DATA/",
 	subfields=range(5,6))
 
 # Now run the measurements on input images
-cgc.meas("obs", measfct, measfctkwargs, ncpu=1, simparams=cgc_simparam, method_prefix="fdnt_")
+cgc.meas_obs(fdnt_measfct.measfct, skipdone=False, ncpu=1)
+
+exit()
+
 """
 # Make sim catalogs & images
 cgc.sim(CGC_simparams(), n=10)
