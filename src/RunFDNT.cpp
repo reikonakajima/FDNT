@@ -51,12 +51,12 @@ FDNTShapeData RunFDNT(const Image<T>& gal_image, const Image<T>& psf_image,
 		       string(" consider padding input image")).c_str());
   }
 
-  /*/ DEBUG BLOCK
-  cerr << "gal_image bounds:" << gal_image.getBounds() << endl;
+  // DEBUG BLOCK
+  //cerr << "gal_image bounds:" << gal_image.getBounds() << endl;
   Image<T> gal_copy = gal_image.duplicate();   // DEBUG
   gal_copy.shift(1,1);
   FITSImage<>::writeToFITS("gal_orig.fits", gal_copy);  // DEBUG
-  /*/
+  //
 
   // GL interpolation of missing values
   double maxBadPixels = 0.1;  // Maximum fraction of bad pixels in postage stamp
@@ -147,11 +147,11 @@ FDNTShapeData RunFDNT(const Image<T>& gal_image, const Image<T>& psf_image,
     const Quintic quintic(1e-4);
     InterpolantXY quintic_2d(quintic);
 
-    /*/ DEBUG BLOCK
+    // DEBUG BLOCK
     Image<T> psf_copy = psf_image.duplicate();
     psf_copy.shift(1,1);
     FITSImage<>::writeToFITS("psf_orig.fits", psf_copy);  // DEBUG
-    /*/
+    //
 
     SBPixel psfWCS(psf_image, quintic_2d);
     /* // generate PSF image in WC  /// future project
@@ -164,11 +164,11 @@ FDNTShapeData RunFDNT(const Image<T>& gal_image, const Image<T>& psf_image,
     double dx = ee50psf / 2.35;  // for proper sampling
     Image<T> ipsf = psfWCS.draw(dx);  // future project: generate from model
 
-    /*/ DEBUG BLOCK
+    // DEBUG BLOCK
     Image<T> ipsf_copy = ipsf.duplicate();
     ipsf_copy.shift(1,1);
     FITSImage<>::writeToFITS("psf.fits", ipsf_copy);  // DEBUG
-    /*/
+    //
 
     // Measure PSF GL size & significance
     Image<T> psfwt(ipsf.getBounds());
@@ -399,9 +399,9 @@ FDNTShapeData RunFDNT(const Image<T>& gal_image, const Image<T>& psf_image,
     results.intrinsic_flags = fd.getFlags();
     if (success) {
       // currently implemented
-      results.intrinsic_e1 = fd.getBasis().getS().getE1();
-      results.intrinsic_e2 = fd.getBasis().getS().getE2();
-      results.intrinsic_sigma = exp(mu);
+      results.intrinsic_e1 = targetS.getE1();
+      results.intrinsic_e2 = targetS.getE2();
+      results.intrinsic_sigma = exp(mu);    // this is currently implemented incorrectly
       // currently the following are unused at/after the python layer
       results.shrink_response = egFix;
       results.evaluation_count = fd.getEvaluationCount();
