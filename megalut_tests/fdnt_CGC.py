@@ -19,7 +19,7 @@ import logging
 logging.basicConfig(level=logging.INFO)
 import numpy as np
 
-import fdnt_measfct
+import megalut.meas.fdnt_measfct
 
 ###################################################################################################
 # User-defined functions and classes needed for GREAT3
