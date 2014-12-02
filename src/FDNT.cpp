@@ -647,7 +647,7 @@ FDNT<T>::shape2(double& logLikelihood,
     sumyyy += prob*y*y*y;
     sumyyyy += prob*y*y*y*y;
 #endif
-    if (!centerIsFixed && (flags & CentroidMismatch)) sumpCentroidMismatch+=prob;
+    if (!centerIsFixed && (i->centroidFlag & CentroidMismatch)) sumpCentroidMismatch+=prob;
     if (!sizeIsFixed) {
       sumpTooSmall += prob * i->fractionTooSmall;
       sumpTooBig += prob * i->fractionTooBig;
