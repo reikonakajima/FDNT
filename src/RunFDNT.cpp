@@ -361,6 +361,7 @@ FDNTShapeData RunFDNT(const Image<T>& gal_image, const Image<T>& psf_image,
       catch (...) {
 	cerr << "fd.shape2() threw with flag: " << fd.getFlags() << endl;
 	results.intrinsic_flags = fd.getFlags();
+	delete fep;
 	return results;
       }
       // ??? Make flag mask an input parameter ???
