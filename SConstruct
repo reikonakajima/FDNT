@@ -1775,7 +1775,9 @@ if not GetOption('help'):
         ClearCache()
 
     if env['PYTHON'] == '':
-        python = default_python
+        python = which('python')
+	if python is None:
+	    python = default_python
     else:
         python = env['PYTHON']
         python = which(python)
